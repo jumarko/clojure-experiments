@@ -68,3 +68,19 @@ me-before
 (s/explain-data ::big-even 5)
 ;; and we can generate examples automatically!
 (gen/sample (s/gen ::big-even))
+
+
+
+;;; multimethod experiments
+;;;
+(defmulti login (fn [user-role credentials] user-role))
+(defmethod login :admin [_ credentials]
+  (println "Admin credentials: " credentials))
+(defmethod login :user [_ credentials]
+  (println "User credentials: " credentials))
+
+(login :admin {:licensee "jumarko" :license-key "xyz"})
+
+(login :user {:licensee "jumarko" :license-key "xyz"})
+
+
