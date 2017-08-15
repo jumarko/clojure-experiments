@@ -163,4 +163,13 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (-> "Works" upp rev)
 
 
-
+;;; how to compose multiple predicate functions into one?
+;;; https://stackoverflow.com/questions/45643579/compose-multiple-predicate-functions-into-one
+;;; => some-fn
+(defn- multiple-of-three? [n] (zero? (mod n 3)))
+(defn- multiple-of-five? [n] (zero? (mod n 5)))
+(def multiple-of-three-or-five?
+  (some-fn multiple-of-three? multiple-of-five?))
+(multiple-of-three-or-five? 3)
+(multiple-of-three-or-five? 4)
+(multiple-of-three-or-five? 5)
