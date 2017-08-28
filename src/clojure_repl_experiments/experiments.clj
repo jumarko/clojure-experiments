@@ -173,3 +173,39 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (multiple-of-three-or-five? 3)
 (multiple-of-three-or-five? 4)
 (multiple-of-three-or-five? 5)
+
+
+
+;;; Dump system info from system properties
+;;; See https://www.roseindia.net/java/beginners/OSInformation.shtml
+(def env-system-properties
+  ["os.name"
+   "os.version"
+   "os.arch"
+   "java.version"
+   "java.class.version"
+   "java.vendor"
+   "java.vm.name"
+   "java.vm.vendor"
+   "java.vm.info"
+   "java.home"
+   "java.io.tmpdir"
+   "user.name"
+   "user.dir"
+   "user.timezone"
+   "user.language"
+   "file.encoding"
+   "file.separator"
+   "path.separator"
+   "line.separator"
+   ])
+
+(defn- environment-info []
+  (let [runtime (Runtime/getRuntime)]
+    (into (->> env-system-properties
+               (mapv (fn [prop-name] [prop-name (System/getProperty prop-name)])))
+          [["available processors" (.availableProcessors runtime)]
+           ["free memory" (.freeMemory runtime)]
+           ["max memory" (.maxMemory runtime)]
+           ["total memory" (.totalMemory runtime)]]))))
+
