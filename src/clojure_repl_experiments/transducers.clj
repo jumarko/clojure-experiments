@@ -44,12 +44,12 @@
 (defn -mapping [f]
   (fn [xf]
     (fn [acc v]
-      #_(println "mapping: " v" -> " (f v))
+      #_(println "mapping: " v " -> " (f v))
       (xf acc (f v)))))
 (defn -filtering [f]
   (fn [xf]
     (fn [acc v]
-      #_(println "filtering: " v" -> " (f v))
+      #_(println "filtering: " v " -> " (f v))
       (if (f v)
         (xf acc v)
         acc))))
@@ -68,3 +68,61 @@
         0
         data)
 
+;;; Transducers episode 2
+;;; https://www.youtube.com/watch?v=3E5dbAKIS_E
+(def rfn (comp (-mapping int)
+               (-mapping inc)
+               (-filtering odd?)
+               (-mapping char)))
+
+(defn string-rf
+  [^StringBuilder acc ^Character ch]
+  (.append acc ch))
+
+(str (reduce (rfn string-rf)
+             (StringBuilder.)
+             "Hello World"))
+;; But now we're complecting construction of `StringBuilder`
+;; with transformation `string-rf` and building the output with `str`
+;; => Rich came with great idea to solve this problem with 3-arity function!
+;; => Let's build a better string-rf
+(defn string-rf
+  ;; construction step
+  ([] (StringBuilder.))
+  ;; completing step
+  ([^StringBuilder sb]
+   (.toString sb))
+  ;; transformation step
+  ([^StringBuilder acc ^Character ch]
+   (.append acc ch)))
+;; we also need to fix `mapping` and `filtering`
+(defn -mapping [f]
+  (fn [xf]
+    (fn
+      ([] (xf))
+      ([acc] (xf acc))
+      ([acc v]
+       (xf acc (f v))))))
+(defn -filtering [f]
+  (fn [xf]
+    (fn
+      ([] (xf))
+      ([acc] (xf acc))
+      ([acc v]
+       (if (f v)
+         (xf acc v)
+         acc)))))
+
+(def xform (comp (-mapping int)
+               (-mapping inc)
+               (-filtering odd?)
+               (-mapping char)))
+
+(transduce xform string-rf "Hello World")
+
+;; One cool thing that we can do with this stuff is to use transient vector!
+(defn vec-trans
+  ([] (transient []))
+  ([acc] (persistent! acc))
+  ([acc v] (conj! acc v)))
+(transduce xform vec-trans "Hello World")
