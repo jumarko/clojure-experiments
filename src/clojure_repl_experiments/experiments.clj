@@ -207,5 +207,19 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
           [["available processors" (.availableProcessors runtime)]
            ["free memory" (.freeMemory runtime)]
            ["max memory" (.maxMemory runtime)]
-           ["total memory" (.totalMemory runtime)]]))))
+           ["total memory" (.totalMemory runtime)]])))
+
+
+;;; Great explanation of lazy sequences: https://groups.google.com/forum/#!topic/clojure/R288cQPgazw
+;;; fibonacci numbers example
+
+(def fibs (cons 0 (cons 1 (lazy-seq (map +' fibs (rest fibs))))))
+(take 10 fibs)
+
+;; Exercise:
+;; You put the lazy seq at the beginning and it hit an infinite loop.
+;; You put the lazy seq after the first two hard-coded values, and it worked.
+;; What happens when you put it after just the first hard-coded value? Can you explain why?
+;; (def fibs (cons 0 (lazy-seq (cons 1 (map +' fibs (rest fibs))))))
+(take 10 fibs)
 
