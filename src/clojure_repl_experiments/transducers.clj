@@ -126,3 +126,51 @@
   ([acc] (persistent! acc))
   ([acc v] (conj! acc v)))
 (transduce xform vec-trans "Hello World")
+
+
+
+;;; Transducers - Episode 3 - IReduce
+;;; https://www.youtube.com/watch?v=7Px1rk3qWGg
+
+;; let's extend the CollReduce protocol
+;;
+;; This is what makes transducers really fast:
+;; -> just function calls, no allocations of lazy seqs
+(extend-protocol clojure.core.protocols/CollReduce
+  java.io.InputStream
+  (coll-reduce [this f init]
+    (let [is ^java.io.InputStream this]
+      (loop [acc init]
+        (let [ch (.read is)]
+          (if (= -1 ch)
+            acc
+            (recur (f acc ch))))))))
+(transduce (map char)
+           conj
+           (java.io.ByteArrayInputStream. (.getBytes "Hello World")))
+
+;; But, we should support early termination!
+(extend-protocol clojure.core.protocols/CollReduce
+  java.io.InputStream
+  (coll-reduce [this f init]
+    (let [is ^java.io.InputStream this]
+      (loop [acc init]
+        ;; notice reduced? usage
+        (if (reduced? acc)
+          @acc
+          (let [ch (.read is)]
+            (if (= -1 ch)
+              acc
+              (recur (f acc ch)))))))))
+(transduce (comp (map char)
+                 (map #(Character/toUpperCase %))
+                 ;; testing early termination with `take`
+                 ;; when you look at source code of `take` you'll see that it calls `reduced`
+                 (take 3))
+           conj
+           (java.io.ByteArrayInputStream. (.getBytes "Hello World")))
+
+;; Notes:
+;; - Instead of extending protocol CollReduce we can also implement clojure.lang.IReduce - better performance?
+;; - coll-reduce function also has 2-arity function (no initial value) - most of the time we shouldn't worry about it
+
