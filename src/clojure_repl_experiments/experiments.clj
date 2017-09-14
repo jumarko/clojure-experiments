@@ -223,3 +223,14 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 ;; (def fibs (cons 0 (lazy-seq (cons 1 (map +' fibs (rest fibs))))))
 (take 10 fibs)
 
+;; alternative fibo implementation using loop-recur
+(defn fibo2 [n]
+  (loop [a 1 b 0 acc n]
+    (if (zero? acc)
+      b
+      (recur
+       (+' a b)
+       a
+       (dec acc)))))
+
+
