@@ -174,3 +174,64 @@
 ;; - Instead of extending protocol CollReduce we can also implement clojure.lang.IReduce - better performance?
 ;; - coll-reduce function also has 2-arity function (no initial value) - most of the time we shouldn't worry about it
 
+
+
+;;; Tim Baldridge Episode 4: Emitting Multiple Items
+;;; `cat` itself is a transducers
+
+;; let's start with simple example
+(def high-low
+  (fn [xf]
+    (fn
+      ([] (xf))
+      ([result] (xf result))
+      ([result item]
+       (xf
+        (xf result (inc item))
+        (dec item))))))
+(transduce high-low conj [] [1 2 3])
+
+;; first try to implement `cat` ourselves
+(def cat
+  (fn [xf]
+    (fn
+      ([] (xf))
+      ([result] (xf result))
+      ([result coll]
+       (reduce xf result coll)))))
+(transduce cat conj [] [[1 2 3] [10 20 30] [100 200 300]])
+
+;; but we have a problem here - let's compose with `take`
+(def print-stuff
+  (map (fn [x]
+         (print "-" x "-")
+         x)))
+(transduce (comp cat print-stuff (take 3)) conj [[1 2] [3 4] [5 6]])
+;; you'll see following print in REPL
+;; - 1 -- 2 -- 3 -- 5 -
+;; that's because of `reduce` called in `cat` transducer;
+;; despite the fact that `take` uses `reduced` it's negated by our call to `reduce`
+
+;; we can solve our issues by wrapping the value with another reduced
+;; this is what `preserving-reduced` private function in clojure.core does:
+(defn ^:private preserving-reduced
+  [rf]
+  #(let [ret (rf %1 %2)]
+     (if (reduced? ret)
+       (reduced ret)
+       ret)))
+(def cat
+  (fn [xf]
+    (let [pr (preserving-reduced xf)]
+      (fn
+        ([] (xf))
+        ([result] (xf result))
+        ([result coll]
+         (reduce pr result coll))))))
+(transduce (comp cat print-stuff (take 3)) conj [[1 2] [3 4] [5 6]])
+
+;; RESULT: whenever you are outputing multiple values from transducer
+;; you must take into account that any of those values might be "reduced"
+
+
+
