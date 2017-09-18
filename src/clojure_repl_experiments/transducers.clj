@@ -118,6 +118,7 @@
                (-filtering odd?)
                (-mapping char)))
 
+
 (transduce xform string-rf "Hello World")
 
 ;; One cool thing that we can do with this stuff is to use transient vector!
@@ -235,3 +236,73 @@
 
 
 
+;;; Tim Baldridge Episode 5: Stateful Transducers
+;;; `take` example
+
+;; Let's implement take which stores its state in an atom
+;; Notice that atom has to be initialized inside inner function
+;; otherwise the transducer created like this `(def take-3 (take 3))` wouldn't be reusable
+(defn take [n]
+  (fn [xf]
+    (let [left (atom n)]
+      (fn
+        ([] (xf))
+        ([result] (xf result))
+        ([result item]
+         (if (pos? @left)
+           (do
+             (swap! left dec)
+             (xf result item))
+           (reduced result)))))))
+(transduce (take 3) conj (range 5))
+;; let's make it clear that take terminates early
+;; -> following sequence throws AssertionError if anybody tries to access
+;;    anything behind the fifth element
+;; also notice that if `take 5` then error is thrown too (clojure.core/take works in this case)
+(transduce (take 3) conj (concat (range 5)
+                                 (lazy-seq (assert false))))
+
+;; Atom uses Compare-And-Swap (CAS)
+;; which basically means that CPU core running the code
+;; has to go grab Cache line, lock it so nobody else can modify item
+;; modify the cache line, and then release it
+;; It's possible that one CPU core blocks the others.
+;; This operation is quite fast, but we can do better!
+
+;; So we can use `volatile!` because we don't need CAS
+;; We're good as long as no 2 threads try to run the same transducing step
+;; concurrently - this is ensured, because transducers are single-threaded.
+;; Note, that two different threads can execute two different transducing
+;; steps safely.
+(defn take [n]
+  (fn [xf]
+    ;; notice `volatile!`
+    (let [left (volatile! n)]
+      (fn
+        ([] (xf))
+        ([result] (xf result))
+        ([result item]
+         (if (pos? @left)
+           (do
+             (vswap! left dec)
+             (xf result item))
+           (reduced result)))))))
+(transduce (take 3) conj (concat (range 5)
+                                 (lazy-seq (assert false))))
+
+
+;;; Transducers episode 6 - cat
+;;; https://www.youtube.com/watch?v=1tw5VXTmydQ
+
+;; LazySeq
+(type (sequence (map inc) [1 2 3 4]))
+
+;; example of transducer filtering some values
+;; and partitioning them
+(def xform (comp
+            (filter even?)
+            (partition-all 2)
+            (clojure.core/cat)
+            (map str)))
+
+;; usage of channels
