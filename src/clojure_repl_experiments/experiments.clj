@@ -234,3 +234,12 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
        (dec acc)))))
 
 
+
+;; Asked on Clojurians slack 19.9.2017 - #beginners
+(defmulti query-dispatcher first)
+(defmethod query-dispatcher "Select" [[_select [lhs op rhs]]]
+  (str lhs " " op " " rhs))
+
+(def q  ["Select" [
+                   "first_name" "like" "Sitges"]])
+(query-dispatcher q)
