@@ -302,7 +302,68 @@
 (def xform (comp
             (filter even?)
             (partition-all 2)
-            (clojure.core/cat)
+            #_(clojure.core/cat)
             (map str)))
 
 ;; usage of channels
+
+
+
+;;; Transducers episode 7: Core.Async integration
+;;; https://www.youtube.com/watch?v=17-o2qCERxg
+;;; Tim Baldridge (Clojure Tutorials)
+
+(require '[clojure.core.async :as async])
+
+;; every value that goes in is transformed by transducer
+;; put (>!!) locks the channel for small amount of time
+;; does its work, and unlocks
+(let [c (async/chan 1024 (map inc))]
+      (async/>!! c 42)
+      (async/<!! c))
+
+;; Transducer runs inside channel lock!
+;; - transducers have to be single-threaded
+;; - while transducer is running no other channel
+;;   can be putting into or taking from the channel
+;; => You certainly don't want to do sth. like this:
+(let [c (async/chan 1024 (map (fn [x]
+                                (Thread/sleep 1000) ; channel is locked for the full second
+                                (inc x))))]
+  (async/>!! c 42)
+  (async/<!! c))
+
+
+(let [c (async/chan 1024 (mapcat range))]
+  (async/>!! c 3)
+  [(async/<!! c)
+   (async/<!! c)
+   (async/<!! c)])
+
+;; notice that you can output multiple items from transducer
+;; even if sizer of buffer is only 1!
+(let [c (async/chan 1 (mapcat range))]
+  (async/>!! c 3)
+  ;; but watch this second put to block
+  ;; and succeed only after the three values are removed
+  (async/put! c 1 (fn [x] (println "done")))
+  [(async/<!! c)
+   (async/<!! c)
+   (async/<!! c)])
+
+
+;; you can also specify exception exception handler for your transducer
+;; Note: otherwise you should never throw exception inside your transducer
+;; because it can crash things (your repl :))
+;; If you hadn't this feature, the exception would bubble up the call stack
+;; and leave the channel locked.
+(let [c (async/chan 1
+                    (map (fn [x]
+                           (assert (odd? x))))
+                    ;; exception handler
+                    (fn [ex]
+                      (println ex)
+                      :error))]
+  (async/>!! c 2)
+  (async/<!! c))
+
