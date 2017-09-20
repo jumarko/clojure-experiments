@@ -243,3 +243,10 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (def q  ["Select" [
                    "first_name" "like" "Sitges"]])
 (query-dispatcher q)
+
+
+;;; Apache POI
+;;; https://groups.google.com/forum/#!topic/clojure/XXVTXNHWejQ
+(import 'org.apache.poi.xssf.eventusermodel.XLSX2CSV)
+(def my-excel-file "test.xlsx")
+(XLSX2CSV/main (into-array String [my-excel-file]))
