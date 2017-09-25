@@ -9,7 +9,9 @@
                  [net.java.dev.jna/jna "4.4.0"]
                  [org.flatland/useful "0.11.5"]
                  [org.apache.poi/poi-ooxml "3.17"]
-                 [org.clojure/core.async "0.3.443"]]
+                 [org.clojure/core.async "0.3.443"]
+                 [funcool/cats "2.1.0"]
+                 [buddy/buddy-hashers "1.3.0"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"
