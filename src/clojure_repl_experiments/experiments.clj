@@ -233,7 +233,7 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
        a
        (dec acc)))))
 
-
+(fibo2 11)
 
 ;; Asked on Clojurians slack 19.9.2017 - #beginners
 (defmulti query-dispatcher first)
@@ -249,4 +249,67 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 ;;; https://groups.google.com/forum/#!topic/clojure/XXVTXNHWejQ
 (import 'org.apache.poi.xssf.eventusermodel.XLSX2CSV)
 (def my-excel-file "test.xlsx")
-(XLSX2CSV/main (into-array String [my-excel-file]))
+#_(XLSX2CSV/main (into-array String [my-excel-file]))
+
+
+
+;; pomegranate dependencies to classpath with sources and javadocs
+;; see https://github.com/vise890/pocketbook/blob/master/src/pocketbook/core.clj
+(require '[cemerick.pomegranate :as pomegrante])
+;; following doesn't work, why?
+(comment 
+  (pomegrante/add-dependencies
+   '[org.apache.poi/poi-ooxml "3.17" :classifier "sources" ])
+  (pomegrante/add-dependencies
+   '[org.apache.poi/poi-ooxml "3.17" :classifier "javadoc" ]))
+
+;; with alembic it's easier?
+(comment 
+  (alembic.still/distill
+   '[org.apache.poi/poi-ooxml "3.17" :classifier "sources" ])
+  (alembic.still/distill
+   '[org.apache.poi/poi-ooxml "3.17" :classifier "javadoc" ]))
+
+
+
+;; simple example of using `defprotocol`
+(defprotocol MyAnkiProtocol
+  "Learn, understand and review."
+  (-learn [this x] "Learn x throughly.")
+  (-understand [this x] "Try to understand everything about x")
+  (-review [this x] "Review x regularly - spaced repetition"))
+
+(defrecord ClojureAnkiCard []
+  MyAnkiProtocol
+  (-learn [this x] (str "Clojure is a really nice language because of " x))
+  (-understand [this x] (str "Now I know how to use " x " in Clojure"))
+  (-review [this x] (str "I keep programming in Clojure and use " x " all the time!")))
+(let [clojure-card (->ClojureAnkiCard)
+      feature "transducers"]
+  (println
+   (-learn clojure-card feature))
+  (println
+   (-understand clojure-card feature))
+  (println
+   (-review clojure-card feature)))
+
+
+;;; Unix epoch
+;; get current unix epoch time in seconds
+(quot (System/currentTimeMillis) 1000)
+;; convert unix epoch time to date
+(def my-unix-time 1234567890)
+(java.util.Date. (* 1000 my-unix-time))
+
+
+;; how do I replace the last element of vector in Clojure?
+;; https://stackoverflow.com/questions/46352166/how-to-replace-the-last-element-in-a-vector-in-clojure
+(def my-vec [1 2 3 4 5])
+;; my solution:
+(assoc my-vec (dec (count my-vec)) 10)
+;; nicer!!!:
+(conj (pop my-vec) 10)
+
+
+;; how to take every other element in a vector?
+(take-nth 2 [1 2 3 4 5])
