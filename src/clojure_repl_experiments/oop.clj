@@ -43,3 +43,53 @@ C++ is an example of object oriented programming language."
     (send-msg :add-score 42)
     (send-msg :add-score 1)
     (send-msg :avg-score))
+
+
+
+;;; Clojure Tutorials: OOP Lesson 2 - dispatching methods
+;;; https://www.youtube.com/watch?v=e8mLbcfbl1g&t=2s
+
+;; we can rewrite our previous example using Clojure constructs
+(defprotocol Scoring
+  (add-score [this score])
+  (sum-scores [this]))
+
+(defrecord ScoreNow [scores]
+  Scoring
+  (add-score [this score]
+    (assoc this :scores (conj scores score)))
+  (sum-scores [this]
+    (apply + scores)))
+
+(-> (->ScoreNow [])
+    (add-score 42)
+    (add-score 1)
+    (sum-scores))
+
+;; we can examine protocol if we want
+Scoring
+
+
+;; let's do a little experiment defining the protocol for our previous hash map
+(defprotocol IObject
+  (send-msg [this msg args]))
+
+(def my-object
+  {:ops {:add-score (fn add-score [state score]
+                      (update-in state [:data :scores] conj score))
+         :sum-scores (fn sum-scores [state]
+                       (apply + (get-in state [:data :scores])))
+         :default (fn default [state & rest]
+                    (println "CAN'T EXECUTE"))}
+   :data {:scores []}})
+
+
+(extend-protocol IObject
+  clojure.lang.PersistentArrayMap
+  (send-msg [obj msg args]
+    (let [op (get-in obj [:ops msg]
+                     (get-in obj [:ops :default]))]
+      (apply op obj args))))
+
+(send-msg my-object :sum-sc [])
+(send-msg my-object :sum-scores [])
