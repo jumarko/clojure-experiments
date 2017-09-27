@@ -313,3 +313,14 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 ;; how to take every other element in a vector?
 (take-nth 2 [1 2 3 4 5])
+
+
+;; defrecord can implement java interface!
+(definterface MyI
+  (printx [x]))
+(defrecord MyR []
+  MyI
+  (printx [this a] (println a)))
+(.printx (->MyR) "ahoj")
+
+
