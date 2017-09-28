@@ -198,3 +198,14 @@
 ;; Since FizzBuzz is used for interviews, here is an interview question:
 ;; Given the implementation above, why is it desirable that this number be small?
 (Math/pow (/ 14.0 15) 100)
+
+(s/def ::name keyword?)
+(s/valid? (s/keys :req-un [::name]) {:name "john"})
+
+(defn f [m]
+  (:name m))
+
+(s/fdef f
+        :args (s/cat :m (s/keys :req-un [::name])))
+
+(stest/instrument)
