@@ -324,3 +324,15 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (.printx (->MyR) "ahoj")
 
 
+(defn my-fn [x y]
+  #break (println "x and y are: " x y)
+  #dbg (let [z (+ x y)]
+    (dotimes [i 10]
+      (println "some side effects: " i))
+    (println "z is: " z)))
+
+(my-fn 10 20)
+
+
+;; reading octal numbers
+(clojure.edn/read-string "050") ;=> 40
