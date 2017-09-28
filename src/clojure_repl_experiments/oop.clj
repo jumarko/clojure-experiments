@@ -164,3 +164,57 @@ C++ is an example of object oriented programming language."
 ;; Actors combines the worst aspects of OOP (mutable state)
 ;; with asynchronous programming which makes them even worse!
 
+
+
+;;; Clojure Tutorials - OOP Lesson 4
+;;; https://www.youtube.com/watch?v=fThssYBkkqI&t=77s
+;;; Looking at how dispatch works in OO languages
+
+;; People often look at following code defining an interface
+;; and say: "Ah, this is OOP!"
+;; But it really isn't - there's nothing here that specifies
+;; where these functions are stored
+(defprotocol IScores
+  (add-score [this score])
+  (sum-scores [this]))
+IScores
+;==>
+#_{:on clojure_repl_experiments.oop.IScores,
+ :on-interface clojure_repl_experiments.oop.IScores,
+ :sigs {:add-score {:name add-score, :arglists ([this score]), :doc nil},
+        :sum-scores {:name sum-scores, :arglists ([this]), :doc nil}},
+ :var #'clojure-repl-experiments.oop/IScores,
+ :method-map {:sum-scores :sum-scores, :add-score :add-score},
+ :method-builders {#'clojure-repl-experiments.oop/add-score #function[clojure-repl-experiments.oop/eval95042/fn--95043], #'clojure-repl-experiments.oop/sum-scores #function[clojure-repl-experiments.oop/eval95042/fn--95056]}}
+
+;; Those functions are not members of objects that define their implementation
+;; These are just polymorphic functions
+;; So we can do something like this:
+(let [impls (atom {})]
+  (defn add-score [this val]
+    ((@impls (type this)) this val))
+  (defn extend-add-score [tp f]
+    (swap! impls assoc tp f)))
+
+(extend-add-score (type [])
+                  conj)
+(add-score [] 1)
+
+(extend-add-score (type {})
+                  (fn [acc i] (assoc acc i i)))
+(add-score {} 1)
+
+;; And protocols are pretty similar => they are not OOP
+;; they are just polymorphic functions that dispatch on the type
+;; of the first argument
+
+;; we can do the same thing with multimethods:
+(defmulti add-scores (fn [acc _] (type acc)) )
+(defmethod add-scores (type [])
+  [acc val]
+  (conj acc val))
+(add-scores [] 1)
+
+;; Because functions are stored in protocol itself, they are namespaced.
+;; => you can extend existing types to protocol
+;; => you can have multiple fns with the same name implemented by one object
