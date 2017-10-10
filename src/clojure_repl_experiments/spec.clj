@@ -208,4 +208,15 @@
 (s/fdef f
         :args (s/cat :m (s/keys :req-un [::name])))
 
-(stest/instrument)
+#_(stest/instrument)
+
+
+;;; spec on multi-arity functions
+(defn zero-or-one
+  ([] (zero-or-one 1))
+  ([x] (inc x)))
+(s/fdef zero-or-one :args (s/? pos-int?))
+#_(zero-or-one -10)
+;; if you want better doc’ed conformed args, could also do:
+(s/fdef zero-or-one :args (s/cat :x (s/? pos-int?)))
+#_(zero-or-one -10)
