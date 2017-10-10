@@ -1,7 +1,8 @@
 (ns clojure-repl-experiments.experiments
   "Single namespace for all my REPL experiments.
   This might be split up later if I find it useful."
-  (:require [seesaw.core :as see]))
+  (:require [criterium.core :as c]
+            [seesaw.core :as see]))
 
 ;;; Seesaw tutorial: https://gist.github.com/1441520
 ;;; check also https://github.com/daveray/seesaw
@@ -336,3 +337,16 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 ;; reading octal numbers
 (clojure.edn/read-string "050") ;=> 40
+
+
+;; transient data structures
+#_(c/quick-bench
+ (reduce conj [] (range 1e6)))
+;;=> Execution time means: 103 ms
+
+#_(c/quick-bench
+ (let [v (reduce conj! (transient []) (range 1e6))]
+    (persistent! v)))
+;;=> Execution time means: 73 ms
+
+
