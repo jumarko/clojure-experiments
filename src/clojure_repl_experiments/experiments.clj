@@ -1,7 +1,8 @@
 (ns clojure-repl-experiments.experiments
   "Single namespace for all my REPL experiments.
   This might be split up later if I find it useful."
-  (:require [criterium.core :as c]
+  (:require [clojure.set :as set]
+            [criterium.core :as c]
             [seesaw.core :as see]))
 
 ;;; Seesaw tutorial: https://gist.github.com/1441520
@@ -350,3 +351,44 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 ;;=> Execution time means: 73 ms
 
 
+;;; Set operations
+(set/map-invert {:a 1 :b 2 :c 3})
+;;=> {1 :a, 2 :b, 3 :c}
+
+(set/rename-keys {:a 1 :b 2 :c 3} {:a :aaa :b :bbb :c :ccc})
+;;=> {:aaa 1, :bbb 2, :ccc 3}
+
+;; You can work around key collisions by using an array-map to control
+;; the order of the renamings.
+(set/rename-keys  {:a 1 :b 2 :c 3}  (array-map :a :tmp :b :a :tmp :b))
+;;=> {:b 1, :a 2, :c 3}
+
+;; join - without common keys it's just a cartesian product
+(set/join #{{:a 1} {:a 2}} #{{:b 1} {:b 2}})
+;;=> #{{:a 1, :b 2} {:a 2, :b 1} {:a 1, :b 1} {:a 2, :b 2}}
+
+;; with common keys it's an inner join
+(def animals #{{:name "betsy" :owner "brian" :kind "cow"}
+               {:name "jake"  :owner "brian" :kind "horse"}
+               {:name "josie" :owner "dawn"  :kind "cow"}
+               {:name "test"}})
+(def personalities #{{:kind "cow" :personality "stoic"}
+                            {:kind "horse" :personality "skittish"}})
+(set/join animals personalities)
+;;=> #{{:kind "horse", :personality "skittish", :name "jake", :owner "brian"}
+;;     {:kind "cow", :personality "stoic", :name "betsy", :owner "brian"}
+;;     {:kind "cow", :personality "stoic", :name "josie", :owner "dawn"}}
+
+;; select elements in set for which predicate is true
+;; like `filter` but returns set
+(set/select odd? #{1 2 3})
+
+;; `set/project` can be used to strip unwanted elements
+(set/project #{{:name "betsy" :id 33}
+               {:name "panda" :id 34}}
+             [:name])
+;; it's kinda similar to `(map select-keys ...)` but `project` always returns set
+;; and it's shorter
+(map #(select-keys % [:name])
+     #{{:name "betsy" :id 33}
+       {:name "panda" :id 34}})
