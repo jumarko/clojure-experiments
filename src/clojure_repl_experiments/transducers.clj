@@ -367,3 +367,5 @@
   (async/>!! c 2)
   (async/<!! c))
 
+
+(transduce (map :someCount) + [{:someCount 10} {:someCount 20}])
