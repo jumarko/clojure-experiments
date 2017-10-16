@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-beta2"]
                  [org.clojure/clojure "1.9.0-beta2" :classifier "sources"]
+                 [org.clojure/test.check "0.10.0-alpha2"]
                  [org.apache.pdfbox/pdfbox "2.0.7"]
                  [net.java.dev.jna/jna "4.4.0"]
                  [org.flatland/useful "0.11.5"]
