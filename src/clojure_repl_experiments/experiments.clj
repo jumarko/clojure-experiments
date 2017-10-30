@@ -392,3 +392,67 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (map #(select-keys % [:name])
      #{{:name "betsy" :id 33}
        {:name "panda" :id 34}})
+
+
+;;; reader literals
+(read-string "#inst \"2017-01-01\"")
+
+
+;;; How to forward protocol methods to existing type?
+;; https://stackoverflow.com/questions/46780207/how-to-forward-protocol-methods-to-existing-type
+(defprotocol Cost
+  (cost [this price-list]))
+
+(defrecord Car [name speed]
+  Cost
+  (cost [this price-list] (price-list (:name this))))
+
+(def my-car (->Car "bmw" 200))
+(def price-list {"bmw" 100000})
+
+(cost my-car price-list)
+;;=> 100000
+
+(-> my-car
+    (assoc :color "blue")
+    (cost price-list))
+;;=> 100000
+
+
+;; reading custom 
+(defrecord Car [year model price])
+
+(defn read-car [car-map]
+  (map->Car car-map))
+
+(clojure.edn/read-string
+ {:readers {'car read-car}}
+ "#car{:year 2017, :model \"Aston Martin V8 Vantage\", :price 3000000}")
+
+(map nil [1 2 3])
+
+
+
+;;; inspector-jay: https://github.com/timmolderez/inspector-jay
+
+#_(inspector-jay.core/inspect java.util.AbstractQueue)
+
+
+;;; How to install UncaughtExceptionHandler for futures?
+(Thread/setDefaultUncaughtExceptionHandler
+ (reify Thread$UncaughtExceptionHandler
+   (uncaughtException [_ thread ex]
+     (println ))))
+;; unforunatelly, uncaught handler doesn't apply to futures
+(future (do (Thread/sleep 20) (/ 1 0)))
+
+(defmacro logging-future [& body]
+  `(future
+     (try ~@body
+          (catch Exception e#
+            (println e#)
+            (throw e#)))))
+
+(logging-future (Thread/sleep 20) (/ 1 0))
+
+
