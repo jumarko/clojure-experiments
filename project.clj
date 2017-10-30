@@ -14,7 +14,11 @@
                  [funcool/cats "2.1.0"]
                  [buddy/buddy-hashers "1.3.0"]
                  [org.julienxx/clj-slack "0.5.5"]
-                 [hswick/jutsu "0.1.1"]]
+                 [hswick/jutsu "0.1.1"]
+                 [clojure-complete "0.2.4"]
+                 [com.rpl/specter "1.0.4"]
+                 [quil "2.6.0"]
+                 [inspector-jay "0.3"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"
