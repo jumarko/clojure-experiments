@@ -446,6 +446,7 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 ;; unforunatelly, uncaught handler doesn't apply to futures
 (future (do (Thread/sleep 20) (/ 1 0)))
 
+
 (defmacro logging-future [& body]
   `(future
      (try ~@body
@@ -455,4 +456,21 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 (logging-future (Thread/sleep 20) (/ 1 0))
 
+
+;;; case
+
+;; petr.mensik
+(def all-statuses {:won {:a 1}
+                   :lost-project {:a 2}
+                   :lost-invoice {:a 3}})
+(def my-status {:a 1})
+#_(let [contact-status (case my-status
+                       (:won all-statuses) (println "won")
+                       (:lost-project all-statuses) (println "lost project")
+                       (:lost-invoice all-statuses) (println "lost invoice")
+                       nil)]
+  (println contact-status))
+
+;; clojure pills screencast
+(case 1 (inc 0) "1" (dec 1) "0" :default)
 
