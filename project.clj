@@ -18,7 +18,12 @@
                  [clojure-complete "0.2.4"]
                  [com.rpl/specter "1.0.4"]
                  [quil "2.6.0"]
-                 [inspector-jay "0.3"]]
+                 [inspector-jay "0.3"]
+                 [org.clojure/tools.reader "1.1.0"]
+                 [net.cgrand/sjacket "0.1.1"]
+                 [org.clojure/tools.analyzer.jvm "0.7.1"]
+                 [jonase/eastwood "0.2.5"]
+                 [ns-graph "0.1.2"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"
