@@ -23,7 +23,8 @@
                  [net.cgrand/sjacket "0.1.1"]
                  [org.clojure/tools.analyzer.jvm "0.7.1"]
                  [jonase/eastwood "0.2.5"]
-                 [ns-graph "0.1.2"]]
+                 [ns-graph "0.1.2"]
+                 [com.climate/claypoole "1.1.4"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"

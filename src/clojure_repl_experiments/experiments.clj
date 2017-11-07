@@ -438,25 +438,6 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 #_(inspector-jay.core/inspect java.util.AbstractQueue)
 
 
-;;; How to install UncaughtExceptionHandler for futures?
-(Thread/setDefaultUncaughtExceptionHandler
- (reify Thread$UncaughtExceptionHandler
-   (uncaughtException [_ thread ex]
-     (println ))))
-;; unforunatelly, uncaught handler doesn't apply to futures
-(future (do (Thread/sleep 20) (/ 1 0)))
-
-
-(defmacro logging-future [& body]
-  `(future
-     (try ~@body
-          (catch Exception e#
-            (println e#)
-            (throw e#)))))
-
-(logging-future (Thread/sleep 20) (/ 1 0))
-
-
 ;;; case
 
 ;; petr.mensik
@@ -473,4 +454,71 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 ;; clojure pills screencast
 (case 1 (inc 0) "1" (dec 1) "0" :default)
+
+
+;;; clojure test output diffing
+(def expected {:url "http://example.com",
+                :accept "application/json",
+                :conn-timeout 1000,
+                :proxy-host "proxy.example.com",
+                :proxy-port 3128,
+                :proxy-user "user",
+                :proxy-pass "password"})
+(def actual {:url "http://example.com",
+               :accept "application/json",
+               :conn-timeout 1000,
+               :proxy-host "proxy.example.com",
+               :proxy-port 3128,
+               :proxy-pass "password"})
+(clojure.data/diff expected actual)
+
+
+
+;;; https://codereview.stackexchange.com/questions/179678/binary-search-algorithm-in-clojure
+(defn log-search
+  [elements, elem-to-find]
+  (loop [left 0
+         right (- (count elements) 1)]
+    (when (<= left right)
+      (def m (int (Math/floor (/ (+ left right) 2))))
+      (def actual (nth elements m))
+      (cond
+        (= actual elem-to-find) m
+        (< actual elem-to-find) (recur (+ m 1) right)
+        (> actual elem-to-find) (recur left (- m 1))))))
+
+(defn log-search
+  [elements elem-to-find]
+  (loop [left 0
+         right (dec (count elements))]
+    (when (<= left right)
+      (let [m (int (Math/floor (/ (+ left right) 2)))
+            actual (nth elements m)]
+        (cond
+          (= actual elem-to-find) m
+          (< actual elem-to-find) (recur (+ m 1) right)
+          (> actual elem-to-find) (recur left (- m 1)))))))
+
+(log-search (range 10) 10)
+
+
+
+;;; performance of `re-pattern` vs. literal pattern syntax #
+;;; see https://stackoverflow.com/questions/47126035/clojure-hash-vs-re-pattern
+
+#_(c/quick-bench (type #"12(ab)*34"))
+
+#_(c/quick-bench (type (re-pattern "12(ab)*34")))
+
+#_(let [re #"12(ab)*34"
+      s "aanbciasdfsidufuo12ab34xcnm,xcvnm,xncv,m"]
+  (c/quick-bench 
+   (re-find re s)))
+
+#_(let [re (re-pattern "12(ab)*34")
+      s "aanbciasdfsidufuo12ab34xcnm,xcvnm,xncv,m"]
+  (c/quick-bench 
+   (re-find re s)))
+
+
 
