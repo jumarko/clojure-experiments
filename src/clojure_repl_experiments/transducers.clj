@@ -1,4 +1,5 @@
-(ns clojure-repl-experiments.transducers)
+(ns clojure-repl-experiments.transducers
+  (:require [clojure.core.async :refer [>! <! <!!] :as async]))
 
 ;;; Tim Baldridge - Transducers - Episode 1 - Introduction to Transducers
 ;;; https://www.youtube.com/watch?v=WkHdqg_DBBs
@@ -313,8 +314,6 @@
 ;;; https://www.youtube.com/watch?v=17-o2qCERxg
 ;;; Tim Baldridge (Clojure Tutorials)
 
-(require '[clojure.core.async :as async])
-
 ;; every value that goes in is transformed by transducer
 ;; put (>!!) locks the channel for small amount of time
 ;; does its work, and unlocks
@@ -369,3 +368,181 @@
 
 
 (transduce (map :someCount) + [{:someCount 10} {:someCount 20}])
+
+
+
+
+;;; Transducers from the ground up - part 2: https://labs.uswitch.com/transducers-from-the-ground-up-the-practice/
+
+;; Composability
+(def inc-and-filter (comp (map inc) (filter odd?)))
+(def special+ (inc-and-filter +))
+(special+ 1 1)
+(special+ 1 2)
+
+;; reduce - compare two versions
+(reduce special+ 0 (range 10))
+(reduce + 0 (filter odd? (map inc (range 10))))
+
+;; transduce makes that explicit
+(transduce inc-and-filter + (range 10))
+
+;; a famous "gist" created by Rich Hickey (the inventor of Clojure) to show off the available transducers in the standard library.
+
+(def x-form
+  (comp
+   (map inc)
+   (filter even?)
+   (dedupe)
+   (mapcat range)
+   (partition-all 3)
+   (partition-by #(< (apply + %) 7))
+   (mapcat flatten)
+   (random-sample 1.0)
+   (take-nth 1)
+   (keep #(when (odd? %) (* % %)))
+   (keep-indexed #(when (even? %1) (* %1 %2)))
+   (replace {2 "two" 6 "six" 18 "eighteen"})
+   (take 11)
+   (take-while #(not= 300 %))
+   (drop 1)
+   (drop-while string?)
+   (remove string?)))
+
+(transduce x-form + (vec (interleave (range 18) (range 20))))
+
+;; composition can be applied on top of more composition, allowing programmers to isolate and name concepts consistently.
+(def x-clean
+  (comp
+   (map inc)
+   (filter even?)
+   (dedupe)
+   (mapcat range)))
+
+(def x-filter
+  (comp
+   (partition-all 3)
+   (partition-by #(< (apply + %) 7))
+   (mapcat flatten)
+   (random-sample 1.0)))
+
+(def x-additional-info
+  (comp
+   (take-nth 1)
+   (keep #(when (odd? %) (* % %)))
+   (keep-indexed #(when (even? %1) (* %1 %2)))
+   (replace {2 "two" 6 "six" 18 "eighteen"})))
+
+(def x-calculate
+  (comp
+   (take 11)
+   (take-while #(not= 300 %))
+   (drop 1)
+   (drop-while string?)
+   (remove string?)))
+
+(def x-prepare
+  (comp
+   x-clean
+   x-filter))
+
+(def x-process
+  (comp
+   x-additional-info
+   x-calculate))
+
+(def x-form
+  (comp
+   x-prepare
+   x-process))
+
+
+;; we can reuse transducers with other transports - e.g. core.async:
+(def xform (comp (filter odd?) (map inc)))
+
+(defn process [items]
+  (let [out (async/chan 1 xform)
+        in (async/to-chan items)]
+    (async/go-loop []
+      (if-some [item (<! in)]
+        (do
+          (>! out item)
+          (recur))
+        (async/close! out)))
+    (<!! (async/reduce conj [] out))))
+
+(process (range 10))
+
+
+;; let's use pipeline
+(defn process [items]
+  (let [out (async/chan (async/buffer 100))]
+    (async/pipeline 4 out xform (async/to-chan items))
+    (<!! (async/reduce conj [] out))))
+
+(process (range 10))
+
+;; Logging transducers
+(defn log [& [idx]]
+  (fn [rf]
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result el]
+       (let [n-step (if idx (str "Step: " idx ". ") "")]
+         (println (format "%sResult: %s, Item: %s" n-step result el)))
+       (rf result el)))))
+
+(sequence (log) [:a :b :c])
+
+(def ^:dynamic *dbg?* false)
+
+(defn comp* [& xforms]
+  (apply comp
+         (if *dbg?*
+           (->>
+            (range)
+            (map log)
+            (interleave xforms))
+           xforms)))
+
+(transduce
+ (comp*
+  (filter odd?)
+  (map inc))
+ +
+ (range 5))
+;; 6
+
+(binding [*dbg?* true]
+  (transduce
+   (comp*
+    (filter odd?)
+    (map inc))
+   +
+   (range 5)))
+
+
+;; sequence and eduction can be used to apply a transducer chain lazily
+(def cnt1 (atom 0))
+(let [res (eduction (map #(do (swap! cnt1 inc) %)) (range 1000))]
+  (doall (take 10 res))
+  @cnt1)
+
+(def cnt2 (atom 0))
+(let [res (sequence (map #(do (swap! cnt2 inc) %)) (range 1000))]
+  (doall (take 10 res))
+  @cnt2)
+
+;; eduction starts a new loop for every sequence operation
+(def cnt1 (atom 0))
+(let [res (eduction (map #(do (swap! cnt1 inc) %)) (range 10))]
+  (conj (rest res) (first res))
+  @cnt1)
+;; 20
+
+(def cnt2 (atom 0))
+(let [res (sequence (map #(do (swap! cnt2 inc) %)) (range 10))]
+  (conj (rest res) (first res)) ; (2)
+  @cnt2)
+;; 10
