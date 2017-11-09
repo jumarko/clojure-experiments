@@ -237,6 +237,8 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 (fibo2 11)
 
+#_(time (fibo2 100000))
+
 ;; Asked on Clojurians slack 19.9.2017 - #beginners
 (defmulti query-dispatcher first)
 (defmethod query-dispatcher "Select" [[_select [lhs op rhs]]]
@@ -521,4 +523,39 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
    (re-find re s)))
 
 
+(defn break [x]
+  (let [y (* x x)]
+    (doseq [n (range y)]
+      (let [msg (str "Hello " n)]
+        #break (println msg)))))
 
+;; just call the function and press "n"
+#_(break 3)
+
+
+;;; How to print all Clojure special forms
+(prn (keys (clojure.lang.Compiler/specials)))
+
+
+
+;;; pmap question from slack
+;;; For my understanding pmap goal is to run a function in parallel over a collection, limiting parallelism.
+;;; From pmap code I underatand that the desired parallelism level is 2+num-of-cpus
+;;; In practice i see a different behaviour:
+;;; This shows all 20 delays running in parallel
+;;; (I have 4 CPUs and running with clojure 1.8)
+;; alternative fibo implementation using loop-recur
+
+(defn- f1 [delay-num]
+  (Thread/sleep (+ 100 (rand-int 1000)))
+  (println (java.util.Date.) "delay #" delay-num "started")
+  (Thread/sleep (* 1000 5))
+  (println (java.util.Date.) "delay #" delay-num "finished")
+  delay-num)
+
+(defn run []
+  (let [delays (range 41)
+        results (pmap f1 delays)]
+    (println "num of cpus = " (.. Runtime getRuntime availableProcessors))
+    (println "total is" (reduce + results))))
+#_(run)
