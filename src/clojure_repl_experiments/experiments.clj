@@ -559,3 +559,72 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
     (println "num of cpus = " (.. Runtime getRuntime availableProcessors))
     (println "total is" (reduce + results))))
 #_(run)
+
+
+
+;;; https://stackoverflow.com/questions/47291914/finding-max-value-using-reduce
+;;; need to transform the table to a hash-map that maps products to the city that has the highest sale
+(def table [
+            {:product "Pencil"
+             :city "Toronto"
+             :year "2010"
+             :sales "2653.00"}
+            {:product "Pencil"
+             :city "Oshawa"
+             :year "2010"
+             :sales "525.00"}
+            {:product "Bread"
+             :city "Toronto"
+             :year "2010"
+             :sales "136,264.00"}
+            {:product "Bread"
+             :city "Oshawa"
+             :year "nil"
+             :sales "242,634.00"}
+            {:product "Bread"
+             :city "Ottawa"
+             :year "2011"
+             :sales "426,164.00"}])
+
+(defn process [table]
+  (let [parseDouble #(Double/parseDouble (clojure.string/replace % #"," ""))]
+    (->> table
+         (group-by :product)
+         (map (comp (juxt :product :city)
+                    (partial apply max-key (comp parseDouble :sales))
+                    val))
+         (into {}))))
+
+(process table);=> {"Pencil" "Toronto", "Bread" "Ottawa"}
+
+
+
+;;; Slack question about debugging;
+;;; andras.liter hi guys. I'm using Cursive to develop & debug our Clojure apps,
+;;; often experimenting things with the REPL. I wonder if there is an efficient way to create datastructures in the REPL
+;;; sourced from a Debug breakpoint - e.g. if I have a complex datastructure,
+;;; which I'd like to work with in the REPL as well (to test functions, debug etc...),
+;;; how can I have a var referencing it the easiest way in the REPL?
+;;; Of course I dont want to type the whole thing in the REPL, but would like to get the data
+;;; from an app under- debugging (say I have a breakpoint and the object is there)?
+
+;; let's say I want to get `m`
+(defn debug-me [x y]
+  (let [z (* x y)
+        w (Math/pow z x)
+        m {:x x
+           :y y
+           :wz {:z z :w w}}]
+    (def d-m m)
+    (keys m)))
+(debug-me 4 5)
+d-m
+
+
+;;; How to filter a sequence and retain evaluated pred values?
+;;; https://stackoverflow.com/questions/47325664/how-to-filter-a-sequence-and-retain-evaluated-pred-values
+;;; (keep #(some->> % self-pred (vector %)) data)
+(keep #(some->> % rseq (vector %)) [[1 2] [] [3 4]])
+;;=> ([[1 2] (2 1)] [[3 4] (4 3)])
+
+
