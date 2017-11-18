@@ -377,3 +377,25 @@
      :changes changes}))
 
 #_(gens/generate gen-directory-with-changes 3)
+
+
+;;;is there a way in spec to say
+;;; ::x is a vector of numbers
+;;; ::y is a vector of numbers
+;;; ::s is a string
+;;; and the three have the same length (thisxis regarding to an s/keys) 
+(s/def ::text-x (s/coll-of number? :kind vector?))
+(s/def ::text-y (s/coll-of number? :kind vector?))
+(s/def ::text-str string?)
+(s/def ::svg-text (s/keys :req [::text-x ::text-y ::text-str ]))
+;; my response:
+(defn- vals-same-length?
+  [m]
+  (->> (vals m)
+       (map count)
+       (apply =)))
+(s/def ::svg-text-same-length (s/and (s/keys :req [::text-x ::text-y ::text-str ])
+                                     vals-same-length?))
+(s/valid? ::svg-text-same-length {::text-x   [1 2 3]
+                                  ::text-y   [10 20 30]
+                                  ::text-str "abc"})
