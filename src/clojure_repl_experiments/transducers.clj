@@ -1,5 +1,7 @@
 (ns clojure-repl-experiments.transducers
-  (:require [clojure.core.async :refer [>! <! <!!] :as async]))
+  (:require [clojure.core.async :refer [>! <! <!!] :as async]
+            [clojure.string :as str]
+            [clojure.java.io :as io]))
 
 ;;; Tim Baldridge - Transducers - Episode 1 - Introduction to Transducers
 ;;; https://www.youtube.com/watch?v=WkHdqg_DBBs
@@ -546,3 +548,69 @@
   (conj (rest res) (first res)) ; (2)
   @cnt2)
 ;; 10
+
+
+;;; https://stackoverflow.com/questions/47333668/split-lines-in-clojure-while-reading-from-file
+(defn lines-reducible [^java.io.BufferedReader rdr]
+  (reify clojure.lang.IReduceInit
+    (reduce [this f init]
+      (try
+        (loop [state init]
+          (if (reduced? state)
+            @state
+            (if-let [line (.readLine rdr)]
+              (recur (f state line))
+              state)))
+        (finally
+          (.close rdr))))))
+
+(comment 
+  ;; count the length of the string
+  (into []
+        (comp
+         (mapcat #(str/split % #";"))
+         (map count))
+        (lines-reducible (io/reader "/tmp/work.txt")))
+  ;; also possible with line-seq
+  (into []
+        (comp
+         (mapcat #(str/split % #";"))
+         (map count))
+        (line-seq (io/reader "/tmp/work.txt")))
+
+  ;; Sum the length of all 'splits'
+  (transduce
+   (comp
+    (mapcat #(str/split % #";"))
+    (map count))
+   +
+   (lines-reducible (io/reader "/tmp/work.txt")))
+  ;; also possible with line-seq
+  (transduce
+   (comp
+    (mapcat #(str/split % #";"))
+    (map count))
+   +
+   (line-seq (io/reader "/tmp/work.txt")))
+
+  ;; Sum the length of all words until we find a word that is longer than 5
+  (transduce
+   (comp
+    (mapcat #(str/split % #";"))
+    (map count))
+   (fn
+     ([] 0)
+     ([sum] sum)
+     ([sum l]
+      (if (> l 5)
+        (reduced sum)
+        (+ sum l))))
+   (lines-reducible (io/reader "/tmp/work.txt")))
+  ;; or with take while
+  (transduce
+   (comp
+    (mapcat #(str/split % #";"))
+    (map count)
+    (take-while #(> 5 %)))
+   +
+   (lines-reducible (io/reader "/tmp/work.txt"))))
