@@ -628,3 +628,44 @@ d-m
 ;;=> ([[1 2] (2 1)] [[3 4] (4 3)])
 
 
+
+;;; quick debugging of threadinug macro
+(def spy #(do (prn %) %))
+(defn quick-spy [coll]
+  (->> coll
+       (map inc)
+       spy
+       (filter odd?)
+       spy
+       (map identity)))
+(quick-spy (range 10))
+
+
+;;; cmal Hi, how to get the min value's index of a vector? shall i use `(let [v [1 2 3 4]] (.indexOf v (apply min v)))`? (edited)
+;;; bronsa you can:
+(let [v [4 1 2 3]]
+  (apply min-key v (range (count v))))
+
+
+;;; stackoverflow: https://stackoverflow.com/questions/47424089/clojure-filter-sequence-of-maps-for-a-value-in-a-list
+;;; Trying to filter a sequence of maps that have a value for a key in a list of values.
+(remove #(#{"0000" "2222"} (:x %))
+        [{ :y "y" :x "0000"} {:y "y" :z "z" :x "1111"} {:y "y" :z "z" :x "2222"}])
+
+
+;; I want to return this
+;; => [{:y "y" :z "z" :x "1111"}]
+
+
+;;; https://dev.clojure.org/jira/browse/CLJ-2275
+;;; case fails for vectors with negative numbers
+(case -1 -1 true false)
+;;=> true
+(case [-1] [-1] true false)
+;;=> true
+(case (int -1) -1 true false)
+;;=> true
+(case [(int 1)] [1] true false)
+;;=> true
+(case [(int -1)] [-1] true false)
+;;=> false
