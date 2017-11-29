@@ -24,7 +24,12 @@
                  [org.clojure/tools.analyzer.jvm "0.7.1"]
                  [jonase/eastwood "0.2.5"]
                  [ns-graph "0.1.2"]
-                 [com.climate/claypoole "1.1.4"]]
+                 [com.climate/claypoole "1.1.4"]
+                 [etaoin "0.1.9"]
+                 ;; Java Object Layout tool - see `jdk` namespace
+                 [org.openjdk.jol/jol-core "0.9"]
+                 [org.clojure/java.jmx "0.3.4"]
+                 [me.raynes/conch "0.8.0"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"
