@@ -640,6 +640,16 @@ d-m
        (map identity)))
 (quick-spy (range 10))
 
+;; with debux: https://github.com/philoskim/debux
+;; don't forget to require `debux.core/dbg` first (use Alfred's snippet `debux`)
+#_(defn quick-debux [coll]
+  ;; try also `dbgn`
+  (dbg (->> coll
+            (map inc)
+            (filter odd?)
+            (map identity))))
+(quick-debux (range 10))
+
 
 ;;; cmal Hi, how to get the min value's index of a vector? shall i use `(let [v [1 2 3 4]] (.indexOf v (apply min v)))`? (edited)
 ;;; bronsa you can:
@@ -669,3 +679,15 @@ d-m
 ;;=> true
 (case [(int -1)] [-1] true false)
 ;;=> false
+
+
+
+;;; bronsa
+;; use `replace`
+(def myv [:a :c :b])
+(def mym {:a :anew})
+(replace mym myv)
+;; user `reduce-kv` and `update`
+(def a {:a 1 :b 2})
+(def b {:a inc})
+(reduce-kv update a b)
