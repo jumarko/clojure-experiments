@@ -648,7 +648,7 @@ d-m
             (map inc)
             (filter odd?)
             (map identity))))
-(quick-debux (range 10))
+#_(quick-debux (range 10))
 
 
 ;;; cmal Hi, how to get the min value's index of a vector? shall i use `(let [v [1 2 3 4]] (.indexOf v (apply min v)))`? (edited)
@@ -691,3 +691,35 @@ d-m
 (def a {:a 1 :b 2})
 (def b {:a inc})
 (reduce-kv update a b)
+
+
+;;; interesting examples from Stuart Sierra's talk
+;;; "Learning Clojure: Next Steps": https://www.youtube.com/watch?v=pbodL96HM28
+
+;; printer & reader - simple serialization protocol
+(defn serialize [x]
+  (binding [*print-dup* true]
+    (pr-str x)))
+
+(defn deserialize [string]
+  (read-string string))
+
+(deserialize (serialize {:a 1 :bv [1 2 #{:a :b :c}]}))
+
+;; #=() trick in clojure reader to eval code
+(read-string "[a b #=(* 3 4)]")
+;;=> [a b 12]
+
+;; set *read-eval* to false if you don't trust the source:
+#_(binding [*read-eval* false]
+  (read-string "#=(java.lang.System/exit 0)"))
+
+;; read from resources with PushbackReader 
+(with-open [r (java.io.PushbackReader.
+               (clojure.java.io/reader
+                (clojure.java.io/resource "clojure/core.clj")))]
+  [(read r)
+   (read r)
+   (read r)
+   (read r)
+   (read r)])
