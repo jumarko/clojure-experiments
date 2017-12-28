@@ -29,7 +29,8 @@
                  ;; Java Object Layout tool - see `jdk` namespace
                  [org.openjdk.jol/jol-core "0.9"]
                  [org.clojure/java.jmx "0.3.4"]
-                 [me.raynes/conch "0.8.0"]]
+                 [me.raynes/conch "0.8.0"]
+                 [org.clojure/core.cache "0.6.5"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"
