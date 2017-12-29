@@ -47,3 +47,27 @@
 ;;=> 8,213 ms
 
 
+;;; How to execute some Clojure futures in a single thread?
+;;; https://stackoverflow.com/questions/47998199/how-to-execute-some-clojure-futures-in-a-single-thread
+(defn task-1 []
+  (println "task 1...")
+  (Thread/sleep 1000))
+(defn task-2 []
+  (println "tak 2...")
+  (Thread/sleep 2000))
+(defn task-3 []
+  (println "task 3...")
+  (Thread/sleep 3000))
+(defn start-async-calc []
+  (let [f1 (promise)
+        f2 (promise)
+        f3 (promise)]
+    (future
+      (deliver f1 (task-1))
+      (deliver f2 (task-2))
+      (deliver f3 (task-3))
+      (println "DONE"))
+    {:task1 f1
+     :task2 f2
+     :task3 f3}))
+#_(start-async-calc)
