@@ -723,3 +723,24 @@ d-m
    (read r)
    (read r)
    (read r)])
+
+
+;;; Clojure / Clojurescript: group-by a map on multiple values:
+;;; https://stackoverflow.com/questions/48010316/clojure-clojurescript-group-by-a-map-on-multiple-values
+(def tools 
+  [{:name "A",
+    :config
+    {:accepts ["id"],
+     :classes ["X"]}}
+   {:name "B",
+    :config
+    {:accepts ["id"],
+     :classes ["X", "Y"]
+     }}])
+(apply merge-with into {}
+       (for [tool tools
+             class (get-in tool [:config :classes])]
+         {class [tool]}))
+;;=> {"X" [{:name "A", :config {:accepts ["id"], :classes ["X"]}}
+;;         {:name "B", :config {:accepts ["id"], :classes ["X" "Y"]}}],
+;;    "Y" [{:name "B", :config {:accepts ["id"], :classes ["X" "Y"]}}]}
