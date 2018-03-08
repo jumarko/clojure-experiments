@@ -51,7 +51,8 @@
   [players winner]
   (get-in players [winner :name]))
 
-(defn game-is-on
+;; CR: end name with `?` for predicate
+(defn game-is-on?
   "Determine if the game is still on by
   checking that both scores are < 3"
   [players]
@@ -68,6 +69,52 @@
                :choices []
                :name computer-name}}))
 
+;; CR: recursiong logic has been removed from this function and it is _only_ about handling
+;; single round now.
+;; Also notice that input/output related code has been moved to the wrapper `handle-round` function.
+(defn play-round
+  "The core game logic"
+  [players choices user-choice]
+  (let [computer-choice (get-random-choice choices)
+        round-winner (get-round-winner user-choice computer-choice)
+        updated-players (-> players
+                            (update-player-choice :user user-choice)
+                            (update-player-choice :computer computer-choice)
+                            (update-player-scores round-winner))]
+
+    {:user-choice user-choice
+     :computer-choice computer-choice
+     :round-winner round-winner
+     :updated-players updated-players}))
+
+;; CR: move reporting logic to separate function
+;; Moreover, `display-round-intro` has been moved here since that's actually the report of the result,
+;; not some initial stuff.
+(defn report-round-result [choices {:keys [players round-winner user-choice computer-choice]}]
+  (println (format "%s vs %s" (get choices user-choice) (get choices computer-choice)))
+  (if (nil? round-winner)
+    (println "Draw")
+    (println (format "%s has won the round" (get-round-winner-name players round-winner)))))
+
+(defn display-question
+  "Display the key question - Rock, Paper, Scissors?"
+  [choices]
+  (let [question (->> choices
+                      (map #(format "%s(%s)" (second %) (-> (first %) name)))
+                      (interpose ", ")
+                      (apply str))]
+    (println (str question "?"))))
+
+(defn handle-round
+  "Runs a single round and reports the results."
+  [players choices]
+  (display-question choices)
+  (let [user-choice (keyword (get-input)) ;; CR: minor -> don't use threading since we have only 1 arg.
+        round-result (play-round players choices user-choice)]
+    (println "DEBUG " round-result)
+    (report-round-result choices round-result)
+    round-result))
+
 (defn display-scores
   "Display the scores and end the game"
   [players]
@@ -81,54 +128,34 @@
                      (if user-won? user-score comp-score)
                      (if user-won? comp-score user-score)))))
 
-(defn display-round-intro
-  "A helper function that displays i.e. Rock vs Scissors"
-  [choices user-choice computer-choice]
-  (println (format "%s vs %s" (get choices user-choice) (get choices computer-choice))))
+;; CR: name it `run-game` - more explicit that it's about recursion;
+;; also optimize for many thousand rounds (tail recursion via `loop-recur`)
+(defn run-game [{:keys [players choices]}]
+  (loop [players players
+         choices choices]
+    (let [{:keys [updated-players]} (handle-round players choices)]
+      (if (game-is-on? updated-players)
+        (recur updated-players choices)
+        updated-players))))
 
-(defn display-question
-  "Display the key question - Rock, Paper, Scissors?"
-  [choices]
-  (let [question (->> choices
-                      (map #(format "%s(%s)" (second %) (-> (first %) name)))
-                      (interpose ", ")
-                      (apply str))]
-    (println (str question "?"))))
+(defn init-game [user-name]
+  (let [choices   {:r "Rock"
+                   :p "Paper"
+                   :s "Scissors"}
+        players (generate-players user-name)]
+    {:choices choices
+     :players players}))
 
-(defn play-round
-  "The core game logic"
-  [players choices]
-  (display-question choices)
-  (let [user-choice (-> (get-input) keyword)
-        computer-choice (get-random-choice choices)
-        round-winner (get-round-winner user-choice computer-choice)
-        updated-players (-> players
-                            (update-player-choice :user user-choice)
-                            (update-player-choice :computer computer-choice)
-                            (update-player-scores round-winner))]
-
-    (display-round-intro choices user-choice computer-choice)
-    (if (nil? round-winner)
-      (println "Draw")
-      (println (format "%s has won the round" (get-round-winner-name players round-winner))))
-
-    (if (game-is-on updated-players)
-      (play-round updated-players choices)
-      (display-scores updated-players))))
-
-(defn ask-for-name
-  "Get the name from the user"
-  []
+(defn game []
+  (println "Let the games begin")
   (println "What is your name?")
   (let [user-name (get-input)
-        players   (generate-players user-name)
-        choices   {:r "Rock"
-                   :p "Paper"
-                   :s "Scissors"}]
-    (play-round players choices)))
+        game-input (init-game user-name)
+        game-result (run-game game-input)]
+    (display-scores game-result)))
 
 (defn -main
   "Start the game"
   [& args]
-  (println "Let the games begin")
-  (ask-for-name))
+  (game))
+
