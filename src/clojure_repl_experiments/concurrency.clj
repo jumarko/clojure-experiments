@@ -1,6 +1,7 @@
 (ns clojure-repl-experiments.concurrency
   "Namespace related to concurrency and parallelism features of Clojure and related libraries."
-  (:require [com.climate.claypoole :as cp]))
+  (:require [com.climate.claypoole :as cp]
+            [criterium.core :as c]))
 
 
 ;;; How to install UncaughtExceptionHandler for futures?
@@ -71,3 +72,20 @@
      :task2 f2
      :task3 f3}))
 #_(start-async-calc)
+
+
+
+;;; Executor Service
+(import (java.util.concurrent Executors ExecutorService))
+
+(def service (Executors/newFixedThreadPool 4))
+;; Notice if you don't use type hint it will run it as Runnable instead of Callable
+;; and you'll get nil as a result
+(comment
+  (def f (.submit ^ExecutorService service
+                 ^Callable (fn []
+                             (println "starting")
+                             (Thread/sleep 5000)
+                             (println "finished.")
+                             :value))))
+
