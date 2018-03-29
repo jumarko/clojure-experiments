@@ -1,9 +1,10 @@
 (ns clojure-repl-experiments.experiments
   "Single namespace for all my REPL experiments.
   This might be split up later if I find it useful."
-  (:require [clojure.set :as set]
-            [criterium.core :as c]
-            [seesaw.core :as see]))
+  (:require [clj-java-decompiler.core :refer [decompile]]
+            [clojure.set :as set]
+            [seesaw.core :as see]
+            [tupelo.core :as t]))
 
 ;;; Seesaw tutorial: https://gist.github.com/1441520
 ;;; check also https://github.com/daveray/seesaw
@@ -268,11 +269,10 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
    '[org.apache.poi/poi-ooxml "3.17" :classifier "javadoc" ]))
 
 ;; with alembic it's easier?
-(comment 
-  (alembic.still/distill
-   '[org.apache.poi/poi-ooxml "3.17" :classifier "sources" ])
-  (alembic.still/distill
-   '[org.apache.poi/poi-ooxml "3.17" :classifier "javadoc" ]))
+  ;; (alembic.still/distill
+  ;;  '[org.apache.poi/poi-ooxml "3.17" :classifier "sources" ])
+  ;; (alembic.still/distill
+  ;;  '[org.apache.poi/poi-ooxml "3.17" :classifier "javadoc" ])
 
 
 
@@ -328,14 +328,14 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (.printx (->MyR) "ahoj")
 
 
-(defn my-fn [x y]
-  #break (println "x and y are: " x y)
-  #dbg (let [z (+ x y)]
-    (dotimes [i 10]
-      (println "some side effects: " i))
-    (println "z is: " z)))
+;; (defn my-fn [x y]
+;;   #break (println "x and y are: " x y)
+;;   #dbg (let [z (+ x y)]
+;;          (dotimes [i 10]
+;;            (println "some side effects: " i))
+;;          (println "z is: " z)))
 
-(my-fn 10 20)
+#_(my-fn 10 20)
 
 
 ;; reading octal numbers
@@ -523,11 +523,11 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
    (re-find re s)))
 
 
-(defn break [x]
-  (let [y (* x x)]
-    (doseq [n (range y)]
-      (let [msg (str "Hello " n)]
-        #break (println msg)))))
+;; (defn break [x]
+;;   (let [y (* x x)]
+;;     (doseq [n (range y)]
+;;       (let [msg (str "Hello " n)]
+;;         #break (println msg)))))
 
 ;; just call the function and press "n"
 #_(break 3)
@@ -744,3 +744,105 @@ d-m
 ;;=> {"X" [{:name "A", :config {:accepts ["id"], :classes ["X"]}}
 ;;         {:name "B", :config {:accepts ["id"], :classes ["X" "Y"]}}],
 ;;    "Y" [{:name "B", :config {:accepts ["id"], :classes ["X" "Y"]}}]}
+
+
+;;; keywordize map's keys
+(clojure.walk/keywordize-keys {"a" 1 "b" 2})
+;; "manually"
+(into {}
+      (map
+       (fn [[k v]] [(keyword k) v]))
+       {"a" 1 "b" 2})
+
+
+
+;;; interesting behavior of when-let when using destructuring
+;;; there's just no way to use `when-let`/`if-let` on destructured values
+;;; 
+(def foo {:a 1})
+
+(when-let [a (:a foo)] (println a))
+;; => prints "1", returns nil
+
+(when-let [{:keys [a]} foo] (println a))
+;; => prints "1", returns nil
+
+(when-let [a (:a (assoc foo :a nil))] (println a))
+;; => returns nil
+
+(when-let [{:keys [a]} (assoc foo :a nil)] (println a))
+;; => prints "nil", returns nil
+
+
+;;; clj-java-decompiler: https://github.com/clojure-goes-fast/clj-java-decompiler
+(decompile (fn [] (println "Hello, decompiler!")))
+(decompile (let [x 1] (println x)))
+
+
+;;; clj-ldap exploration
+;; [org.clojars.pntblnk/clj-ldap "0.0.15"]
+;; unboundid sdk: 
+(comment
+  
+  (require '[clj-ldap.client :as ldap])
+  (ldap/connect {:host {:address "codescene-sso.westeurope.cloudapp.azure.com"
+                        :port 636}
+                 :ssl? true
+                 :timeout 3000
+                 :connect-timeout 3000})
+  (ldap/bind? {} "csuser@mycompany.local" "abc")
+
+  (import '(com.unboundid.ldap.sdk LDAPConnectionPool ResultCode))
+  (defn my-bind [connection bind-dn password]
+    (try
+      (let [r (if (instance? LDAPConnectionPool connection)
+                (.bindAndRevertAuthentication connection bind-dn password nil)
+                (.bind connection bind-dn password))]
+        (= ResultCode/SUCCESS (.getResultCode r)))
+      (catch Exception e
+        (do
+          (println (.getMessage e))
+          false))))
+  (my-bind {} "csuser@mycompany.local" "abc"))
+
+;; now let's try to add "sources" artifact to the project.clj
+;; :profiles {:uberjar {:aot :all}
+;;            ;; notice sources for development!
+;;            :dev {:dependencies [[com.unboundid/unboundid-ldapsdk "4.0.0" :classifier "sources"]]}})
+;; and restart REPL...
+
+;; if that's too anoying we can try to hotload the dependency...
+;; `cljr-hotload-dependency`
+;; => BOOM! this artificat is not in Clojars
+;; => Try alembic: https://github.com/pallet/alembic
+;; add alembic (, r a p)
+;; make sure to clojure clojure-emacs/alembic: [clojure-emacs/alembic "0.3.3"]
+;; and use it
+;; (require '[alembic.still :as a])
+#_(a/distill '[com.unboundid/unboundid-ldapsdk "4.0.0" :classifier "sources"])
+
+;; Unfortunately, this still doesn't mean that it will work with cider navigation automatically.
+;; But: you can use `cider-open-classpath-entry`  to locate unboundid sources jar and open
+;; whatever source file you want
+
+
+
+;;; http://blog.cognitect.com/blog/2016/9/15/works-on-my-machine-understanding-var-bindings-and-roots
+
+(def ^:dynamic answer 42)
+
+(binding [answer 0]
+  (future
+    (Thread/sleep 1000)
+    (println answer)))
+                                        ;=> prints "0"
+
+
+(with-redefs [answer 0]
+  (future
+    (Thread/sleep 1000)
+    (println answer)))
+
+                                        ;=> prints "42"
+
+
