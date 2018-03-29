@@ -1,9 +1,9 @@
 (ns clojure-repl-experiments.spec
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            ;; note that almost everything should be in spec, but there are some generators that are not
-            [clojure.test.check.generators :as gens]
-            [clojure.spec.test.alpha :as stest]))
+            [clojure.spec.test.alpha :as stest]
+            [clojure.string :as string]
+            [clojure.test.check.generators :as gens]))
 
 ;; copied from clojure.spec
 (alias 'stc 'clojure.spec.test.check)
@@ -224,8 +224,8 @@
 #_(zero-or-one -10)
 
 
-;;; test.check generators
-;;; great talk from Gary Frederics: https://www.youtube.com/watch?v=F4VZPxLZUdA&t=174s
+;;; Building test.check generators - great talk from Gary Frederics:
+;;; https://www.youtube.com/watch?v=F4VZPxLZUdA&t=174s
 
 ;; this doesn't work without parentheses
 (def great-data
@@ -399,3 +399,14 @@
 (s/valid? ::svg-text-same-length {::text-x   [1 2 3]
                                   ::text-y   [10 20 30]
                                   ::text-str "abc"})
+
+;; generate non-empty string
+(s/exercise (s/and string? (complement string/blank?)))
+;; suggested by gfredericks
+(gen/sample (gen/not-empty (gen/string)))
+
+(defn post 
+  [{{:strs [email password]} :form-params session :session :as req}]
+  (println req)
+  (println email)
+  (println password))
