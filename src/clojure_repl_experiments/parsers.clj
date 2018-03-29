@@ -1,5 +1,6 @@
 (ns clojure-repl-experiments.parsers
   (:require [clojure.tools.analyzer.jvm :as ana]
+            [clojure.tools.emitter.jvm :as e]
             [clojure.tools.reader :as r]
             [clojure.tools.reader.edn :as re]
             [net.cgrand.sjacket.parser :as sjp]))
@@ -33,3 +34,7 @@
 #_(ns-graph.core/depgraph* {:source-paths "src/"
                           :debug true
                           :format "svg"})
+
+
+;;; tools.emitter
+(e/eval '(+ 1 2) {:debug true})
