@@ -9,7 +9,6 @@
        println
        (while true)))
 
-
 ;;; reading clojure file - example from Getting Clojure book:
 (defn read-source [path]
   (with-open [r (java.io.PushbackReader. (io/reader path))]

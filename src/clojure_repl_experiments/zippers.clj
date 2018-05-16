@@ -1,6 +1,45 @@
 (ns clojure-repl-experiments.zippers
   (:require [clojure.zip :as z]))
 
+;;; Clojure Zippers - Luke Vanderhart
+;;; https://www.youtube.com/watch?v=6c4DJX2Xr3k
+
+(def data [[1 2] 3 [4 5]])
+(def z1 (z/vector-zip data))
+
+(def z2 (z/down z1))
+;;=> [[1 2] {:l [], :pnodes [[[1 2] 3 [4 5]]], :ppath nil, :r (3 [4 5])}]
+
+(z2 1)
+;;=> {:l [], :pnodes [[[1 2] 3 [4 5]]], :ppath nil, :r (3 [4 5])}
+
+
+
+;;; Joseph Fahey: Getting Acquainted With Clojure Zippers: http://josf.info/blog/2014/03/21/getting-acquainted-with-clojure-zippers/
+
+(z/vector-zip [1 [:a :b] 2 3 [40 50 60]])
+;;=> [[1 [:a :b] 2 3 [40 50 60]] nil]
+
+(->  [1 [:a :b] 2 3 [40 50 60]]
+     z/vector-zip
+     z/down
+     z/right)
+;;=> [[:a :b] {:l [1], :pnodes [[1 [:a :b] 2 3 [40 50 60]]], :ppath nil, :r (2 3 [40 50 60])}]
+
+;; depth-first traversal
+(def zzz (z/vector-zip [1 [:a :b] 2 3 [40 50 60]]))
+(-> zzz z/next z/node)
+;;=> 1
+(-> zzz z/next z/next z/node)
+;;=> [:a :b]
+(-> zzz z/next z/next z/next z/node)
+;;=> :a
+(-> zzz z/next z/next z/next z/next z/node)
+;;=> :b
+(-> zzz z/next z/next z/next z/next z/next z/node)
+
+
+
 
 ;;; Brian Marick's tutorial - “Editing” trees in Clojure with clojure.zip:
 ;;; http://www.exampler.com/blog/2010/09/01/editing-trees-in-clojure-with-clojurezip/trackback/index.html
