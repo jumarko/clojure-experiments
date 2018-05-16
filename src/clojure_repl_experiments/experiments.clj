@@ -4,7 +4,8 @@
   (:require [clj-java-decompiler.core :refer [decompile]]
             [clojure.set :as set]
             [seesaw.core :as see]
-            [tupelo.core :as t]))
+            [tupelo.core :as t]
+            [clojure.spec.alpha :as s]))
 
 ;;; Seesaw tutorial: https://gist.github.com/1441520
 ;;; check also https://github.com/daveray/seesaw
@@ -846,3 +847,39 @@ d-m
                                         ;=> prints "42"
 
 
+
+;;; dadair Is it safe, in terms of sorting/order, to do ``? Or is there potential for the id to actually be incorrect for a given `x`?
+(def xs [{:id 1 :name "John"}
+         {:id 10 :name "Ann"}
+         {:id 3 :name "Ben"}
+         {:id 2 :name "Henry"}]) 
+(zipmap (map :id xs) xs)
+(reduce (fn [m x] (assoc m (:id x) x)) {} xs)
+(into {} (map (juxt :id identity) xs))
+(into {} (map (juxt :id identity)) xs)
+
+(comment
+  (require '[criterium.core :as c])
+  (c/quick-bench (zipmap (map :id xs) xs))
+  (c/quick-bench (reduce (fn [m x] (assoc m (:id x) x)) {} xs))
+  (c/quick-bench (into {} (map (juxt :id identity) xs)))
+  (c/quick-bench (into {} (map (juxt :id identity)) xs))
+  )
+
+
+;;; namespaced maps
+
+;; duplicated key `foo` is overwritten
+(let [{:x/keys [foo bar] :y/keys [foo baz]} {:x/foo 1 :x/bar 2 :y/foo 10 :y/baz 20}]
+  [foo bar baz])
+;;=> [10 2 20]
+
+;; we can resolve the conflict
+(let [{:x/keys [foo bar] :y/keys [baz] yfoo :y/foo} {:x/foo 1 :x/bar 2 :y/foo 10 :y/baz 20}]
+  [foo bar yfoo baz])
+;;=> [1 2 10 20]
+
+;; aliases require double collons and namespace has to exist
+::s/my-key
+#_::super/my-key ;=> invalid token
+#_(alias 'superx 'not.exist) ;=> no namespace found
