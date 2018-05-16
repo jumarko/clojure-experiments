@@ -37,7 +37,9 @@
                  [org.clojure/tools.trace "0.7.9"]
                  [nodisassemble "0.1.3"]
 
-                 [org.clojure/tools.emitter.jvm "0.1.0-beta5"]]
+                 [org.clojure/tools.emitter.jvm "0.1.0-beta5"]
+                 [com.gfredericks/test.chuck "0.2.9"]
+                 [phrase "0.3-alpha3"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"

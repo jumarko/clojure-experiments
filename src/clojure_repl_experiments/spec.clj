@@ -3,7 +3,8 @@
             [clojure.spec.gen.alpha :as gen]
             [clojure.spec.test.alpha :as stest]
             [clojure.string :as string]
-            [clojure.test.check.generators :as gens]))
+            [clojure.test.check.generators :as gens]
+            [expound.alpha :as exp]))
 
 ;; copied from clojure.spec
 (alias 'stc 'clojure.spec.test.check)
@@ -410,3 +411,113 @@
   (println req)
   (println email)
   (println password))
+
+
+
+;;; Rich Hickey on Clojure Spec - LispNYC: https://vimeo.com/195711510
+
+;; 46:40 spec validates all the keys if they have registered spec, not just those
+;; explicitly stated in s/keys!!!
+(s/def ::a int?)
+(s/def ::b float?)
+(s/def ::c int?)
+(s/def ::m (s/keys :req [::a] :opt [::b])) ; notice that `::c` is not here at all
+(s/valid? ::m {::a 1 ::b 2.0}) ;=> true
+(s/valid? ::m {::a 1 ::b 2.0 ::c "ahoj"}) ;=> false!!
+(s/explain ::m {::a 1 ::b 2.0 ::c "ahoj"})
+
+;; just an "alias" to an existing spec
+(s/def ::z ::b)
+(s/def ::person (s/cat :name string? :age pos-int?))
+(def conformed-person (s/conform ::person ["Juraj Martinka" 32]))
+(s/unform ::person conformed-person)
+
+
+;;; Clojure apropos screencast #8 about spec: https://youtu.be/iMOHTrsxzqg?t=1853
+;;; The problem is to write a spec for contact list: 
+;;;   contact list has: name, mobile, email
+;;;   name = required; string, no numbers
+;;;   mobile = optional; string, numbers and spaces or hyphens
+;;;   email = optional; string, foo@bar.co - so >= 2 letters before @, an @, >= 2 letters, dot, >= 2 letters
+;;;   contact-list is an atom holding an array of contacts (maps)write and spec the add-contact function
+;;; 
+(def contacts (atom {}))
+(defn add-contact [contact]
+  (swap! contacts conj contact))
+(add-contact {:name "Josh"})
+(require '[clojure.spec.alpha :as s])
+
+;; name is supposed to be letters but no numbers
+;; Mikes `contains-digit?` implementation
+(defn contains-digit? [s]
+  (some (into #{} "0123456789") s))
+;; alternatively - my implementation
+(defn contains-digit? [s]
+  (re-matches #".*\d.*" s))
+
+(s/def ::name (s/and string? (complement contains-digit?)))
+(s/valid? ::name "abc")
+(s/valid? ::name "ab33c")
+
+(s/exercise ::name )
+
+;; let's look at problems when satisfying predicates
+(s/def ::foo (s/and string? #(= (count %) 15)))
+#_(s/exercise ::foo)
+;;=> Couldn't satisfy such-that predicate after 100 tries.
+;; let's fix it with `with-gen`
+#_(s/def ::foo (s/with-gen
+               (s/and string? #(= (count %) 15))
+                 ;; write your gen fn here - maybe use test.chuck: https://github.com/gfredericks/test.chuck
+                 ...
+               ))
+
+(s/exercise inst?)
+(s/exercise uri?)
+
+(s/def ::foo (s/keys :req [::age]))
+(s/def ::age int?)
+(s/exercise ::foo)
+(s/valid? ::foo {::age 12 ::name "bar"})
+;; now notice that `::name` key is validated against `::name` spec event it's not mentioned in s/keys at all
+(s/valid? ::foo {::age 12 ::name "b343ar"})
+
+;; try test.chuck
+(require '[com.gfredericks.test.chuck :as chuck])
+(require '[com.gfredericks.test.chuck.generators :as genc])
+(s/def ::foo (s/with-gen
+               (s/and string? #(= (count %) 15))
+               ;; Note that with-gen (and other places that take a custom generator) take a no-arg function that returns the generator, allowing it to be lazily realized.
+               ;; (see spec guide: https://clojure.org/guides/spec)
+               #(genc/string-from-regex #"\w{10,20}")
+               ))
+(s/exercise ::foo)
+
+;; or perhaps pure test.check
+(require '[clojure.spec.gen.alpha :as gen])
+(s/def ::foo (s/with-gen
+               (s/and string? #(= (count %) 15))
+               ;; Note that with-gen (and other places that take a custom generator) take a no-arg function that returns the generator, allowing it to be lazily realized.
+               ;; (see spec guide: https://clojure.org/guides/spec)
+               #(gen/fmap (fn [chars] (apply str chars))
+                          (gen/vector (gen/char-alpha) 10 20))))
+(s/exercise ::foo)
+
+;;; phrase: https://github.com/alexanderkiel/phrase
+;;; weird and not very useful :(
+(require '[phrase.alpha :refer [defphraser phrase-first]])
+
+[context problem]
+(defphraser :default [_ _] "Invalid value")
+(phrase-first {} ::m {::a 1 ::b 2.0 ::c "ahoj"}) ;=> false!!
+
+
+;;; expound: https://github.com/bhb/expound
+(exp/expound ::m {::a 1 ::b 2.0 ::c "ahoj"})
+(exp/expound ::m {::a 1 ::b 2.0 ::c "ahoj"})
+
+(s/def ::x (s/coll-of int?))
+(s/def ::m (s/keys :req-un [::x ::y] :opt-un [::z]))
+(s/def ::t (s/keys :req-un [::m ::n]))
+(exp/expound ::t {:m {:x [1 "a"]}})
+(s/explain-data ::t {:m {:x [1 "a"]}})
