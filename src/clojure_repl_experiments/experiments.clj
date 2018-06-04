@@ -3,9 +3,10 @@
   This might be split up later if I find it useful."
   (:require [clj-java-decompiler.core :refer [decompile]]
             [clojure.set :as set]
+            [clojure.spec.alpha :as s]
+            [clojure.string :as string]
             [seesaw.core :as see]
-            [tupelo.core :as t]
-            [clojure.spec.alpha :as s]))
+            [tupelo.core :as t]))
 
 ;;; Seesaw tutorial: https://gist.github.com/1441520
 ;;; check also https://github.com/daveray/seesaw
@@ -883,3 +884,98 @@ d-m
 ::s/my-key
 #_::super/my-key ;=> invalid token
 #_(alias 'superx 'not.exist) ;=> no namespace found
+
+
+;;; Profile with tufte: https://github.com/ptaoussanis/tufte#how-does-tufte-compare-to-hugoduncancriterium
+
+(require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
+;; We'll request to send `profile` stats to `println`:
+(tufte/add-basic-println-handler! {})
+
+;;; Let's define a couple dummy fns to simulate doing some expensive work
+(defn get-x [] (Thread/sleep 500)             "x val")
+(defn get-y [] (Thread/sleep (rand-int 1000)) "y val")
+
+;; How do these fns perform? Let's check:
+(profile ; Profile any `p` forms called during body execution
+ {} ; Profiling options; we'll use the defaults for now
+ (dotimes [_ 5]
+   (p :get-x (get-x))
+   (p :get-y (get-y))))
+
+
+(comment 
+
+  (defmacro protocol [name & body]
+    `(defn [command]
+       (condp = command
+         body)))
+
+  (protocol cmds
+            "LIST" (list-handler)
+            "EXIT" (exit-handler))
+
+  (defn cmds [command]
+    (condp = command
+      "LIST" (list-handler)
+      "EXIT" (exit-handler))))
+
+
+
+;;; https://stackoverflow.com/questions/50663848/converting-string-to-nested-map-in-clojure
+(def my-file "1|apple|sweet
+  2|coffee|bitter
+  3|gitpush|relief")
+
+(as-> my-file $
+  (string/split $ #"\n")
+  (map #(string/split % #"\|") $)
+  (map (juxt first rest) $)
+  (into {} $))
+
+
+;;; https://stackoverflow.com/questions/50650009/filter-on-the-values-of-multiple-keys-in-a-map-entry-and-return-a-map-with-those
+(def maps
+  [{:id 2, :category "Big bang theory", :name "The Big Bang!"}
+   {:id 3, :category "The big Lebowski", :name "Ethan Coen"}
+   {:id 4, :category "Chitty Chitty Bang Bang", :name "Roald Dahl"}])
+
+
+(filter
+ #(some
+   (fn [v]
+     (when (string? v)
+       (-> v
+           (string/lower-case)
+           (string/includes? "ban"))))
+   (vals %))
+ maps)
+
+(->> maps
+     (filter (fn [m]
+               ())))
+
+
+;;; noisesmith @sova here's a macro that's very useful when debugging
+(defmacro locals
+  []
+  (into {}
+        (map (juxt (comp keyword name)
+                   identity))
+        (keys &env)))
+
+(defn foo [x]
+  (let [y (+ x x)]
+    (println (locals)) y))
+(foo 2)
+;; prints
+;; {:x 2, :y 4}
+
+;; see also: https://www.safaribooksonline.com/library/view/clojure-programming/9781449310387/ch05s08.html
+(defmacro spy-env []
+  (let [ks (keys &env)]
+    `(prn (zipmap '~ks [~@ks]))))
+
+(let [x 1 y 2]
+  (spy-env)
+  (+ x y))
