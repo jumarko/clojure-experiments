@@ -16,3 +16,12 @@
 (.getHour (round-to-nearest-hour "2017-08-30 09:01:48"))
 (.getHour (round-to-nearest-hour "2017-08-30 09:31:48"))
 
+
+(def dtf (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+(def now (LocalDateTime/now))
+;; borkdude asked why he needs type hints in this code but actually no type hints (^LocalDateTime) are needed
+(def today (.format now dtf))
+(def tomorrow
+  (-> now
+      (.plusDays 1)
+      (.format dtf)))
