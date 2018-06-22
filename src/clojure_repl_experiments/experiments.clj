@@ -1020,11 +1020,10 @@ d-m
 ;; my solution
 (apply
  mapv
- (fn [& ks-vals]
-   (into {} ks-vals))
+ #(into {} %&)
  (for [[k vs] my-data]
-   (for [v vs]
-     [k v])))
+   (for [v vs] [k v])))
+
        
 ;; alexyakushev [11:28 AM]
 (let [ks (keys my-data)]
