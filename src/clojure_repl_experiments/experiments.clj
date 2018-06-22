@@ -5,6 +5,7 @@
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
+            [criterium.core :as c]
             [seesaw.core :as see]
             [tupelo.core :as t]))
 
@@ -979,3 +980,56 @@ d-m
 (let [x 1 y 2]
   (spy-env)
   (+ x y))
+
+
+
+;;; performance `doall` vs `mapv` (vector)
+
+;; `doall`
+(comment
+  
+  (c/quick-bench (doall (map inc (range 1000000))))
+  ;; Evaluation count : 6744 in 6 samples of 1124 calls.
+  ;; Execution time mean : 79.154994 µs
+  ;; Execution time std-deviation : 5.479175 µs
+  ;; Execution time lower quantile : 71.472044 µs ( 2.5%)
+  ;; Execution time upper quantile : 85.333914 µs (97.5%)
+  ;; Overhead used : 12.084946 ns
+
+  )
+
+;; `mapv`
+(comment 
+  (c/quick-bench (mapv inc (range 1000000)))
+  ;; Evaluation count : 13680 in 6 samples of 2280 calls.
+  ;; Execution time mean : 51.043335 µs
+  ;; Execution time std-deviation : 10.854776 µs
+  ;; Execution time lower quantile : 41.069582 µs ( 2.5%)
+  ;; Execution time upper quantile : 68.105034 µs (97.5%)
+  ;; Overhead used : 12.084946 ns
+
+  (c/quick-bench (vec (map inc (range 1000))))
+  
+  )
+
+;;; how to turn this:
+(def my-data {:foo ["a" "b" "c"], :bar ["x" "y" "z"] :baz [1 2 3]})
+;; to this:
+[{:foo "a", :bar "x"} {:foo "b", :bar "y"}]
+
+;; my solution
+(apply
+ mapv
+ (fn [& ks-vals]
+   (into {} ks-vals))
+ (for [[k vs] my-data]
+   (for [v vs]
+     [k v])))
+       
+;; alexyakushev [11:28 AM]
+(let [ks (keys my-data)]
+  (->> (vals my-data)
+       (#(doto % prn))
+       (apply map vector) ;; Transpose the matrix of values
+       (#(doto % prn))
+       (mapv (partial zipmap ks))))
