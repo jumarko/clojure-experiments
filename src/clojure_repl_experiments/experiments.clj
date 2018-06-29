@@ -222,6 +222,12 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (def fibs (cons 0 (cons 1 (lazy-seq (map +' fibs (rest fibs))))))
 (take 10 fibs)
 
+;;; Fibonacci implementation using `iterated` (Chtristopher Grand)
+(defn fibo []
+  (map first
+       (iterate (fn [[a b]] [b (+ a b)]) [0 1])))
+
+
 ;; Exercise:
 ;; You put the lazy seq at the beginning and it hit an infinite loop.
 ;; You put the lazy seq after the first two hard-coded values, and it worked.
