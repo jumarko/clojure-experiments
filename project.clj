@@ -41,7 +41,9 @@
                  [com.gfredericks/test.chuck "0.2.9"]
                  [phrase "0.3-alpha3"]
                  [net.n01se/clojure-jna "1.0.0"]
-                 [com.taoensso/truss "1.5.0"]]
+                 [com.taoensso/truss "1.5.0"]
+                 [net.cgrand/xforms "0.18.2"]
+                 [clojure2d "1.0.0"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"

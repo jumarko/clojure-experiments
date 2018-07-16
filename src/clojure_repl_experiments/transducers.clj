@@ -1,7 +1,8 @@
 (ns clojure-repl-experiments.transducers
   (:require [clojure.core.async :refer [>! <! <!!] :as async]
             [clojure.string :as str]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [net.cgrand.xforms :as x]))
 
 ;;; Tim Baldridge - Transducers - Episode 1 - Introduction to Transducers
 ;;; https://www.youtube.com/watch?v=WkHdqg_DBBs
@@ -614,3 +615,52 @@
     (take-while #(> 5 %)))
    +
    (lines-reducible (io/reader "/tmp/work.txt"))))
+
+
+;;; Inside Transducers (Lambda Island): https://lambdaisland.com/episodes/inside-transducers
+(reduce + [1 2 3])
+
+(defn my-into [target src]
+  (reduce conj target src))
+(my-into #{} [1 2 3])
+
+(reduce (fn [acc x]
+          (if (> acc 5)
+            (reduced acc)
+            (+ acc x)))
+        [1 2 3 4 5])
+(type (reduced 42))
+@(reduced 42)
+;; use `unreduced` to be sure that you're dealing with unreduced value
+(unreduced (reduced 42))
+
+(defn add-index-prefix
+  [[idx res] x]
+  [(inc idx) (conj res (str idx ". " x))])
+(second
+ (reduce add-index-prefix
+         [1 []]
+         ["wulong" "red" "black" "green"]))
+;; let's improve add-index-prefix to not force user to specify initial values and completing step by hand
+(defn add-index-prefix
+  ([] [1 []])
+  ([acc] (second acc))
+  ([[idx res] x]
+   [(inc idx) (conj res (str idx ". " x))]))
+;; now we need to use `transduce`
+(transduce identity add-index-prefix ["wulong" "red" "black" "green"])
+
+;; this is interesting: 10 instead of -10!
+(transduce identity - 0 [1 2 3 4])
+;; => this can be solved with `completing`:
+(transduce identity (completing - (fn [x] x)) 0 [1 2 3 4])
+
+;; cgrand functions
+(x/count (filter #(= 0 (mod % 3))) (range 1 20))
+(x/some (filter #(= 0 (mod % 3))) (range 1 20))
+(x/str (comp (map str/upper-case)
+             (interpose "-"))
+       ["foo" "bar" "baz"])
+(into [] x/str ["foo" "bar" "baz"])
+;; ultimate is `x/reduce`
+(into [] (x/reduce +) [3 5 7])
