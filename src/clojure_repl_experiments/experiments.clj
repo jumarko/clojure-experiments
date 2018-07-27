@@ -1038,3 +1038,45 @@ d-m
        (apply map vector) ;; Transpose the matrix of values
        (#(doto % prn))
        (mapv (partial zipmap ks))))
+
+
+;;; holyjak [9:34 AM]
+;;; Hello, is there a better way to extract an item from a collection based on its attribute than
+(def cars [{:name "AM" :producer "Ferrari"}
+           {:name "BM" :producer "Mercedes"}
+           {:name "CM" :producer "Ferrari"}])
+
+(some 
+ #(when 
+      (= (:producer %) "Ferrari") 
+    %) 
+ cars)
+
+;; VS seancorfield [10:29 AM]
+;; @holyjak `(first (filter #(= "Ferrari" (:producer %)) cars))` would work if you don't mind the search going further than the first match (chunking).
+(first (filter #(= "Ferrari" (:producer %)) cars))
+
+;; VS valtteri [10:37 AM]
+;; If the collection is not enormous I often find myself transforming it into a map and then doing a lookup. My favourite function atm is:
+;; NOTE: this doesn't work well
+(defn index-by
+  ([idx-fn coll]
+   (index-by idx-fn identity coll))
+  ([idx-fn value-fn coll]
+   (into {} (map (juxt idx-fn value-fn)) coll)))
+(index-by :producer cars)
+
+;; hiredman: clojure.set/index
+;; https://gist.github.com/hiredman/7d17d8d2b58c41ce95bf2db305b0f427
+(-> cars
+    (clojure.set/index [:producer])
+    (get {:producer "Ferrari"})
+    first)
+
+
+;; clojuredocs: http://clojuredocs.org/clojure.set/index
+(def weights #{ {:name 'betsy :weight 1000}
+               {:name 'jake :weight 756}
+               {:name 'shyq :weight 1000} })
+
+(clojure.set/index weights [:weight])
