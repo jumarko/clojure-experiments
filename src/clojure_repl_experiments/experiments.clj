@@ -227,7 +227,6 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
   (map first
        (iterate (fn [[a b]] [b (+ a b)]) [0 1])))
 
-
 ;; Exercise:
 ;; You put the lazy seq at the beginning and it hit an infinite loop.
 ;; You put the lazy seq after the first two hard-coded values, and it worked.
@@ -1080,3 +1079,11 @@ d-m
                {:name 'shyq :weight 1000} })
 
 (clojure.set/index weights [:weight])
+
+
+;;; https://groups.google.com/forum/#!topic/clojure/tfHYGjyIWWM
+(defmacro foo [x]
+  (+ x 10))
+(def ^:const bar 100)
+;; following doesn't work:
+#_(foo bar)

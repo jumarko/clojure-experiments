@@ -3,8 +3,10 @@
   :url "https://github.com/jumarko/clojure-repl-experiments"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.0-alpha4"]
-                 [org.clojure/clojure "1.10.0-alpha4" :classifier "sources"]
+  :dependencies [[org.clojure/clojure "1.10.0-RC1"]
+                 ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
+                 #_[org.clojure/clojure "1.10.0-alpha4" :classifier "sources"]
+                 [org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0-alpha2"]
                  [org.apache.pdfbox/pdfbox "2.0.7"]
                  [net.java.dev.jna/jna "4.4.0"]
@@ -43,7 +45,12 @@
                  [net.n01se/clojure-jna "1.0.0"]
                  [com.taoensso/truss "1.5.0"]
                  [net.cgrand/xforms "0.18.2"]
-                 [clojure2d "1.0.0"]]
+                 [clojure2d "1.0.0"]
+                 [datascript "0.16.6"]
+                 [lambdaisland/deep-diff "0.0-8"]
+                 ;; http://clojure-goes-fast.com/blog/latency-tool-jvm-hiccup-meter/
+                 [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
+                 [bocko "1.0.0"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"

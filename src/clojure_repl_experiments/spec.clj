@@ -521,3 +521,14 @@
 (s/def ::t (s/keys :req-un [::m ::n]))
 (exp/expound ::t {:m {:x [1 "a"]}})
 (s/explain-data ::t {:m {:x [1 "a"]}})
+
+
+
+;; use spec-provider to generate specs
+(require '[spec-provider.provider :as sp])
+(let [my-ns (name (ns-name *ns*))
+      my-spec "my-spec"]
+  (sp/pprint-specs (sp/infer-specs [{:status 201, :headers {"Content-Type" "application/json"}, :body "Some html body"}]
+                                   (keyword my-ns my-spec))
+                   my-ns
+                   's))

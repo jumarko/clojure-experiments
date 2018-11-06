@@ -16,6 +16,11 @@
 ;;; 2.2 Specter
 (def data [{:a 1 :b 2} {:c 3} {:d 4}])
 (transform [ALL MAP-VALS even?] inc data)
+(map
+ #(map (fn [[k v]]
+         (if (even? v) [k (inc v)] [k v])) %)
+ data)
+
 
 ;; START
 [{:a 1 :b 2} {:c 3} {:d 4}]
