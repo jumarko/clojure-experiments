@@ -532,3 +532,25 @@
                                    (keyword my-ns my-spec))
                    my-ns
                    's))
+
+
+;;; quick showcase how to use different specs for the same unqualified key `:type`
+(s/def :a/type int?)
+(s/def ::a-type (s/keys :req-un [:a/type]))
+
+(s/def :b/type string?)
+(s/def ::b-type (s/keys :req-un [:b/type]))
+
+(def int {:type 10})
+(def b {:type "number"})
+
+(s/valid? ::a-type a)
+;; => true
+(s/valid? ::a-type b)
+;; => false
+
+(s/valid? ::b-type b)
+;; => true
+(s/valid? ::b-type a)
+;; => false
+
