@@ -3,7 +3,7 @@
   :url "https://github.com/jumarko/clojure-repl-experiments"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.0-RC1"]
+  :dependencies [[org.clojure/clojure "1.10.0-beta5"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
                  #_[org.clojure/clojure "1.10.0-alpha4" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]

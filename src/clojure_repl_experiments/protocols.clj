@@ -63,3 +63,17 @@
 
 (sort compare-time [(java.util.Date.) 10001 (DateTime. 2018 1 1 10 10 10)])
 
+
+;;; Bug in Clojure 1.10 with meta-based dispatch
+;;; https://dev.clojure.org/jira/browse/CLJ-2426
+(defprotocol Foo (foo [x]))
+(foo (with-meta [42] {`foo (fn [x] :boo)}))
+;; => :boo
+
+;; but `satisfies?` doesn't work
+(satisfies? Foo (with-meta [42] {`foo (fn [x] :boo)}))
+;; => false
+
+(defrecord FooImpl [] Foo (foo [x] :impl))
+(satisfies? Foo (->FooImpl))
+;; => true
