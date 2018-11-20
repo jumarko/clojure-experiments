@@ -20,7 +20,7 @@
                  [hswick/jutsu "0.1.1"]
                  [clojure-complete "0.2.4"]
                  [com.rpl/specter "1.1.0"]
-                 [quil "2.6.0"]
+                 [quil "2.8.0"]
                  [inspector-jay "0.3"]
                  [org.clojure/tools.reader "1.1.1"]
                  [net.cgrand/sjacket "0.1.1"]
