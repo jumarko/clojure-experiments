@@ -2,6 +2,7 @@
   "Single namespace for all my REPL experiments.
   This might be split up later if I find it useful."
   (:require [clj-java-decompiler.core :refer [decompile]]
+            [clojure.datafy :as d]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
@@ -786,6 +787,12 @@ d-m
 (decompile (fn [] (println "Hello, decompiler!")))
 (decompile (let [x 1] (println x)))
 
+(decompile (loop [i 100, sum 0]
+             (if (< i 0)
+               sum
+               (recur (unchecked-dec i) (unchecked-add sum i)))))
+
+
 
 ;;; clj-ldap exploration
 ;; [org.clojars.pntblnk/clj-ldap "0.0.15"]
@@ -1089,4 +1096,4 @@ d-m
 #_(foo bar)
 
 
-
+#_(require '[debux.core :refer [dbg dbgn]])

@@ -1,6 +1,6 @@
 (ns clojure-repl-experiments.parsers
   (:require [clojure.tools.analyzer.jvm :as ana]
-            [clojure.tools.emitter.jvm :as e]
+            #_[clojure.tools.emitter.jvm :as e]
             [clojure.tools.reader :as r]
             [clojure.tools.reader.edn :as re]
             [net.cgrand.sjacket.parser :as sjp]))
@@ -37,4 +37,4 @@
 
 
 ;;; tools.emitter
-(e/eval '(+ 1 2) {:debug true})
+#_(e/eval '(+ 1 2) {:debug true})

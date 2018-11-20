@@ -4,7 +4,8 @@
             [clojure.spec.test.alpha :as stest]
             [clojure.string :as string]
             [clojure.test.check.generators :as gens]
-            [expound.alpha :as exp]))
+            [expound.alpha :as exp]
+            [net.cgrand.xforms :as x]))
 
 ;; copied from clojure.spec
 (alias 'stc 'clojure.spec.test.check)
@@ -554,3 +555,18 @@
 (s/valid? ::b-type a)
 ;; => false
 
+
+
+
+;; pyr Hi, I'm trying to spec a map (over which I dont' have control) which uses an inconvenient idiom:
+;;   for a number of members it accepts either a :membername or :memberid key, but at least one must be present. If there's a single member like this, `spec/or` is convenient.
+;; * mpenet can't you use
+(s/def ::member (s/keys :req-un [(or  ::membername ::memberid)]))
+(s/explain-str ::member {:membername "juraj"})
+(s/explain-str ::member {:memberfirstname "juraj"})
+(s/explain-str ::member {:memberfirstname "juraj" :memberid "jm"})
+;; * it also supports `and`, kind of a cool feature: from the docstring: `(s/keys :req [::x ::y (or ::secret (and ::user ::pwd))] :opt [::z])`
+(s/def ::member (s/keys :req-un [(or  (and ::membername ::memberage) ::memberid)]))
+(s/explain-str ::member {:membername "juraj"})
+(s/explain-str ::member {:membername "juraj" :memberage 33})
+(s/explain-str ::member {:membername "juraj" :memberid "jm"})
