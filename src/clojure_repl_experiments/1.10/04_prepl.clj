@@ -83,3 +83,12 @@
   (serve-multi-clients 3333 respond)
 
   )
+
+
+;;; Try remote (io-)prepl
+;;; just launch socket server with io-prepl function
+;;; clojure -Sdeps '{:deps {org.clojure/clojure {:mvn/version "1.10.0-beta7"}}}' -J-Dclojure.server.repl="{:port 0 :accept clojure.core.server/io-prepl}"
+(defn out-fn [v]
+  (prn "data: " v))
+;; Don't use :repl/quit ! (just EOF)
+;; (remote-prepl "localhost" 5555 *in* out-fn )

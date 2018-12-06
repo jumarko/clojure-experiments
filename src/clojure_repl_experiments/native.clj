@@ -1,15 +1,5 @@
 (ns clojure-repl-experiments.native
-  (:require [net.n01se.clojure-jna :as jna]
-            [criterium.core :as c])
-  (:import [com.sun.jna Native Pointer]))
-
-;;; also https://github.com/Chouser/clojure-jna
-(comment
-
-  (def cf-current-time (jna/to-fn Double CoreFoundation/CFAbsoluteTimeGetCurrent))
-  (cf-current-time)
-  )
-
+  (:import (com.sun.jna Native Pointer)))
 
 ;;; Accessing native shared libraries from Clojure via JNA
 ;;; https://nakkaya.com/2009/11/16/java-native-access-from-clojure/

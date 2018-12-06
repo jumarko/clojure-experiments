@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
-                 [org.clojure/clojure "1.10.0-beta6"]
+                 [org.clojure/clojure "1.10.0-RC2"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
                  ;; [org.clojure/clojure "1.10.0-beta6" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
@@ -67,7 +67,17 @@
                  #_[com.cognitect/transit-cljs "0.8.256"]
 
                  [org.clojure/java.data "0.1.1"]
-                 [fn-fx/fn-fx-javafx "0.5.0-SNAPSHOT"]]
+                 [fn-fx/fn-fx-javafx "0.5.0-SNAPSHOT"]
+                 [rewrite-clj "0.6.1"]
+                 [amperity/greenlight "0.1.2"]
+                 [bronsa/tools.decompiler "0.1.0-alpha1"]
+
+                 ;; REBL: https://github.com/cognitect-labs/REBL-distro
+                 ;; It has to be installed in the local repository first
+                 ;; - download it here: http://rebl.cognitect.com/download.html
+                 ;; - mvn install:install-file -Dfile=/Users/jumar/tools/clojure/rebl/REBL-0.9.109/REBL-0.9.109.jar -DgroupId=com.cognitect -DartifactId=rebl -Dversion=0.9.109 -Dpackaging=jar -DgeneratePom=true
+                 [com.cognitect/rebl "0.9.109"]
+]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-repl-experiments.core
   :target-path "target/%s"

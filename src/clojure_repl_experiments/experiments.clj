@@ -1097,3 +1097,46 @@ d-m
 
 
 #_(require '[debux.core :refer [dbg dbgn]])
+
+
+;;; 4clojure 53 - leetwinski elegant solution: http://www.4clojure.com/problem/solutions/53
+(defn longest-increasing-subseq [numbers]
+  (or (->> (range (count numbers) 1 -1)
+           (mapcat #(partition % 1 numbers))
+           (filter #(apply < %))
+           first)
+      []))
+
+
+;;; Question on slack about lazy seq
+;;; *The problem*
+;;;   Works fine for when `first-duplicate` only has to look at small amounts of accumulated list,
+;;;   get StackOverflow error for longer input:
+;;; Notes:
+;;; - this is from Advent of Code - Day 1
+;;; - accumulcate-lazy can be replaced with `(reductions + ...)
+(defn accumulate-lazy
+  "Takes in a lazy sequence and lazily produces the accumulated output."
+  ([coll] (accumulate-lazy 0 coll))
+  ([sum coll]
+   (when-let [[x & xs] (seq coll)]
+     (let [new-sum (+ sum x)]
+       (cons new-sum (lazy-seq (accumulate-lazy new-sum xs)))))))
+
+(defn first-duplicate
+  "Returns the first duplicate in a sequence"
+  ([coll] (first-duplicate coll #{}))
+  ([coll accumulator]
+   (loop [[x & xs] (seq coll)
+          acc accumulator]
+     (when x
+       (if (contains? acc x)
+         x
+         (recur xs (conj acc x)))))))
+
+#_(first-duplicate (accumulate-lazy (cycle [-14 1 10 4])))
+;; => -13
+#_(first-duplicate (accumulate-lazy (cycle (range 10000))))
+;; => 49995000
+#_(first-duplicate (accumulate-lazy (range 10000)))
+;; => nil

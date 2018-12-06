@@ -1,6 +1,25 @@
 (ns clojure-repl-experiments.zippers
   (:require [clojure.zip :as z]))
 
+
+;;; Den of Clojure: Functional Zippers: https://www.youtube.com/watch?v=HJJG-xbXRdg
+
+;; nested vectors can be treated as kind of tree structure
+(def loc (z/vector-zip [[1 2] [3 4]]))
+
+;; Caveats: not a cursor
+#_(->> [[1 2]]
+     z/vector-zip
+     z/down
+     z/down
+     z/remove
+     z/remove
+     (z/insert-left 3)
+     )
+
+
+
+
 ;;; Clojure Zippers - Luke Vanderhart
 ;;; https://www.youtube.com/watch?v=6c4DJX2Xr3k
 
