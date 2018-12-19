@@ -9,6 +9,19 @@
   "
   (:require [cognitect.rebl :as rebl]))
 
+;; Let's add tab to inspect values in REBL ui
+(add-tap #(rebl/inspect %))
+
+(defn interesting-data-gen []
+  (->> (range 100)
+       (map-indexed (fn [idx val] (let [x (* idx val)]
+                                    #_(tap> x)
+                                    x)))
+       (tap> )
+       ))
+
+#_(interesting-data-gen)
+
 (comment
 
   ;; can launch UI from the REPL
