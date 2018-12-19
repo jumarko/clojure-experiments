@@ -6,7 +6,7 @@
   :dependencies [
                  [org.clojure/clojure "1.10.0-RC2"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
-                 ;; [org.clojure/clojure "1.10.0-beta6" :classifier "sources"]
+                 ;; [org.clojure/clojure "1.10.0" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0-alpha2"]
                  [org.apache.pdfbox/pdfbox "2.0.7"]
@@ -17,7 +17,10 @@
                  [funcool/cats "2.1.0"]
                  [buddy/buddy-hashers "1.3.0"]
                  [org.julienxx/clj-slack "0.5.5"]
-                 [hswick/jutsu "0.1.1"]
+                 ;; Does this conflict with oz because of aleph/sente conflict?
+                 ;;   Syntax error (FileNotFoundException) compiling at (server.clj:1:1).
+                 ;;   Could not locate taoensso/sente/server_adapters/aleph__init.class, taoensso/sente/server_adapters/aleph.clj or taoensso/sente/server_adapters/aleph.cljc on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.
+                 ;; [hswick/jutsu "0.1.1"]
                  [clojure-complete "0.2.4"]
                  [com.rpl/specter "1.1.0"]
                  [quil "2.8.0"]
@@ -58,7 +61,7 @@
                  [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                  [bocko "1.0.0"]
                  ;; OZ - powerful data visualizations https://github.com/metasoarous/oz
-                 #_[metasoarous/oz "1.3.1"]
+                 [metasoarous/oz "1.4.0"]
                  [aerial.hanami "0.2.0"]
                  ;; modern version of sente required by oz
                  #_[com.taoensso/sente "1.13.1"]
