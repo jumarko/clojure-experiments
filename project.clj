@@ -1,6 +1,6 @@
-(defproject clojure-repl-experiments "0.1.0-SNAPSHOT"
+(defproject clojure-experiments "0.2.0-SNAPSHOT"
   :description "My clojure REPL experiments."
-  :url "https://github.com/jumarko/clojure-repl-experiments"
+  :url "https://github.com/jumarko/clojure-experiments"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
@@ -82,7 +82,7 @@
                  [com.cognitect/rebl "0.9.109"]
 ]
   :java-source-paths ["src/java"]
-  :main ^:skip-aot clojure-repl-experiments.core
+  :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              ;; notice sources for development!
