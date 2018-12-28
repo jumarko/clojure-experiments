@@ -23,6 +23,18 @@
 
   )
 
+;; my primitive example
+#_(oz/v!
+ {:data {:values [{:city "PB" :citizens 45000}
+                  {:city "Brno" :citizens 400000}
+                  {:city "Bratislava" :citizens 450000}
+                  {:city "Praha" :citizens 1200000}
+                  ]}
+  :encoding {:x {:field "city"
+                 :type "ordinal"}
+             :y {:field "citizens"
+                 :type "quantitative"}}
+  :mark "bar"})
 
 
 ;;;; Examples from here: https://github.com/metasoarous/oz
