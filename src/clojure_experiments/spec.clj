@@ -570,3 +570,18 @@
 (s/explain-str ::member {:membername "juraj"})
 (s/explain-str ::member {:membername "juraj" :memberage 33})
 (s/explain-str ::member {:membername "juraj" :memberid "jm"})
+
+
+;;; s/and flows conformed results which is why s/or inside s/and doesn't work
+#_(s/explain
+ (s/and (s/or :int int? :double double?)
+        pos?)
+ 3)
+;;=>    clojure.lang.MapEntry cannot be cast to java.lang.Number
+;;alex miller:
+;;  s/and will flow the conformed result so the and will be receiving a value like `[:int pos?]`
+;;  prob the best option here is to
+(s/explain
+ (s/or :int (s/and int? pos?)
+       :double (s/and double? pos?))
+ 3)
