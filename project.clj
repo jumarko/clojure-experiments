@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
-                 [org.clojure/clojure "1.10.0-RC2"]
+                 [org.clojure/clojure "1.10.0"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
                  ;; [org.clojure/clojure "1.10.0" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
@@ -80,7 +80,18 @@
                  ;; - download it here: http://rebl.cognitect.com/download.html
                  ;; - mvn install:install-file -Dfile=/Users/jumar/tools/clojure/rebl/REBL-0.9.109/REBL-0.9.109.jar -DgroupId=com.cognitect -DartifactId=rebl -Dversion=0.9.109 -Dpackaging=jar -DgeneratePom=true
                  [com.cognitect/rebl "0.9.109"]
-]
+
+                 ;; statistics functions - e.g. TTest
+                 [org.apache.commons/commons-math3 "3.6.1"]
+
+                 ;; kixi.stats: https://github.com/mastodonC/kixi.stats
+                 ;; see also lambdaisland: https://lambdaisland.com/episodes/clojure-data-science-kixi-stats
+                 [kixi/stats "0.4.4"] 
+                 [redux "0.1.4"]
+                 [net.cgrand/xforms "0.19.0"]
+
+
+                 [thi.ng/geom "1.0.0-RC3"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
