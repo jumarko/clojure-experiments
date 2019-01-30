@@ -6,14 +6,15 @@
   "Returns human-readable score of the game.
   E.g. '0-15', 'deuce', 'Player1 has an advantage', 'Player1 won the game'."
   [game]
-  (let [[player1-name player1-score] (first game)
-        [player2-name player2-score] (second game)]
+  (let [winner (:winner game)
+        [_ player1-score] (first game)
+        [_ player2-score] (second game)]
     (cond
-      (> player1-score 40)
-      (format "%s won the game!" player1-name)
+      winner
+      (format "%s won the game!" winner)
 
-      (> player2-score 40)
-      (format "%s won the game!" player2-name)
+      (= 40 player1-score player2-score)
+      (format "DEUCE")
 
       :else
       (format "%s-%s" player1-score player2-score))))
@@ -24,8 +25,16 @@
     (+ 15 current-score)
     (+ 10 current-score)))
 
+(defn winner? [game player]
+  (< 40 (get game player)))
+
 (defn wins-ball [game player]
-  (update game player update-score))
+  (if (:winner game)
+    game
+    (let [updated-game (update game player update-score)]
+      (if (winner? updated-game player)
+        (assoc updated-game :winner player)
+        updated-game))))
 
 (defn make-game [player1-name player2-name]
   ;; here we rely on ordering of small hashmaps which is generally bad but in this case it's completely safe

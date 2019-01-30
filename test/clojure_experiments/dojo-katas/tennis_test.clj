@@ -52,9 +52,17 @@
 (deftest simple-game-first-player-wins
   (check-score ["P1" 4] ["P2" 0] "P1 won the game!")
   (check-score ["P1" 4] ["P2" 3] "P1 won the game!")
-  )
+  ;; this should still be the winninig for the first player!
+  (check-score ["P1" 4] ["P2" 4] "P1 won the game!"))
 
+(deftest simple-game-second-player-wins
+  (check-score ["P1" 0] ["P2" 4] "P2 won the game!")
+  (check-score ["P1" 3] ["P2" 4] "P2 won the game!")
+  ;; this should still be the winninig for the first player!
+  (check-score ["P2" 4] ["P1" 4] "P2 won the game!"))
 
 ;; deuce
+(deftest simple-game-second-player-wins
+  (check-score ["P1" 3] ["P2" 3] "DEUCE"))
 
 ;; advantage
