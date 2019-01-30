@@ -6,9 +6,17 @@
   "Returns human-readable score of the game.
   E.g. '0-15', 'deuce', 'Player1 has an advantage', 'Player1 won the game'."
   [game]
-  (let [[_ player1-score] (first game)
-        [_ player2-score] (second game)]
-    (format "%s-%s" player1-score player2-score)))
+  (let [[player1-name player1-score] (first game)
+        [player2-name player2-score] (second game)]
+    (cond
+      (> player1-score 40)
+      (format "%s won the game!" player1-name)
+
+      (> player2-score 40)
+      (format "%s won the game!" player2-name)
+
+      :else
+      (format "%s-%s" player1-score player2-score))))
 
 ;; TODO: how about the idea to track points and only translate them to the score in the `score` function?
 (defn- update-score [current-score]

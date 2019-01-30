@@ -49,6 +49,10 @@
 ;;; TODO Tests categories
 
 ;; player wins
+(deftest simple-game-first-player-wins
+  (check-score ["P1" 4] ["P2" 0] "P1 won the game!")
+  (check-score ["P1" 4] ["P2" 3] "P1 won the game!")
+  )
 
 
 ;; deuce
