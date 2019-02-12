@@ -1100,12 +1100,16 @@ d-m
 
 
 ;;; 4clojure 53 - leetwinski elegant solution: http://www.4clojure.com/problem/solutions/53
+;; also interesting example of using debux
+(require '[debux.core :refer [dbg dbgn]])
 (defn longest-increasing-subseq [numbers]
-  (or (->> (range (count numbers) 1 -1)
-           (mapcat #(partition % 1 numbers))
-           (filter #(apply < %))
-           first)
+  (or (dbg (->> (range (count numbers) 1 -1)
+                (mapcat #(partition % 1 numbers))
+                (filter #(apply < %))
+                first))
       []))
+
+(longest-increasing-subseq [1 0 1 2 3 0 4 5])
 
 
 ;;; Question on slack about lazy seq
@@ -1140,3 +1144,22 @@ d-m
 ;; => 49995000
 #_(first-duplicate (accumulate-lazy (range 10000)))
 ;; => nil
+
+
+;;; Threading macros gotchas/experiments
+((-> 10 (fn [x] (inc x)))
+ 1)
+
+;; OR
+((-> x10 #(inc %))
+ 1)
+;; => 2
+
+;; BUT
+#_((-> 10 (fn [x] (inc x)))
+ 1)
+;; => macroexpanding error: 10 - failed: vector? 
+#_((-> x10 (fn x10 [x] (inc x)))
+ 1)
+;; => macroexpanding error: x10 - failed: vector? 
+
