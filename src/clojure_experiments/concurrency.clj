@@ -23,6 +23,19 @@
 (logging-future (Thread/sleep 20) (/ 1 0))
 
 
+;;; bindings
+;;; See
+;;; - https://stackoverflow.com/questions/20139463/clojure-binding-vs-with-redefs
+(def ^:dynamic *a*)
+
+;; this will print "*a* is" (*a* is really nil in this case)
+(binding [*a* 2]
+  (doto (Thread. #(println "*a* is " *a*)) .start .join))
+
+;; HOWEVER, using binding-conveyor-fn we can make it work
+;; this will print "*a* is 2"
+(binding [*a* 2]
+  (doto (Thread. (#'clojure.core/binding-conveyor-fn  #(println "*a* is " *a*))) .start .join))
 
 ;;; Claypoole: Threadpool tools for Clojure
 ;;; https://github.com/TheClimateCorporation/claypoole
