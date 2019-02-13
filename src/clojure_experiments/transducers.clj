@@ -529,12 +529,12 @@
 ;; sequence and eduction can be used to apply a transducer chain lazily
 (def cnt1 (atom 0))
 (let [res (eduction (map #(do (swap! cnt1 inc) %)) (range 1000))]
-  (doall (take 10 res))
+  (doall (clojure.core/take 10 res))
   @cnt1)
 
 (def cnt2 (atom 0))
 (let [res (sequence (map #(do (swap! cnt2 inc) %)) (range 1000))]
-  (doall (take 10 res))
+  (doall (clojure.core/take 10 res))
   @cnt2)
 
 ;; eduction starts a new loop for every sequence operation
