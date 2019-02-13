@@ -267,9 +267,10 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 
 
+;; THIS ISN'T ON THE CLASSPATH ANYMORE!
 ;; pomegranate dependencies to classpath with sources and javadocs
 ;; see https://github.com/vise890/pocketbook/blob/master/src/pocketbook/core.clj
-(require '[cemerick.pomegranate :as pomegrante])
+#_(require '[cemerick.pomegranate :as pomegrante])
 ;; following doesn't work, why?
 (comment 
   (pomegrante/add-dependencies
@@ -895,7 +896,7 @@ d-m
 
 ;; aliases require double collons and namespace has to exist
 ::s/my-key
-#_::super/my-key ;=> invalid token
+;; #_::super/my-key ;=> invalid token!
 #_(alias 'superx 'not.exist) ;=> no namespace found
 
 
@@ -1147,7 +1148,7 @@ d-m
 
 
 ;;; Threading macros gotchas/experiments
-((-> 10 (fn [x] (inc x)))
+((-> x10 (fn [x] (inc x)))
  1)
 
 ;; OR

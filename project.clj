@@ -6,6 +6,7 @@
   :dependencies [
                  [org.clojure/clojure "1.10.0"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
+                 ;; and more errors with cheshire lib loading
                  ;; [org.clojure/clojure "1.10.0" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0-alpha2"]
@@ -54,7 +55,8 @@
                  [net.n01se/clojure-jna "1.0.0"]
                  [com.taoensso/truss "1.5.0"]
                  [net.cgrand/xforms "0.18.2"]
-                 [clojure2d "1.0.0"]
+                 ;; this can break cider?! - dev profile plugins: https://github.com/Clojure2D/clojure2d/blob/master/project.clj
+                 [clojure2d "1.1.0"]
                  [datascript "0.16.6"]
                  [lambdaisland/deep-diff "0.0-8"]
                  ;; http://clojure-goes-fast.com/blog/latency-tool-jvm-hiccup-meter/
@@ -91,7 +93,9 @@
                  [net.cgrand/xforms "0.19.0"]
 
 
-                 [thi.ng/geom "1.0.0-RC3"]]
+                 [thi.ng/geom "1.0.0-RC3"]
+                 ;; added explicitly otherwise I was getting "namespace 'cheshire.factory' not found error"
+                 [cheshire "5.8.1"]]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
