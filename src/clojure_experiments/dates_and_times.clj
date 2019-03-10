@@ -25,3 +25,19 @@
   (-> now
       (.plusDays 1)
       (.format dtf)))
+
+
+;; https://stackoverflow.com/questions/54958706/clj-time-coerce-java-sql-date-tostring-decrements-date/54969691#54969691
+(comment
+
+  (require '[clj-time.coerce :as tc])
+  (java.util.TimeZone/setDefault(java.util.TimeZone/getTimeZone "GMT"))
+  (.toString (tc/to-sql-date (tc/from-string "2018-09-28")))
+  ;; => "2018-09-28"
+
+  (java.util.TimeZone/setDefault(java.util.TimeZone/getTimeZone "GMT-1"))
+  (.toString (tc/to-sql-date (tc/from-string "2018-09-28")))
+  ;; => "2018-09-27"
+
+  )
+
