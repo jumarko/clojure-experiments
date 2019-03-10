@@ -6,8 +6,7 @@
   :dependencies [
                  [org.clojure/clojure "1.10.0"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
-                 ;; and more errors with cheshire lib loading
-                 ;; [org.clojure/clojure "1.10.0" :classifier "sources"]
+                 [org.clojure/clojure "1.10.0" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0-alpha2"]
                  [org.apache.pdfbox/pdfbox "2.0.7"]
@@ -38,11 +37,13 @@
                  [me.raynes/conch "0.8.0"]
                  ;; tupelo library with lots of useful functionsl ike `spy`, `lazy-cons`, `with-exception-default`
                  [tupelo "0.9.71"]
-                 [com.clojure-goes-fast/clj-java-decompiler "0.1.0"]
+                 [com.clojure-goes-fast/clj-java-decompiler "0.2.1"]
                  [org.clojars.pntblnk/clj-ldap "0.0.15"]
                  [vvvvalvalval/scope-capture "0.1.4"]
                  [org.clojure/tools.trace "0.7.9"]
                  [nodisassemble "0.1.3"]
+                 ;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
+                 [com.clojure-goes-fast/clj-async-profiler "0.3.0"]
 
                  ;; Problem with old tools.analyzer.jvm version (transitive dep of emmiter):
                  ;; 2. Unhandled clojure.lang.Compiler$CompilerException
