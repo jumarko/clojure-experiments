@@ -96,7 +96,9 @@
 
                  [thi.ng/geom "1.0.0-RC3"]
                  ;; added explicitly otherwise I was getting "namespace 'cheshire.factory' not found error"
-                 [cheshire "5.8.1"]]
+                 [cheshire "5.8.1"]
+                 [org.flatland/ordered "1.5.7"]
+                 ]
   :java-source-paths ["src/java"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"

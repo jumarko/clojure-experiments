@@ -1164,3 +1164,11 @@ d-m
  1)
 ;; => macroexpanding error: x10 - failed: vector? 
 
+
+(first (filter (fn [i] (println "resolved" i) (= i 14)) (range 100)))
+;; => 14
+;; prints numbers from 0 to 31 (chunked seq)
+
+(some (fn [i] (println "resolved" i) (when (= i 14) i)) (range 100))
+;; => 14
+;; printlns only numbers from 0 to 14

@@ -369,10 +369,6 @@
                  stroke
                  stroke-width
                  interleave
-                 bar-width
-                 stroke
-                 stroke-width
-                 interleave
                  bar-width]
           :or   {stroke       "#3385ff"
                  stroke-width 10

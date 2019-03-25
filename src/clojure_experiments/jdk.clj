@@ -4,3 +4,6 @@
 ;;; http://central.maven.org/maven2/org/openjdk/jol/jol-cli
 ;;; org.openjdk.jol/jol-core
 
+(import '(org.openjdk.jol.info ClassLayout))
+
+(.toPrintable (ClassLayout/parseInstance []))
