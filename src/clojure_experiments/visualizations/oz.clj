@@ -21,6 +21,8 @@
   ;; stop when needed
   (oz-server/stop)
 
+  (oz/live-reload!)
+
   )
 
 ;; my primitive example
@@ -73,7 +75,7 @@
 
 ;;; See https://github.com/metasoarous/oz/blob/master/resources/contour-lines.vega.json
 
-(def contour-plot (json/parse-string (slurp (clojure.java.io/resource "contour-lines.vega.json")))) 
+#_(def contour-plot (json/parse-string (slurp (clojure.java.io/resource "contour-lines.vega.json")))) 
 #_(oz/v! contour-plot :mode :vega)
 
 
