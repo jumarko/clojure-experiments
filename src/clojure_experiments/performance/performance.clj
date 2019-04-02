@@ -10,7 +10,6 @@
   (+ (* a a) (* b b)))
 
 
-
 ;;; clj-async-profiler
 ;;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
 ;;; http://clojure-goes-fast.com/blog/clj-async-profiler-tips/
@@ -29,6 +28,7 @@
 (comment
 
   (prof/start {})
+
   ;; or 
   (prof/start {:event :alloc})
 
@@ -47,6 +47,9 @@
 ;;      lock
 ;;      wall
 ;;      itimer
+
+  (prof/serve-files 8888) 
+
 
 ;; end comment
   )

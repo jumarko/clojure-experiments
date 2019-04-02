@@ -64,7 +64,7 @@
                  [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                  [bocko "1.0.0"]
                  ;; OZ - powerful data visualizations https://github.com/metasoarous/oz
-                 [metasoarous/oz "1.4.0"]
+                 [metasoarous/oz "1.6.0-alpha1"]
                  [aerial.hanami "0.2.0"]
                  ;; modern version of sente required by oz
                  #_[com.taoensso/sente "1.13.1"]
@@ -100,6 +100,7 @@
                  [org.flatland/ordered "1.5.7"]
                  ]
   :java-source-paths ["src/java"]
+  :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
