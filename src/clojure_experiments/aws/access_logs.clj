@@ -1,9 +1,9 @@
-(ns clojure-experiments.aws.access-logs
-  "Utilities to process Elastic Beanstalk (nginx) access logs (aka 'webrequests')"
-  (:require [clojure.java.io :as io]
-            [clojure.string :as string]
-            [clojure.spec.alpha :as s])
-  (:import java.io.FilenameFilter))
+{(ns clojure-experiments.aws.access-logs
+   "Utilities to process Elastic Beanstalk (nginx) access logs (aka 'webrequests')"
+   (:require [clojure.java.io :as io]
+             [clojure.string :as string]
+             [clojure.spec.alpha :as s])
+   (:import java.io.FilenameFilter))}
 
 (def sample-line "10.0.0.141 - - [01/Feb/2019:22:07:03 +0000] \"GET /projects/4064/created HTTP/1.1\" 200 3120 \"-\" \"Amazon CloudFront\" \"100.12.186.227, 34.226.14.150\"")
 
@@ -80,6 +80,19 @@
          [project-id (->> project-log-records (map :source-ip) distinct)])
        parsed-log-records))
 
+(defn read-messages-from-json-file
+  "This is useful when you fetch logs via `aws logs` cli, e.g.
+  `aws logs filter-log-events --log-group-name codescene-web-prod-webrequests --start-time 1548979200000 --end-time 1554076799000 --filter-pattern '\"/projects/2667\"' > 2019-02-01_2019-03-31_project-2667.log`"
+  [file-path]
+  (let [full-content (slurp file-path)
+        parsed-json (json/parse-string full-content true)]
+    (->> parsed-json
+         :events
+         (mapv :message))))
+
+(defn rich-data [{:keys [timestamp request-url response-status source-ip]}]
+  (format "%s,%s,%s,%s" timestamp source-ip response-status request-url ))
+
 (comment
 
   (def parsed-logs (parse-access-log-files "access-logs"))
@@ -90,6 +103,23 @@
   (run! #(let [[project-id ips] %]
            (println project-id ":" (string/join ", " ips)))
         source-ips)
+
+
+  ;;; fetching logs via AWS CLI tools is better for automation - can be used like this:
+  ;; access log from 1.2.2019 to 31.3.2019
+  ;; `aws logs filter-log-events --log-group-name xxx-webrequests --start-time 1548979200000 --end-time 1554076799000 --filter-pattern '"/projects/2667"' > 2019-02-01_2019-03-31.log`
+  (def json-messages (read-messages-from-json-file "2019-02-01_2019-03-31.log"))
+  (def parsed-json-messages (parse-access-log json-messages))
+  (def rich-data-output (mapv rich-data parsed-json-messages))
+  (run! println rich-data-output)
+  (spit "2019-02-01_2019-03-31.csv" (string/join "\n" rich-data-output))
+  (def source-ips-output (->> parsed-json-messages (mapv :source-ip) distinct))
+  (run! println source-ips-output)
+  
+  (def messages-by-source-ip (group-by :source-ip parsed-json-messages))
+  ;; check all but the first one which is very common
+  (run! println (drop 1 messages-by-source-ip))
+
 
 
 ;; end comment
