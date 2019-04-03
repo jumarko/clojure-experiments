@@ -1,5 +1,6 @@
 (ns clojure-experiments.stats.commons-math
-  "Examples using apache commons math library: "
+  "Examples using apache commons math library:
+  Check https://generateme.github.io/fastmath/fastmath.stats.html too."
   (:import (org.apache.commons.math3.stat.inference TTest)))
 
 

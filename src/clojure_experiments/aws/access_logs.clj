@@ -1,9 +1,10 @@
-{(ns clojure-experiments.aws.access-logs
-   "Utilities to process Elastic Beanstalk (nginx) access logs (aka 'webrequests')"
-   (:require [clojure.java.io :as io]
-             [clojure.string :as string]
-             [clojure.spec.alpha :as s])
-   (:import java.io.FilenameFilter))}
+(ns clojure-experiments.aws.access-logs
+  "Utilities to process Elastic Beanstalk (nginx) access logs (aka 'webrequests')"
+  (:require [cheshire.core :as json]
+            [clojure.java.io :as io]
+            [clojure.spec.alpha :as s]
+            [clojure.string :as string])
+  (:import java.io.FilenameFilter))
 
 (def sample-line "10.0.0.141 - - [01/Feb/2019:22:07:03 +0000] \"GET /projects/4064/created HTTP/1.1\" 200 3120 \"-\" \"Amazon CloudFront\" \"100.12.186.227, 34.226.14.150\"")
 
