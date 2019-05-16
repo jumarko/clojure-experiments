@@ -338,12 +338,12 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (.printx (->MyR) "ahoj")
 
 
-;; (defn my-fn [x y]
-;;   #break (println "x and y are: " x y)
-;;   #dbg (let [z (+ x y)]
-;;          (dotimes [i 10]
-;;            (println "some side effects: " i))
-;;          (println "z is: " z)))
+(defn my-fn [x y]
+  #break (println "x and y are: " x y)
+  #dbg (let [z (+ x y)]
+         (dotimes [i 10]
+           (println "some side effects: " i))
+         (println "z is: " z)))
 
 #_(my-fn 10 20)
 
