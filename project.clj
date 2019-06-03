@@ -43,7 +43,7 @@
                  [org.clojure/tools.trace "0.7.9"]
                  [nodisassemble "0.1.3"]
                  ;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
-                 [com.clojure-goes-fast/clj-async-profiler "0.3.0"]
+                 [com.clojure-goes-fast/clj-async-profiler "0.4.0"]
 
                  ;; Problem with old tools.analyzer.jvm version (transitive dep of emmiter):
                  ;; 2. Unhandled clojure.lang.Compiler$CompilerException
