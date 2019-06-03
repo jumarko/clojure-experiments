@@ -4,24 +4,13 @@
   Find the largest Lynch Bell number, that is number consisting of unique digits
   and divisible by all such digits/numbers.
   E.g. 135 is divisible by all 1, 3, 5.
-  Note: The number can't contain 0 since division by zero leads to the arithmetic exception.")
+  Note: The number can't contain 0 since division by zero leads to the arithmetic exception."
+  (:require [clojure-experiments.purely-functional.puzzles.util :as u]))
 
 ;;; The largest one could be 123456789
 
-(defn- digits [n]
-  "Returns all digits of given number"
-  (assert (pos? n) "Can only work with positive numbers.")
-  (loop [n n
-         digits '()]
-    (if (> n 9)
-      (recur (quot n 10) (conj digits (rem n 10)))
-      (conj digits n))))
-
-#_(digits 135)
-;; => (1 3 5)
-
 (defn lynch-bell? [n]
-  (let [digs (digits n)
+  (let [digs (u/digits n)
         nonzero-digs (remove zero? digs)
         rems (map #(rem n %) nonzero-digs)]
     (every? zero? rems)))
