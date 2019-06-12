@@ -157,3 +157,34 @@
 
   ;; end 
   )
+
+
+;;; mapv vs map + into when there are multiple stages
+;; alexmiller  when I hear "a bunch of maps", that suggests you might be going through multiple mapv calls on the same data. 
+;; in that case, using `(into [] (comp (map F1) (map F2) (map F3)) V)` 
+;; is going to much more efficient than `(->> V (mapv F1) (mapv F2) (mapv F3))`
+;; in that the former will not create any intermediate vectors
+(comment
+
+  (time (->> (range 10000000)
+             (mapv inc)
+             (mapv #(* % 3))
+             (mapv #(+ % 2))
+             (mapv #(- % 10))
+             (mapv str)
+             (take 10)
+             ))
+  ;; "Elapsed time: 2291.661106 msecs"
+
+  (time (->> 
+         (into [] (comp
+                   (map inc)
+                   (map #(* % 3))
+                   (map #(+ % 2))
+                   (map #(- % 10))
+                   (map str))
+               (range 10000000))
+         (take 10)))
+  ;; "Elapsed time: 1094.197845 msecs"
+
+  )
