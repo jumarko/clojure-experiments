@@ -6,24 +6,25 @@
 (def secrets-log-patterns
   "All patterns matching potentially sensitive data in logs that should be replaced by `secret-replacement-str`.
 
-
-  These patterns should alway follow the format '(Whatever is the matching prefix) MYSCRET'.
+  These patterns should always follow the format '(Whatever is the matching prefix) MYSCRET'.
   - note that the parens are required!
   This will match the log message 'Whatever is the matching prefix MYSCRET'
   and that message will be replaced with 'Whatever is the matching prefix ***'"
-  [#"(Bearer )\w+" ;; OAuth access tokens sent in the Authorization header
-   #"(client_secret=)\w+" ;; OAuth app client secret sent as the request form body param
+  [#"(Bearer )\S+" ;; OAuth access tokens sent in the Authorization header
+   #"([:\"](?:access_token|access-token|refresh_token|refresh-token)(?:\":)? \")[^\"]+" ;; OAuth access/refresh tokens as used internally in Clojure maps or returned by OAuth provider "access_token" API
+   #"(client_secret=)[^\s&]+" ;; OAuth app client secret sent in the request form body param
+   #"(:client-secret \")[^\"]+" ;; OAuth app client secret as stored in a Clojure map
    ])
 
 (def secret-replacement "***")
 
 (defn- mask-secrets [secrets-patterns replacement log-message]
-  (reduce
-   (fn mask-pattern [msg pattern]
-     ;; the original prefix ($1) plus the secret replaced with '***'
-     (clojure.string/replace msg pattern (str "$1" secret-replacement)))
-   log-message
-   secrets-patterns))
+  ((reduce
+    (fn mask-pattern [msg pattern]
+      ;; the original prefix ($1) plus the secret replaced with '***'
+      (clojure.string/replace msg pattern (str "$1" secret-replacement)))
+    log-message
+    secrets-patterns)))
 
 (def mask-secrets-in-log (partial mask-secrets secrets-log-patterns secret-replacement))
 
