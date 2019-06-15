@@ -585,3 +585,43 @@
  (s/or :int (s/and int? pos?)
        :double (s/and double? pos?))
  3)
+
+;;; s/and and generators
+;;; s/and will use only the first predicate for generator and then filter the remaining stuff
+
+(s/exercise (s/and int? pos? odd?))
+;; => ([9 9] [1 1] [3 3] [7 7] [161 161] [11 11] [7 7] [1 1] [101 101] [17 17])
+
+;; but following would fail because odd? doesn't have automatically mapped generator
+#_(s/exercise (s/and odd? int? pos?))
+;; => ExceptionInfo Unable to construct gen at: [] for: odd? #:clojure.spec.alpha{:path [], :form clojure.core/odd?, :failure :no-gen}
+;; clojure.spec.alpha/gensub (alpha.clj:282)
+;; ...
+;; DON'T BE CONFUSED BY CIDER SHOWING DUMMY ERROR!
+;;  1. Unhandled clojure.lang.ExceptionInfo
+;;  Spec assertion failed.
+;;  
+;;  Spec: nil
+;;  Value: nil
+
+
+;;; Sampling specs - every, every-kv
+(s/valid? (s/every int? )
+          (range 100))
+;; => true
+
+(s/valid? (s/every int? )
+          (concat (range 100)
+                  ["ahoj"]))
+;; => false
+
+(s/valid? (s/every int? )
+          (concat (range 100)
+                  ["ahoj"]))
+;; => false
+
+;; sampling specs check only `s/*coll-check-limit` (by default 101)
+(s/valid? (s/every int?)
+          (concat (range 101)
+                  ["ahoj"]))
+;; => true
