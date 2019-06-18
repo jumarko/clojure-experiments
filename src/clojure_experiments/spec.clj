@@ -508,7 +508,6 @@
 ;;; weird and not very useful :(
 (require '[phrase.alpha :refer [defphraser phrase-first]])
 
-[context problem]
 (defphraser :default [_ _] "Invalid value")
 (phrase-first {} ::m {::a 1 ::b 2.0 ::c "ahoj"}) ;=> false!!
 
@@ -542,7 +541,7 @@
 (s/def :b/type string?)
 (s/def ::b-type (s/keys :req-un [:b/type]))
 
-(def int {:type 10})
+(def a {:type 10})
 (def b {:type "number"})
 
 (s/valid? ::a-type a)
@@ -625,3 +624,30 @@
           (concat (range 101)
                   ["ahoj"]))
 ;; => true
+
+;;; s/exercise more clear - generate pairs of examples and conformed values
+;; (s/exercise (s/cat :ns (s/? string?) :name string?))
+(s/def ::namespace (s/cat :ns (s/? string?) :name string?))
+(s/exercise ::namespace)
+'([("" "") {:ns "", :name ""}]
+  [("5") {:name "5"}]
+  [("x4") {:name "x4"}]
+  [("Bt") {:name "Bt"}]
+  [("uK") {:name "uK"}]
+  [("LcJai") {:name "LcJai"}]
+  [("") {:name ""}]
+  [("" "") {:ns "", :name ""}]
+  [("D4f459h") {:name "D4f459h"}]
+  [("qxs") {:name "qxs"}])
+
+(gen/sample (s/gen ::namespace))
+;; => (("" "")
+;;     ("2")
+;;     ("Ao" "jV")
+;;     ("3h" "AR3")
+;;     ("")
+;;     ("231m")
+;;     ("2oy" "")
+;;     ("4De" "0caUY25")
+;;     ("F2A")
+;;     ("jePAaU1" "ks6Ilinby"))
