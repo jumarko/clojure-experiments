@@ -1,7 +1,10 @@
 (ns clojure-experiments.performance.performance
   (:require [clj-async-profiler.core :as prof]
             [clj-java-decompiler.core :as decompiler :refer [decompile disassemble]]
-            [no.disassemble :as nd]))
+            [no.disassemble :as nd]
+            [criterium.core :as crit]
+            [clj-java-decompiler.core :refer [decompile disassemble] :as decompiler]
+            ))
 
 ;;; Boxed math
 
@@ -188,3 +191,38 @@
   ;; "Elapsed time: 1094.197845 msecs"
 
   )
+
+
+;;; ^:const behavior
+;; works on primitive values surprisingly well:
+(def pi1 3.14)
+(defn circ1 [r] (* 2 pi1 r))
+(comment 
+  (time (dotimes [_ 1e5] (circ1 5)))
+  (crit/quick-bench (circ1 5)))
+;; Execution time mean : 18.908745 ns
+;; Execution time std-deviation : 2.226636 ns
+
+
+;; => nil
+
+
+(def ^:const pi2 3.14)
+(defn circ2 [r] (* 2 pi2 r))
+(comment 
+  (time (dotimes [_ 1e5] (circ2 5)))
+  (crit/quick-bench (circ2 5)))
+;; Execution time mean : 5.132742 ns
+;; Execution time std-deviation : 0.213913 ns
+(decompile (* 2 pi1 100))
+(decompile (* 2 pi2 100))
+
+(def mm {:a [1 2 3]})
+(def ^:const mmc {:a [1 2 3]})
+(decompile (assoc mm :b []))
+(decompile (assoc mmc :b []))
+
+(disassemble (assoc mm :b []))
+(disassemble (assoc mmc :b []))
+
+;; but less well on arbitrary objects/values
