@@ -1,7 +1,6 @@
-(ns clojure-experiments.ui-tests
+(ns clojure-experiments.testing.ui-tests
   (:require [etaoin.api :as e]
             [etaoin.keys :as ek]))
-
 
 ;; firefox crashes at `(e/fill driver ...)`
 #_(def driver (e/firefox)) ;; here, a Firefox window should appear
