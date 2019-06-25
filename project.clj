@@ -100,6 +100,8 @@
                  [org.flatland/ordered "1.5.7"]
 
                  [spec-provider "0.4.14"]
+
+                 [tesser.core "1.0.3"]
                  ]
   :java-source-paths ["src/java"]
   :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]

@@ -1,6 +1,8 @@
 (ns clojure-experiments.sequences
   (:require [clojure.string :as str]
-            [criterium.core :as c])
+            [criterium.core :as c]
+            [tesser.core :as t]
+            [tesser.simple :as ts])
   (:import java.io.File))
 
 ;;; lazy sequence: http://insideclojure.org/2015/01/02/sequences/
@@ -73,3 +75,37 @@
              {"05"
               {"02" "low.xml",
                "01" "low.xml"}}}}}))))
+
+;;; tesser for parallel forlds
+(comment
+  (time (ts/reduce + 0 (range 10000000)))
+  ;; => 49999995000000
+  ;; "Elapsed time: 1109.460566 msecs"
+
+  (time (reduce + 0 (range 10000000)))
+  ;; => 49999995000000
+  ;; "Elapsed time: 67.243529 msecs"
+
+  (time (reduce + 0 (range (int 1e9))))
+  ;; "Elapsed time: 13938.97033 msecs"
+
+  (defn- part-range [top threads part-index]
+    (let [part-n (int (/ top threads))
+          start (* part-index part-n)
+          end (* (inc part-index) part-n)]
+      (range start end)))
+
+  (time
+   (let [top 1e9
+         threads 6]
+     (->> (range threads)
+          (map (fn [i] (future (reduce + 0 (part-range top threads i)))))
+          (map deref)
+          (reduce + 0))))
+  ;; 12 threads: "Elapsed time: 3500.113004 msecs"
+  ;; 6 threads: "Elapsed time: 3441.50413 msecs"
+
+
+  ;; end
+  )
+;; => nil
