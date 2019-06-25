@@ -1,4 +1,4 @@
-(ns clojure-experiments.programming-pearls.pearls
+(ns clojure-experiments.books.programming-pearls.pearls
   (:require [clj-memory-meter.core :as mm]))
 
 

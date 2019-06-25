@@ -1,4 +1,4 @@
-(ns clojure-experiments.joy-of-clojure.ch06)
+(ns clojure-experiments.books.joy-of-clojure.ch06)
 
 ;;; lazy quick sort (p. 133) - This is a gem!
 (defn sort-parts [work]

@@ -1,4 +1,4 @@
-(ns clojure-experiments.brave-clojure.zombie-metaphysics
+(ns clojure-experiments.books.brave-clojure.zombie-metaphysics
   (:require [clojure.string :as str]))
 
 (def example-1 "Before I got married I had six theories about bringing up children; now I have six children and no theories.\n-- John Wilmot (Earl of Rochester) \n")
