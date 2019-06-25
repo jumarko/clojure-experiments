@@ -48,5 +48,9 @@
   (dictionary-anagrams "car" my-dictionary)
   ;; => ["arc" "car" "rca"]
 
+  (time (dictionary-anagrams "tire" my-dictionary))
+  ;; => ["rite" "tier" "tire"]
+  ;; "Elapsed time: 6.253211 msecs"
+
   ;; end
   )
