@@ -1,9 +1,16 @@
 (ns clojure-experiments.parsers
-  (:require [clojure.tools.analyzer.jvm :as ana]
+  (:require [clojure.java.io :as io]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as st]
+            [clojure.tools.analyzer.jvm :as ana]
             #_[clojure.tools.emitter.jvm :as e]
             [clojure.tools.reader :as r]
             [clojure.tools.reader.edn :as re]
             [net.cgrand.sjacket.parser :as sjp]))
+
+;;;; See `clojure-experiments.parsers.spec` 
+;;;; =========================================
+
 
 ;;; tools.reader
 
@@ -38,3 +45,6 @@
 
 ;;; tools.emitter
 #_(e/eval '(+ 1 2) {:debug true})
+
+
+
