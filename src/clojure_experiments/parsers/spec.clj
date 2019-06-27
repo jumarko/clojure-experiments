@@ -5,7 +5,8 @@
 ;;; TODO
 ;;; experiment checking of specs for all applicable function calls inside a ns
 ;;; via tools.analyzer.jvm
-;;; https://github.com/gfredericks/clj-usage-graph/blob/master/src/com/gfredericks/clj_usage_graph/usages.clj#L8
+;;; - https://github.com/gfredericks/clj-usage-graph/blob/master/src/com/gfredericks/clj_usage_graph/usages.clj#L8
+;;; - AST QuickRef: http://clojure.github.io/tools.analyzer.jvm/spec/quickref.html#instance-call
 (require '[clojure.tools.analyzer.jvm :as a]
          '[clojure.tools.analyzer.ast :refer [nodes]])
 

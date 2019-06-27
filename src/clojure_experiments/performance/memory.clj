@@ -1,5 +1,6 @@
 (ns clojure-experiments.performance.memory
-  (:require [clj-memory-meter.core :as mm])
+  (:require [clj-memory-meter.core :as mm]
+            [cljol.dig9 :as cljol])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
 
@@ -9,7 +10,13 @@
   (def array-size (* 2 1024 1024))
   (def test-data (int-array array-size)))
 
-;;; Comparing sizes of various collections
+
+;;; cljol
+;;; doesn't play well with large data structures: https://github.com/jafingerhut/cljol/issues/2
+(def my-map {:a 1 :b 2 :c 3})
+#_(cljol/view my-map)
+
+;;; Memory-Meter: Comparing sizes of various collections
 
 ;; vectors vs seqs - 1,000,000 elements
 ;; => vector is vastly more efficient
