@@ -1,5 +1,9 @@
 (ns clojure-experiments.parsers.spec
-  "Experiment with 'static' analysis of function forms leveraging fspec-s.")
+  "Experiment with 'static' analysis of function forms leveraging fspec-s."
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
+            [clojure.tools.analyzer.jvm :as ana]
+            [clojure.tools.analyzer.ast :refer [nodes]]))
 
 ;;;===============================================
 ;;; TODO
@@ -7,16 +11,15 @@
 ;;; via tools.analyzer.jvm
 ;;; - https://github.com/gfredericks/clj-usage-graph/blob/master/src/com/gfredericks/clj_usage_graph/usages.clj#L8
 ;;; - AST QuickRef: http://clojure.github.io/tools.analyzer.jvm/spec/quickref.html#instance-call
-(require '[clojure.tools.analyzer.jvm :as a]
-         '[clojure.tools.analyzer.ast :refer [nodes]])
+
 
 (defn instrumentable-functions
   "Enumerates all given namespaces and returns symbols representing all functions
   that are instrumentable as per `stest/instrumentable-syms`."
   [ns-syms]
-  (let [instrumentable-syms (st/instrumentable-syms)]
+  (let [instrumentable-syms (stest/instrumentable-syms)]
     (->> ns-syms
-         (st/enumerate-namespace)
+         (stest/enumerate-namespace)
          (filterv #(contains? instrumentable-syms %))
          set)))
 
