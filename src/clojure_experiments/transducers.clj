@@ -664,3 +664,46 @@
 (into [] x/str ["foo" "bar" "baz"])
 ;; ultimate is `x/reduce`
 (into [] (x/reduce +) [3 5 7])
+
+
+;;; Introduction to transducers: https://nbviewer.jupyter.org/github/amitramon/clojure-keynotes/blob/master/notebooks/transducers.ipynb
+
+(def iris-data
+  [{:sepal_length 5.1 :sepal_width 3.5 :petal_length 1.4 :petal_width 0.2 :species "setosa"}
+   {:sepal_length 6.9 :sepal_width 3.1 :petal_length 4.9 :petal_width 1.5 :species "versicolor"}
+   {:sepal_length 4.7 :sepal_width 3.2 :petal_length 1.3 :petal_width 0.2 :species "setosa"}
+   {:sepal_length 7.1 :sepal_width 3.0 :petal_length 5.9 :petal_width 2.1 :species "virginica"}
+   {:sepal_length 4.6 :sepal_width 3.1 :petal_length 1.5 :petal_width 0.2 :species "setosa"}
+   {:sepal_length 5.0 :sepal_width 3.6 :petal_length 1.4 :petal_width 0.2 :species "setosa"}
+   {:sepal_length 7.0 :sepal_width 3.2 :petal_length 4.7 :petal_width 1.4 :species "versicolor"}
+   {:sepal_length 6.5 :sepal_width 2.8 :petal_length 4.6 :petal_width 1.5 :species "versicolor"}
+   {:sepal_length 4.9 :sepal_width 3.0 :petal_length 1.4 :petal_width 0.2 :species "setosa"}
+   {:sepal_length 5.7 :sepal_width 2.8 :petal_length 4.5 :petal_width 1.3 :species "versicolor"}
+   {:sepal_length 6.3 :sepal_width 3.3 :petal_length 6.0 :petal_width 2.5 :species "virginica"}
+   {:sepal_length 6.4 :sepal_width 3.2 :petal_length 4.5 :petal_width 1.5 :species "versicolor"}
+   {:sepal_length 5.8 :sepal_width 2.7 :petal_length 5.1 :petal_width 1.9 :species "virginica"}
+   {:sepal_length 5.5 :sepal_width 2.3 :petal_length 4.0 :petal_width 1.3 :species "versicolor"}
+   {:sepal_length 6.3 :sepal_width 2.9 :petal_length 5.6 :petal_width 1.8 :species "virginica"}])
+
+;; first try with usual lazy seqs (my solution)
+(->> iris-data
+     (filter #(= "virginica" (:species %)))
+     (random-sample 0.6)
+     (map (fn [{l :petal_length w :petal_width}] {:petal_ratio (/ l w)
+                                                  :petal_area (* l w)})))
+
+
+;; now we transducers - decoupled
+(def xf-prepare-data (comp
+                      (filter #(= (:species %) "virginica"))
+                      (random-sample 0.6)))
+
+(def xf-calculate (comp
+                   (map (fn [item] [(:petal_length item) (:petal_width item)]))
+                   (map (fn [[l w]] {:petal_ratio (/ l w) :petal_area (* l w)}))))
+
+(def xf (comp xf-prepare-data xf-calculate))    
+
+(transduce xf conj iris-data)
+
+
