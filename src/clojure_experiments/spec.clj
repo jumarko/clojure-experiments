@@ -226,6 +226,11 @@
 #_(zero-or-one -10)
 
 
+(s/valid? (s/? (s/cat :my-int pos-int?
+                      :something-else (s/+ string?)))
+          [1 "" "a"])
+;; => true
+
 ;;; Building test.check generators - great talk from Gary Frederics:
 ;;; https://www.youtube.com/watch?v=F4VZPxLZUdA&t=174s
 
