@@ -1,4 +1,4 @@
-(ns clojure-experiments.1.10.protocols)
+(ns clojure-experiments.clojure-1.10.protocols)
 
 (defprotocol component
   (start [c])

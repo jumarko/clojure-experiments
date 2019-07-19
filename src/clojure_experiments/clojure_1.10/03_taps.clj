@@ -1,4 +1,4 @@
-(ns clojure-experiments.1.10.03-taps)
+(ns clojure-experiments.clojure-1.10.03-taps)
 
 ;;;; taps: https://github.com/clojure/clojure/blob/master/changes.md#23-tap
 ;;;; https://www.birkey.co/2018-10-26-datafy-and-tap%3E-in-clojure-1.10.html

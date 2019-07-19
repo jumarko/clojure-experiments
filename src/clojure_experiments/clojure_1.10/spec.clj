@@ -1,4 +1,4 @@
-(ns clojure-experiments.1.10.spec
+(ns clojure-experiments.clojure-1.10.spec
   (:require [clojure.spec.alpha :as s]))
 
 

@@ -1,4 +1,4 @@
-(ns clojure-experiments.1.10.symbol)
+(ns clojure-experiments.clojure-1.10.symbol)
 
 ;;; symbol - able to get namespaced symbol from Var now:
 ;;; https://github.com/clojure/clojure/blob/master/changes.md#34-other-enhancements

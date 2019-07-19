@@ -1,9 +1,9 @@
-(ns clojure-experiments.1.10.error-messages)
+(ns clojure-experiments.clojure-1.10.01-error-messages)
 
 ;;;; https://www.reddit.com/r/Clojure/comments/9nb80n/clojure_1100rc1/?st=joi9pk1q&sh=65782ca6
 
 
-:::5
+;; :::5
 ;;=> Syntax error reading source at (2:0). Invalid token: :::5
 ;; VS 1.9
 ;;   RuntimeException Invalid token: :::5  clojure.lang.Util.runtimeException (Util.java:221)
