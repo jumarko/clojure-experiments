@@ -1,4 +1,4 @@
-(ns clojure-experiments.courses.lambdaisland.048-for
+(ns clojure-experiments.lambdaisland.048-for
   "https://lambdaisland.com/episodes/list-comprehension-clojure-for"
   (:require [clojure.string :as str]))
 
