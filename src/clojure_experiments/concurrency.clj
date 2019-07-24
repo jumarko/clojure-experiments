@@ -1,7 +1,8 @@
 (ns clojure-experiments.concurrency
   "Namespace related to concurrency and parallelism features of Clojure and related libraries."
   (:require [com.climate.claypoole :as cp]
-            [criterium.core :as c]))
+            [criterium.core :as c]
+            [taoensso.timbre :as log]))
 
 
 ;;; How to install UncaughtExceptionHandler for futures?
@@ -10,7 +11,7 @@
    (uncaughtException [_ thread ex]
      (println ))))
 ;; unforunatelly, uncaught handler doesn't apply to futures
-(future (do (Thread/sleep 20) (/ 1 0)))
+#_(future (do (Thread/sleep 20) (/ 1 0)))
 
 
 (defmacro logging-future [& body]
@@ -20,7 +21,31 @@
             (println e#)
             (throw e#)))))
 
-(logging-future (Thread/sleep 20) (/ 1 0))
+#_(logging-future (Thread/sleep 20) (/ 1 0))
+
+
+;;; Now we get some extra goodies by preserving also the client stacktrace
+;;; See https://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
+(defn- client-trace []
+  (Exception. "Client stack trace"))
+
+(defn logging-future+* [body]
+  `(let [client-stack-trace# (client-trace)]
+     (future 
+       (try ~@body
+            (catch Exception e#
+              (log/error e#)
+              (log/error client-stack-trace# "Submitting client stack-trace:")
+              (throw e#))))))
+
+
+(defmacro logging-future+
+  "Logs any error that occurs during the execution of given body in a `future`
+  *including* the client stack trace at the time of submitting the future for execution."
+  [& body]
+  (logging-future+* body))
+
+#_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
 
 ;;; bindings
@@ -29,12 +54,12 @@
 (def ^:dynamic *a*)
 
 ;; this will print "*a* is" (*a* is really nil in this case)
-(binding [*a* 2]
+#_(binding [*a* 2]
   (doto (Thread. #(println "*a* is " *a*)) .start .join))
 
 ;; HOWEVER, using binding-conveyor-fn we can make it work
 ;; this will print "*a* is 2"
-(binding [*a* 2]
+#_(binding [*a* 2]
   (doto (Thread. (#'clojure.core/binding-conveyor-fn  #(println "*a* is " *a*))) .start .join))
 
 ;;; Claypoole: Threadpool tools for Clojure
