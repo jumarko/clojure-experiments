@@ -7,6 +7,7 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [criterium.core :as c]
+            [flatland.useful.debug :as ud]
             [seesaw.core :as see]
             [tupelo.core :as t]))
 
@@ -1172,3 +1173,12 @@ d-m
 (some (fn [i] (println "resolved" i) (when (= i 14) i)) (range 100))
 ;; => 14
 ;; printlns only numbers from 0 to 14
+
+
+;;; useful by Alan Malloy
+;;; https://github.com/clj-commons/useful
+
+;; macro ? for debugging -> very primitive
+#_(ud/? (map (fn [x] (inc x))
+           (range 10)))
+

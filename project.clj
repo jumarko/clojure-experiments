@@ -102,6 +102,11 @@
                  [spec-provider "0.4.14"]
 
                  [tesser.core "1.0.3"]
+
+                 [clj-http "3.10.0"]
+
+                 ;; shell scripting experiments
+                 [com.palletops/stevedore "0.8.0-beta.7"]
                  ]
   :java-source-paths ["src/java"]
   :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]
