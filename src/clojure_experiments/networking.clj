@@ -1,5 +1,7 @@
 (ns clojure-experiments.networking
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clj-http.client :as http])
+  )
 
 
 ;; How to check TLS certificate expiration date with Clojure?
@@ -13,3 +15,11 @@
 ;; => #inst "2019-04-17T09:15:00.000-00:00"
     
 
+;;; clj-http playground: https://github.com/dakrone/clj-http
+;;; Check https://github.com/public-apis/public-apis for list of Public APIs 
+(comment
+
+  (def facts (http/get "https://cat-fact.herokuapp.com/facts" {:as :json}))
+  
+  ;; end
+  )
