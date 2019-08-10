@@ -1,4 +1,4 @@
-(ns clojure-experiments.clojure-1.10.spec
+(ns clojure-experiments.clojure-1-10.spec
   (:require [clojure.spec.alpha :as s]))
 
 
@@ -26,7 +26,8 @@
 ;;; Improved error printing
 ;;; ----------------------------------------------------------------------------
 
-(let [a 2 b ])
+(comment
+  (let [a 2 b ])
 ;;   Syntax error macroexpanding clojure.core/let at (spec.clj:5:1).
 ;;   () - failed: Insufficient input at: [:bindings :init-expr] spec: :clojure.core.specs.alpha/bindings
 
@@ -34,3 +35,6 @@
 ;;   CompilerException clojure.lang.ExceptionInfo: Call to clojure.core/let did not conform to spec:
 ;;   In: [0] val: () fails spec: :clojure.core.specs.alpha/bindings at: [:args :bindings :init-expr] predicate: any?,  Insufficient input
 ;;   #:clojure.spec.alpha{:problems [{:path [:args :bindings :init-expr], :reason "Insufficient input", :pred clojure.core/any?, :val (), :via [:clojure.core.specs.alpha/bindings :clojure.core.specs.alpha/bindings], :in [0]}], :spec #object[clojure.spec.alpha$regex_spec_impl$reify__2436 0x1036e1ce "clojure.spec.alpha$regex_spec_impl$reify__2436@1036e1ce"], :value ([a 2 b]), :args ([a 2 b])}, compiling:(*cider-repl codescene-cloud/web:localhost:62509(clj)*:1251:37) 
+
+  ;; end
+)

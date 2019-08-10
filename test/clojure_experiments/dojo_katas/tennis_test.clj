@@ -1,6 +1,6 @@
 (ns clojure-experiments.dojo-katas.tennis-test
   (:require [clojure-experiments.dojo-katas.tennis :as tennis]
-            [clojure.test :refer [deftest is testing use-fixtures]]))
+            [clojure.test :refer [deftest is testing]]))
 
 (defn new-game []
   (tennis/make-game "P1" "P2"))

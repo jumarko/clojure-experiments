@@ -37,13 +37,18 @@
                  [me.raynes/conch "0.8.0"]
                  ;; tupelo library with lots of useful functionsl ike `spy`, `lazy-cons`, `with-exception-default`
                  [tupelo "0.9.71"]
+
                  [com.clojure-goes-fast/clj-java-decompiler "0.2.1"]
+                 ;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
+                 [com.clojure-goes-fast/clj-async-profiler "0.4.0"]
+                 ;; http://clojure-goes-fast.com/blog/latency-tool-jvm-hiccup-meter/
+                 [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
+                 [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
+
                  [org.clojars.pntblnk/clj-ldap "0.0.15"]
                  [vvvvalvalval/scope-capture "0.1.4"]
                  [org.clojure/tools.trace "0.7.9"]
                  [nodisassemble "0.1.3"]
-                 ;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
-                 [com.clojure-goes-fast/clj-async-profiler "0.4.0"]
 
                  ;; Problem with old tools.analyzer.jvm version (transitive dep of emmiter):
                  ;; 2. Unhandled clojure.lang.Compiler$CompilerException
@@ -60,8 +65,6 @@
                  [clojure2d "1.1.0"]
                  [datascript "0.16.6"]
                  [lambdaisland/deep-diff "0.0-8"]
-                 ;; http://clojure-goes-fast.com/blog/latency-tool-jvm-hiccup-meter/
-                 [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                  [bocko "1.0.0"]
                  ;; OZ - powerful data visualizations https://github.com/metasoarous/oz
                  [metasoarous/oz "1.6.0-alpha1"]
@@ -107,6 +110,9 @@
 
                  ;; shell scripting experiments
                  [com.palletops/stevedore "0.8.0-beta.7"]
+
+                 ;; simple profiling
+                 [com.taoensso/tufte "2.0.1"]
                  ]
   :java-source-paths ["src/java"]
   :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]

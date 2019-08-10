@@ -1,4 +1,4 @@
-(ns clojure-experiments.clojure-1.10.04-prepl
+(ns clojure-experiments.clojure-1-10.04-prepl
   (:require [clojure.core.server :refer [prepl io-prepl remote-prepl]:as server]
             [clojure.java.io :as io])
   (:import [clojure.lang LineNumberingPushbackReader]

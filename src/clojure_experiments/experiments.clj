@@ -262,9 +262,10 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 
 ;;; Apache POI
 ;;; https://groups.google.com/forum/#!topic/clojure/XXVTXNHWejQ
-(import 'org.apache.poi.xssf.eventusermodel.XLSX2CSV)
-(def my-excel-file "test.xlsx")
-#_(XLSX2CSV/main (into-array String [my-excel-file]))
+(comment
+  (import 'org.apache.poi.xssf.eventusermodel.XLSX2CSV)
+  (def my-excel-file "test.xlsx")
+  (XLSX2CSV/main (into-array String [my-excel-file])))
 
 
 
@@ -290,7 +291,7 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 ;; simple example of using `defprotocol`
 (defprotocol MyAnkiProtocol
   "Learn, understand and review."
-  (-learn [this x] "Learn x throughly.")
+  (-learn [this x] "Learn x thoroughly.")
   (-understand [this x] "Try to understand everything about x")
   (-review [this x] "Review x regularly - spaced repetition"))
 
@@ -339,14 +340,17 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 (.printx (->MyR) "ahoj")
 
 
-(defn my-fn [x y]
-  #break (println "x and y are: " x y)
-  #dbg (let [z (+ x y)]
-         (dotimes [i 10]
-           (println "some side effects: " i))
-         (println "z is: " z)))
+(comment
+  
+  ;; note: #break and #dbg doesn't work outside cider, in particular it fails when you try `lein uberjar`
+  ;; (defn my-fn [x y]
+  ;;   #break (println "x and y are: " x y)
+  ;;   #dbg (let [z (+ x y)]
+  ;;          (dotimes [i 10]
+  ;;            (println "some side effects: " i))
+  ;;          (println "z is: " z)))
 
-#_(my-fn 10 20)
+  #_(my-fn 10 20))
 
 
 ;; reading octal numbers
@@ -904,19 +908,20 @@ d-m
 ;;; Profile with tufte: https://github.com/ptaoussanis/tufte#how-does-tufte-compare-to-hugoduncancriterium
 
 (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
-;; We'll request to send `profile` stats to `println`:
-(tufte/add-basic-println-handler! {})
+(comment
+  ;; We'll request to send `profile` stats to `println`:
+  (tufte/add-basic-println-handler! {})
 
 ;;; Let's define a couple dummy fns to simulate doing some expensive work
-(defn get-x [] (Thread/sleep 500)             "x val")
-(defn get-y [] (Thread/sleep (rand-int 1000)) "y val")
+  (defn get-x [] (Thread/sleep 500)             "x val")
+  (defn get-y [] (Thread/sleep (rand-int 1000)) "y val")
 
-;; How do these fns perform? Let's check:
-(profile ; Profile any `p` forms called during body execution
- {} ; Profiling options; we'll use the defaults for now
- (dotimes [_ 5]
-   (p :get-x (get-x))
-   (p :get-y (get-y))))
+  ;; How do these fns perform? Let's check:
+  (profile ; Profile any `p` forms called during body execution
+   {} ; Profiling options; we'll use the defaults for now
+   (dotimes [_ 5]
+     (p :get-x (get-x))
+     (p :get-y (get-y)))))
 
 
 (comment 

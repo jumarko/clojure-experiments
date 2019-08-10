@@ -1,4 +1,4 @@
-(ns clojure-experiments.clojure-protocols
+(ns clojure-experiments.protocols
   "Examples showing the clojure protocols, starting with Sean's Devlin talk
   'Clojure Protocols': https://www.youtube.com/watch?v=kQhOlWXXl2I"
   (:import org.joda.time.DateTime))

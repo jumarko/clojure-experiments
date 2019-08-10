@@ -1,4 +1,4 @@
-(ns clojure-experiments.clojure-1.10.02-datafy
+(ns clojure-experiments.clojure-1-10.02-datafy
   (:require [clojure.core.protocols :as p]
             [clojure.datafy :as d]
             [clojure.java.data :as java-data]
