@@ -1,6 +1,7 @@
 (ns clojure-experiments.leiningen.deps
   "
   See https://github.com/technomancy/leiningen/blob/master/src/leiningen/deps.clj.
+  Related cider issue: https://github.com/clojure-emacs/cider/issues/1666
 
   Try to walk dependencies and see if you can attach source jars to the :resource-paths."
   (:require [clojure.java.io :as io]
