@@ -8,7 +8,7 @@
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
                  [org.clojure/clojure "1.10.0" :classifier "sources"]
                  [org.clojure/tools.deps.alpha "0.5.460"]
-                 [org.clojure/test.check "0.10.0-alpha2"]
+                 [org.clojure/test.check "0.10.0"]
                  [org.apache.pdfbox/pdfbox "2.0.7"]
                  [net.java.dev.jna/jna "4.4.0"]
                  [org.flatland/useful "0.11.5"]
@@ -56,7 +56,7 @@
                  ;; 1. Caused by java.lang.IllegalAccessError
                  ;;    resolve-var does not exist
                  #_[org.clojure/tools.emitter.jvm "0.1.0-beta5"]
-                 [com.gfredericks/test.chuck "0.2.9"]
+                 [com.gfredericks/test.chuck "0.2.10"]
                  [phrase "0.3-alpha3"]
                  [net.n01se/clojure-jna "1.0.0"]
                  [com.taoensso/truss "1.5.0"]
