@@ -6,6 +6,19 @@
             [clojure.string :as string])
   (:import java.io.FilenameFilter))
 
+;;;; You can use this parse the logs manually
+;;;; 
+;;;; BUT you can also use a regex and Cloudwatch insights to parse in the AWS console!
+;;;; Example query parsing source IP address into the sourceAddr field:
+;;;;   fields @timestamp, @message
+;;;;   | parse /^.*"(?<sourceAddr>\d+\.\d+\.\d+\.\d+), (?<targetAddr>\d+\.\d+\.\d+\.\d+)"/
+;;;;   | stats count(*) as sourceAddrRequestCount by sourceAddr 
+;;;;   | sort sourceAddrRequestCount desc
+;;;; 
+;;;; -----------------------------------------------------------------------------------------------
+
+
+
 (def sample-line "10.0.0.141 - - [01/Feb/2019:22:07:03 +0000] \"GET /projects/4064/created HTTP/1.1\" 200 3120 \"-\" \"Amazon CloudFront\" \"100.12.186.227, 34.226.14.150\"")
 
 (def ip-address-pattern "(\\d+\\.\\d+\\.\\d+\\.\\d+)")
