@@ -2,42 +2,12 @@
   "One strategy to develop properties - functionality.
   This is the most intuitive strategy for people that already did unit testing."
   (:require
-   [clojure.test :refer [deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.properties :as prop]
    [clojure.test.check.generators :as gen]
-   [clojure.spec.alpha :as s]))
+   [clojure.spec.alpha :as s]
+   [clojure-experiments.purely-functional.property-based-testing.mergesort :refer [mergesort]]))
 
-;;; Implementation to test
-(defn merge* [l1 l2]
-  (lazy-seq
-   (cond
-     (empty? l1) l2
-     (empty? l2) l1
-
-     (< (first l1) (first l2))
-     (cons (first l1) (merge* (rest l1) l2))
-
-     :else
-     (cons (first l2) (merge* l1 (rest l2))))))
-
-(defn mergesort* [v]
-  (case (count v)
-    0 ()
-    1 (seq v)
-    (let [half (quot (count v) 2)]
-      (merge*
-       (mergesort* (subvec v 0 half))
-       (mergesort* (subvec v half))))))
-
-(defn mergesort [ls]
-  (seq (mergesort* (vec ls))))
-
-(mergesort (reverse (range 10)))
-;; => (0 1 2 3 4 5 6 7 8 9)
-
-
-;;;; Actual tests
 ;;;; Testing functionality = ensuring it does what is is supposed together
 ;;;; Caveat: you can't reimplement the function under the test (e.g. implementing mergesort to test mergesort)
 
@@ -48,10 +18,6 @@
   (prop/for-all [numbers (gen/vector gen/large-integer)]
                 (= (sort numbers)
                    (mergesort numbers))))
-;; => doesn't work with empty list/vector
-;; => fix the implementation (remove `seq` call in `mergesort`)
-(defn mergesort [ls]
-  (mergesort* (vec ls)))
 
 ;;; If you don't have a "model" already built-in in your language:
 ;;; you can use simpler model (like hashmap used for testing database)
