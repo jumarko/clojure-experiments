@@ -70,6 +70,11 @@
    (dotimes [_ 10] (reduce * (range 10000000))))
 
 
+  ;; profile external process
+  (def pid 64735)
+  (prof/start {:width 1800 :pid pid})
+  (Thread/sleep 5000)
+  (prof/stop {:width 1800 :pid pid})
 
   ;; try again
   (prof/profile {:width 2400}
@@ -226,3 +231,44 @@
 (disassemble (assoc mmc :b []))
 
 ;; but less well on arbitrary objects/values
+
+
+;;; Interesting performance issue that Andy Fingerhunt hit: (function faster the first time it's called)
+;;; https://github.com/jafingerhut/leeuwenhoek/blob/master/doc/runs-slower-after-first.md
+;;; cgrand 10:19 AM @andy.fingerhut your loop is in return position and returns a primitive, the function return type is object, this return type mismatch is the root of the issue:
+;;;    No clear idea. I believe it has something to do with on stack replacement, and later realizing that the replacement sig does not match the replacee sig  maybe even pushing some boxing inside the loop. Inspecting assembly could help figure out.
+(defn foo2 [n]
+  (let [n (int n)]
+    (loop [i (int 0)]
+      (if (< i n)
+        (recur (inc i))
+        i))))
+#_(time (foo2 100000000))
+;; "Elapsed time: 53.865585 msecs"
+#_(time (foo2 100000000))
+;; "Elapsed time: 226.535655 msecs"
+
+;; return object
+(defn foo2 [n]
+  (let [n (int n)]
+    (loop [i (int 0)]
+      (if (< i n)
+        (recur (inc i))
+        :foo))))
+#_(time (foo2 100000000))
+;; "Elapsed time: 57.383683 msecs"
+#_(time (foo2 100000000))
+;; "Elapsed time: 56.647265 msecs"
+
+;; return primitive
+(defn ^long foo2 [n]
+  (let [n (int n)]
+    (loop [i (int 0)]
+      (if (< i n)
+        (recur (inc i))
+        i))))
+#_(time (foo2 100000000))
+;; "Elapsed time: 51.049683 msecs"
+#_(time (foo2 100000000))
+;; "Elapsed time: 47.310656 msecs"
+
