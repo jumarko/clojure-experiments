@@ -8,11 +8,8 @@
 
 (defn camel-case
   [s]
-  (let [capitalize (fn [word] (apply str
-                                     (Character/toUpperCase (first word))
-                                     (rest word)))
-        [first-word & next-words] (clojure.string/split s #"-")
-        capitalized (map capitalize next-words)]
+  (let [[first-word & next-words] (clojure.string/split s #"-")
+        capitalized (map clojure.string/capitalize next-words)]
     (apply str first-word capitalized)))
 
 (deftest camel-case-test
