@@ -42,3 +42,10 @@
         (is (= 3628800
                (count permutations))))))
 
+(defn resolve-url [c]
+  (let [url "https://docs.oracle.com/en/java/javase/11/docs/api/{JAVA_MODULE_NAME}/"
+        klass (Class/forName c)
+        module-name (.getName (.getModule klass))]
+    ;; NPE here!
+    (.replace url "{JAVA_MODULE_NAME}" module-name)))
+#_(resolve-url "org.apache.commons.codec.binary.Base64")
