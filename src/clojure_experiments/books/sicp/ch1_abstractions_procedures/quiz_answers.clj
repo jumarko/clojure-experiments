@@ -3,7 +3,7 @@
   (:require [clojure.test :refer [deftest is are testing]]))
 
 
-;; iterative improvement
+;;; iterative improvement (sqrt - p. 22, 25, 30)
 ;; how about helper fn?
 ;; the idea is to start with initial guess and improve until satisfied
 (defn- abs [x]
