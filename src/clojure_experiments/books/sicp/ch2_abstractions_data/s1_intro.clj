@@ -3,7 +3,8 @@
   It demonstrates the technique 'constructors & selectors' using rational numbers as an example
   (sections 2.1.1 and 2.1.2 - Abstraction Barriers).
   2.1.4 contains an extended exercise - Interval Arithmetic."
-  (:require [clojure.test :refer [are deftest is testing]]))
+  (:require [clojure.test :refer [are deftest is testing]]
+            [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square sqrt]]))
 
 
 ;;; 2.1.1 - Rational Numbers (p. 83)
@@ -142,9 +143,179 @@
 ;;=> Funny enough, this is already done thanks to the `mod` implementation in Clojure
 
 
+;;; 2.1.2 Abstraction Barriers
+;;; add-rat, sub-rat, mult-rat, div-rat makes higher-level abstraction barrier
+;;; make-rat, numer, denom are another lower-level barrier
+;;; even more level is cons, car, cdr,
+;;; etc.
+
+;;; Exercise 2.2. (p. 89)
+;;; Constructors and selectors for line segments and their start/end points:
+;;; Solutions: http://community.schemewiki.org/?sicp-ex-2.2
+(defn make-point [x y]
+  [x y])
+(defn x-point [point] (first point))
+(defn y-point [point] (second point))
+
+(defn make-segment [start-point end-point]
+  [start-point end-point])
+(defn start-segment [segment] (first segment))
+(defn end-segment [segment] (second segment))
+
+(defn- avg [x y]
+  (/ (+ x y)  2))
+(defn midpoint-segment [segment]
+  (let [start (start-segment segment)
+        end (end-segment segment)]
+    (make-point (avg (x-point start) (x-point end))
+                (avg (y-point start) (y-point end)))))
+
+(defn print-point [point]
+  (printf "\n(%d,%d)" (x-point point) (y-point point)))
+
+(def midpoint (midpoint-segment
+               (make-segment (make-point 20 100)
+                             (make-point 40 70))))
+#_(print-point midpoint)
+;;=> (30,85)
+
+;; To be fair, the implementation above is quite complex without having any obvious benefits
+;; => More conventional  Clojure way:
+
+(defn midpoint-segment [[[start-x start-y :as segment-start]
+                         [end-x end-y :as segment-end]]]
+  [(avg start-x end-x) (avg start-y end-y)])
+
+(def midpoint (midpoint-segment [[20 100]
+                                 [40 70]]))
+#_(print-point midpoint)
+;;=> (30,85)
+
+;; but hashmap-based impl would be even better!
+(defn midpoint-segment [{:keys [start end]}]
+  [(avg (:x start) (:x end))
+   (avg (:y start) (:y end))])
+
+(def midpoint (midpoint-segment {:start {:x 20 :y 100}
+                                 :end {:x 40 :y 70}}
+                                ))
+#_(print-point midpoint)
+;;=> (30,85)
 
 
+;; From solutions: interesting alternative: http://community.schemewiki.org/?sicp-ex-2.2
+;; > I think the above solution misses part of the point about abstraction barriers; midpoint-segment reaches through both layers to achieve its goal.
+(defn average-points [a b]
+  (make-point (avg (x-point a) (x-point b)) 
+              (avg (y-point a) (y-point b)))) 
+
+(defn midpoint-segment [seg] 
+  (average-points (start-segment seg) 
+                  (end-segment seg))) 
 
 
+;;; Ex. 2.3. Rectangles
+;;; Using above 'segments' abstraction build 'rectangles' on top of that.
+;;; Implement representation-independent functions `perimeter` and `area`
+;;; that don't change if you change your representation of rectangles (try that!)
+;;; Solutions here: http://community.schemewiki.org/?sicp-ex-2.3 (not very interesting)
+(defn make-rect
+  "Makes a new rectangle consisting given line segments."
+  [a b c d]
+  [a b c d])
+(defn rect-a [rect] (first rect))
+(defn rect-b [rect] (second rect))
+(defn rect-c [rect] (nth rect 2))
+(defn rect-d [rect] (last rect))
+
+;; helper functions for perimeter and area
+(defn- abs [x] (if (pos? x) x (- x)))
+
+(defn- length [segment]
+  (let [start (start-segment segment)
+        end (end-segment segment)
+        x-diff (abs (- (x-point start) (x-point end)))
+        y-diff (abs (- (y-point start) (y-point end)))]
+    (sqrt (+ (square x-diff)
+             (square y-diff)))))
+(length (make-segment (make-point 0 0)
+                      (make-point 8 6)))
+;; => 10.0000000001399
+
+(defn perimeter [rect]
+  (+ (length (rect-a rect))
+     (length (rect-b rect))
+     (length (rect-c rect))
+     (length (rect-d rect))))
+
+(def my-rectangle (make-rect
+                    (make-segment (make-point 0 0)
+                                  (make-point 8 6))
+                    (make-segment (make-point 8 6)
+                                  (make-point 2 12))
+                    (make-segment (make-point 2 12)
+                                  (make-point -6 6))
+                    (make-segment (make-point -6 6)
+                                  (make-point 0 0))))
+(perimeter my-rectangle)
+;; => 36.970571637343554
+
+;; No different representation
+(defn make-rect
+  "Makes a new rectangle consisting given line segments."
+  [a b c d]
+  {:a a :b b :c c :d d})
+(defn rect-a [rect] (:a rect))
+(defn rect-b [rect] (:b rect))
+(defn rect-c [rect] (:c rect))
+(defn rect-d [rect] (:d rect))
+
+(def my-rectangle2 (make-rect
+                   (make-segment (make-point 0 0)
+                                 (make-point 8 6))
+                   (make-segment (make-point 8 6)
+                                 (make-point 2 12))
+                   (make-segment (make-point 2 12)
+                                 (make-point -6 6))
+                   (make-segment (make-point -6 6)
+                                 (make-point 0 0))))
+(perimeter my-rectangle2)
+;; => 36.970571637343554
 
 
+;; Now try to use more idiomatic Clojure solution (leave out accessors and constructors)
+;; 
+
+;; helper functions for perimeter and area
+(defn- length [segment]
+  (let [start (:start segment)
+        end (:end segment)
+        x-diff (abs (- (:x start) (:x end)))
+        y-diff (abs (- (:y start) (:y end)))]
+    (sqrt (+ (square x-diff)
+             (square y-diff)))))
+(length {:start {:x 0 :y 0}
+         :end {:x 8 :y 6}})
+;; => 10.0000000001399
+
+(defn perimeter3 [{:keys [a b c d] :as _rect}]
+  (+ (length a) (length b) (length c) (length d)))
+
+(def my-rectangle3 {:a {:start {:x 0 :y 0}
+                       :end {:x 8 :y 6}}
+                   :b {:start {:x 8 :y 6}
+                       :end {:x 2 :y 12}}
+                   :c {:start {:x 2 :y 12}
+                       :end {:x -6 :y 6}}
+                   :d {:start {:x -6 :y 6}
+                       :end {:x 0 :y 0}}}
+  )
+(perimeter3 my-rectangle)
+;; => 36.970571637343554
+
+
+;;; TAKEAWAY:
+;;; My take on this is that it really doesn't help much to build this constructors and selectors
+;;; because you need to expose the underlying structure anyway (but you call functions instead
+;;; of accessing data directly)
+;;; => It's just mimicking the structure of data and probably not worth the effort in most cases
