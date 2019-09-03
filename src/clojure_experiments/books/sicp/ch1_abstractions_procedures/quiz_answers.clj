@@ -4,8 +4,8 @@
 
 
 ;;; iterative improvement (sqrt - p. 22, 25, 30)
-;; how about helper fn?
-;; the idea is to start with initial guess and improve until satisfied
+;;; how about helper fn?
+;;; the idea is to start with initial guess and improve until satisfied
 (defn- abs [x]
   (if (> x 0) x (- x)))
 (defn- square [x]
@@ -43,26 +43,65 @@
     (is (thrown? IllegalArgumentException (sqrt -1)))))
 
 
-;; what is Iterative process?
-(defn fibonacci-iter [n])
+;;; what is Iterative process?
+;;; A: Iterative process is the one whose state can be completely captured by input parameters.
+;;; That is the computation can be effectively "saved" just by storing the args values
+;;; It's usually more efficient because it doesn't consume stack
+;;; In Clojure it can be optimized via loop-recur
 
-;; "invariant quantity" (ex. 1.16)
+;; iterative fibonacci must somehow capture the notion of
+;; "next element being computed from two previous elements"
+;; => we will need to extra arguments, not just one!
+
+;; We use loop-recur to optimize recursion
+(defn fibonacci [n]
+  ;;
+  (loop [b 0
+         a 1
+         n n]
+    (if (zero? n)
+      b
+      (recur a (+' a b) (dec n)))))
+  
+;; write some tests
+(deftest fibonacci-test
+  (testing "basic elements"
+    (is (= 0 (fibonacci 0)))
+    (is (= 1 (fibonacci 1))))
+  (testing "a few subsequent elements"
+    (is (= 1 (fibonacci 2)))
+    (is (= 2 (fibonacci 3)))
+    (is (= 3 (fibonacci 4)))
+    (is (= 5 (fibonacci 5)))
+    (is (= 8 (fibonacci 6))))
+  ;; see http://php.bubble.ro/fibonacci/
+  (testing "a big number"
+    (is (= 354224848179261915075 (time (fibonacci 100)))))) ;; fibonacci 100 takes 0.01 msecs
+
+;; if the `fibonacci` didn't use loop-recur but rather ordinary recursion
+;; then the following example would throw StackOverflowError
+#_(time (fibonacci 20000))
+;; "Elapsed time: 7.655326 msecs"
+
+
+
+;;; "invariant quantity" (ex. 1.16)
 
 
 ;; "Invariant quantity"
-;; Ex. 1.16 - iterative variant of `fast-exp` procedure
-;; how can I use this helper fn?
+;;; Ex. 1.16 - iterative variant of `fast-exp` procedure
+;;; how can I use this helper fn?
 (defn fast-exp [x n m])
 
 
-;; why the algorithm makes sense?
-;; how can you 'invent' it?
+;;; GCD: why the algorithm makes sense?
+;;; how can you 'invent' it?
 (defn gcd [a b]
   )
 
-;; expmod (p. 51)
-;; x^n mod m
-;; show also the native version and what's wrong with it..
+;;; expmod (p. 51)
+;;; x^n mod m
+;;; show also the native version and what's wrong with it..
 (defn expmod [x n m])
 
 ;; use expmod to implement `fermat-test`
