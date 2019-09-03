@@ -7,10 +7,11 @@
             [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square sqrt]]))
 
 
-;;; 2.1.1 - Rational Numbers (p. 83)
-;;; We try to implement operations on rational numbers
-;;; starting just by 'wishful thinking' - that is not caring about particular implementation,
-;;; rather assuming that we have basic functions already available to us:
+;;;; -----------------------------------------------------------------------------------------------
+;;;; 2.1.1 - Rational Numbers (p. 83)
+;;;; We try to implement operations on rational numbers
+;;;; starting just by 'wishful thinking' - that is not caring about particular implementation,
+;;;; rather assuming that we have basic functions already available to us:
 
 ;; this is just a first representation that came to my mind...
 ;; I added it because I wanted to write tests early on
@@ -21,8 +22,8 @@
 (defn denom [x]
   (:den x))
 
-;;---------------------
-;; now implement basic operations on rational numbers
+;;;---------------------
+;;; now implement basic operations on rational numbers
 (defn add-rat [d1 d2]
   (/ (+ (* (numer d1) (denom d2))
       (* (numer d2) (denom d1))
@@ -80,7 +81,7 @@
             (make-rat 4 6))
 ;; => true
 
-;; Pairs - Concrete representation of rational numbers
+;;; Pairs - Concrete representation of rational numbers
 
 (defn make-rat [n d]
   (cons n (cons d ())))
@@ -102,7 +103,7 @@
 (print-rat (make-rat 2 3))
 
 
-;; Let's improve our representation by reducing rational numbers to the least common denominator:
+;;; Let's improve our representation by reducing rational numbers to the least common denominator:
 (defn gcd [x y]
   (if (zero? y)
     x
@@ -129,11 +130,11 @@
   )
 
 
-;; Exercise 2.1 (p. 87)
-;; Define a better `make-rat` that handles positive and negative args
-;; it should normmalize the sign:
-;; - if number is positive both num. and den. are positive
-;; - if number is negative then only num. is negative
+;;; Exercise 2.1 (p. 87)
+;;; Define a better `make-rat` that handles positive and negative args
+;;; it should normmalize the sign:
+;;; - if number is positive both num. and den. are positive
+;;; - if number is negative then only num. is negative
 (make-rat -3 7)
 ;; => (-3 7)
 (make-rat 3 -7)
@@ -143,11 +144,12 @@
 ;;=> Funny enough, this is already done thanks to the `mod` implementation in Clojure
 
 
-;;; 2.1.2 Abstraction Barriers
-;;; add-rat, sub-rat, mult-rat, div-rat makes higher-level abstraction barrier
-;;; make-rat, numer, denom are another lower-level barrier
-;;; even more level is cons, car, cdr,
-;;; etc.
+;;;; -----------------------------------------------------------------------------------------------
+;;;; 2.1.2 Abstraction Barriers
+;;;; add-rat, sub-rat, mult-rat, div-rat makes higher-level abstraction barrier
+;;;; make-rat, numer, denom are another lower-level barrier
+;;;; even more level is cons, car, cdr,
+;;;; etc.
 
 ;;; Exercise 2.2. (p. 89)
 ;;; Constructors and selectors for line segments and their start/end points:
