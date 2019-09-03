@@ -321,3 +321,30 @@
 ;;; because you need to expose the underlying structure anyway (but you call functions instead
 ;;; of accessing data directly)
 ;;; => It's just mimicking the structure of data and probably not worth the effort in most cases
+
+
+;;;; 2.1.3 What is Meant by Data? (p. 90)
+;;;; Interesting section showing that we can represent data completely via procedures + conditions
+;;;; such as make-rat, numer, and denom fns satisfying condition:   (numer x) / (denom x) = n / d;
+;;;;     where x = (make-rat n d)
+
+;;; Example of such implementation of pairs completely via procedures
+;;; defining functions cons, car, cdr
+
+;; notice that `my-cons` actually return a procedure
+(defn my-cons [x y]
+  (fn dispatch [m]
+    (case m
+      0 x
+      1 y)))
+
+(defn my-car [z] (z 0))
+
+(defn my-cdr [z] (z 1))
+
+(my-car (my-cons 1 2))
+(my-cdr (my-cons 1 2))
+(my-car (my-cons 10 (my-cons 1 2)))
+;; => 10
+
+
