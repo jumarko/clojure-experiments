@@ -293,9 +293,11 @@
 
 ;;; Recursive data structures (like trees)
 (drop 45
-      (gen/sample (gen/recursive-gen gen/vector
-                                       ;; base type
-                                     gen/boolean)
+      (gen/sample (gen/recursive-gen
+                   ;; 'container'
+                   gen/vector
+                   ;; base type
+                   gen/boolean)
                   50))
 ;; => ([[true true] false []]
 ;;     [true [] [[false true] [false false false true]]]
