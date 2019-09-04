@@ -17,7 +17,7 @@
 ;; "Invariant quantity"
 ;; Ex. 1.16 - iterative variant of `fast-exp` procedure
 ;; how can I use this helper fn?
-(defn fast-exp [x n m])
+(defn fast-exp [x n])
 
 
 ;; why the algorithm makes sense?

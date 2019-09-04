@@ -9,7 +9,7 @@
 (defn- abs [x]
   (if (> x 0) x (- x)))
 (defn- square [x]
-  (* x x))
+  (*' x x))
 (def threshold 0.001)
 (defn- close-enough? [n guess]
   (< (abs (- n (square guess)))
@@ -49,6 +49,7 @@
 ;;; It's usually more efficient because it doesn't consume stack
 ;;; In Clojure it can be optimized via loop-recur
 
+
 ;; iterative fibonacci must somehow capture the notion of
 ;; "next element being computed from two previous elements"
 ;; => we will need to extra arguments, not just one!
@@ -86,12 +87,37 @@
 
 
 ;;; "invariant quantity" (ex. 1.16)
+;;; A: Invariant quantity is an approach how to identify what's "constant" across recursion calls
+;;; and so it helps with implementing _iterative processes_.
 
 
 ;; "Invariant quantity"
 ;;; Ex. 1.16 - iterative variant of `fast-exp` procedure
 ;;; how can I use this helper fn?
-(defn fast-exp [x n m])
+
+;; this is the slow approach:
+(defn fast-exp [x n]
+  ;; cheating
+  #_(bigint (Math/pow x n))
+  (nth (iterate #(*' x %) x)
+       (dec n)))
+#_(time (fast-exp 2 100000))
+;; "Elapsed time: 219.763192 msecs"
+
+;; more expected approach and also much faster
+;; invariant quantity is going to be ...
+;; ... acc * x^n is unchanged during fn calls
+(defn fast-exp-iter [x n]
+  (loop [x x
+         n n
+         acc 1]
+    (cond
+      (zero? n) acc
+      (odd? n) (recur x (dec n) (*' acc x))
+      (even? n) (recur (square x) (/ n 2) acc))))
+(fast-exp-iter 2 10)
+#_(time (fast-exp-iter 2 100000))
+;; "Elapsed time: 1.88767 msecs"
 
 
 ;;; GCD: why the algorithm makes sense?
