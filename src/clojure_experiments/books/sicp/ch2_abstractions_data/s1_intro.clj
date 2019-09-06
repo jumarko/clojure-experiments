@@ -4,7 +4,13 @@
   (sections 2.1.1 and 2.1.2 - Abstraction Barriers).
   2.1.4 contains an extended exercise - Interval Arithmetic."
   (:require [clojure.test :refer [are deftest is testing]]
-            [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square sqrt]]))
+            [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements
+             :refer [square sqrt]]
+            ;; this is the iterative version of fast-exp to avoid StackOverlowError
+            [clojure-experiments.books.sicp.ch1-abstractions-procedures.exercise :refer [fast-exp]]
+            [clojure.test.check.clojure-test :refer [defspec]]
+            [clojure.test.check.properties :as prop]
+            [clojure.test.check.generators :as gen]))
 
 
 ;;;; -----------------------------------------------------------------------------------------------
@@ -304,15 +310,14 @@
   (+ (length a) (length b) (length c) (length d)))
 
 (def my-rectangle3 {:a {:start {:x 0 :y 0}
-                       :end {:x 8 :y 6}}
-                   :b {:start {:x 8 :y 6}
-                       :end {:x 2 :y 12}}
-                   :c {:start {:x 2 :y 12}
-                       :end {:x -6 :y 6}}
-                   :d {:start {:x -6 :y 6}
-                       :end {:x 0 :y 0}}}
-  )
-(perimeter3 my-rectangle)
+                        :end {:x 8 :y 6}}
+                    :b {:start {:x 8 :y 6}
+                        :end {:x 2 :y 12}}
+                    :c {:start {:x 2 :y 12}
+                        :end {:x -6 :y 6}}
+                    :d {:start {:x -6 :y 6}
+                        :end {:x 0 :y 0}}})
+(perimeter3 my-rectangle3)
 ;; => 36.970571637343554
 
 
@@ -607,30 +612,137 @@
 ;;; Ex. 2.11 (p. 95)
 ;;; By testing the signs of endpoints of an interval it's possible to break down
 ;;; `mult-interval` into 9 cases only one of which requires more than 2 multiplications
-(defn ben-mult-interval [x y]
-  (let [p1 (* (lower-bound x) (lower-bound y))
-        p2 (* (lower-bound x) (upper-bound y))
-        p3 (* (upper-bound x) (lower-bound y))
-        p4 (* (upper-bound x) (upper-bound y))]
-    (make-interval
-     (min p1 p2 p3 p4)
-     (max p1 p2 p3 p4)))
 
+;; try to start by enumerating all posibilities:
+
+;; 1. everything positive
+(mult-interval
+ (make-interval 1 2)
+ (make-interval 10 15))
+;; => [10 30]  (x_l * y_l; x_h * y_h)
+
+;; 2. everything negative
+(mult-interval
+ (make-interval -2 -1)
+ (make-interval -15 -10))
+;; => [10 30] (x_h * y_h; x_l * y_l)
+
+;; 3. x_l negative
+(mult-interval
+ (make-interval -1 2)
+ (make-interval 10 15))
+;; => [-15 30]  (x_l * y_h; x_h * y_h)
+
+;; 4. y_l negative
+(mult-interval
+ (make-interval 1 2)
+ (make-interval -10 15))
+;; => [-20 30] (x_h * y_l; x_h * y_h)
+
+;; 5. x_l and x_h negative
+(mult-interval
+ (make-interval -2 -1)
+ (make-interval 10 15))
+;; => [-30 -10] (x_l * y_h; x_h * y_l)
+
+;; 6. y_l and y_h negative
+(mult-interval
+ (make-interval 1 2)
+ (make-interval -15 -10))
+;; => [-30 -10] (x_h * y_l; x_l * y_h)
+
+;; 7. x_l, y_l negative
+(mult-interval
+ (make-interval -1 2)
+ (make-interval -10 15))
+;; => [-20 30] (x_h * y_l; x_h * y_h)
+
+;; 8. x_l, y_l, y_h negative
+(mult-interval
+ (make-interval -1 2)
+ (make-interval -15 -10))
+;; => [-30 15] (x_h * y_l; x_l * y_l)
+
+;; 9. x_l, x_h, y_l negative
+(mult-interval
+ (make-interval -2 -1)
+ (make-interval -10 15))
+;; => [-30 20] (x_l * y_h; x_l * y_l)
+
+
+(defn ben-mult-interval [x y]
   (let [xl (lower-bound x)
         xh (upper-bound x)
         yl (lower-bound y)
-        yh (upper-bound y)]
-    ;;; ???
+        yh (upper-bound y)
+        p1 (* xl yl)
+        p2 (* xl yh)
+        p3 (* xh yl)
+        p4 (* xh yh)]
+    (make-interval
+     (min p1 p2 p3 p4)
+     (max p1 p2 p3 p4))
+
     (cond
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (neg? xh) (pos? yl) (pos? yh))
+      (every? pos? [xl xh yl yh])
+      (make-interval (* xl yl) (* xh yh))
+
+      (and (neg? xl) (neg? xh) (neg? yl) (neg? yh))
+      (make-interval (* xh yh) (* xl yl))
+
       (and (neg? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
-      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (make-interval (* xl yh) (* xh yh))
+
+      (and (pos? xl) (pos? xh) (neg? yl) (pos? yh))
+      (make-interval (* xh yl) (* xh yh))
+
+      (and (neg? xl) (neg? xh) (pos? yl) (pos? yh))
+      (make-interval (* xl yh) (* xh yl))
+
+      (and (pos? xl) (pos? xh) (neg? yl) (neg? yh))
+      (make-interval (* xl yh) (* xh yl))
+
+      ;;; 
+      ;;; too much busy work; check the solutions
       ))
-  
   )
+
+
+;;; dealing with center values and additive tolerance (p. 95)
+
+;; Ex. 2.12
+(defn make-center-width [c w]
+  (make-interval (- c w) (+ c w)))
+
+(defn center [i]
+  (/ (+ (lower-bound i) (upper-bound i))
+     2))
+
+(defn width [i]
+  (/ (- (upper-bound i) (lower-bound i))
+     2))
+
+(width (make-center-width 0.5 0.1))
+;; => 0.09999999999999998
+(width (make-interval 0.4 0.6))
+;; => 0.09999999999999998
+(center (make-interval 0.4 0.6))
+;; => 0.5
+(center (make-center-width 0.5 0.1))
+;; => 0.5
+
+(defn make-center-percent [c p]
+  (make-center-width c (* c (/ p 100))))
+
+(make-center-percent 0.5 20)
+;; => [0.4 0.6]
+
+(defn percent [i]
+  (* 100
+     (/ (width i)
+        (center i))))
+(percent (make-center-percent 0.5 20))
+;; => 19.999999999999996
+
+
+;; Ex. 2.13
