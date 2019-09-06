@@ -372,7 +372,7 @@
     (fast-exp-iter a (square' b) (/ n 2))
 
     :else
-    (fast-exp-iter (* a b) b (dec n))))
+    (fast-exp-iter (*' a b) b (dec n))))
 
 (defn fast-exp
   [base exponent]

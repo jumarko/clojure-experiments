@@ -348,3 +348,289 @@
 ;; => 10
 
 
+
+;;; Ex. 2.4 (p. 92)
+;;; alternative representation of pairs
+(defn my-cons [x y]
+  (fn [m] (m x y)))
+(defn my-car [z]
+  (z (fn [p q] p)))
+;; Implement cdr
+(defn my-cdr [z]
+  (z (fn [p q] q)))
+
+(my-car (my-cons 1 2))
+;; => 1
+(my-car (my-cons 10 (my-cons 1 2)))
+;; => 10
+(my-car (my-cons (fn a [x])
+                 (fn b [x])))
+;; notice `a--...` at the end (`a` is the name of the fn)
+;; => #function[clojure-experiments.books.sicp.ch2-abstractions-data.s1-intro/eval26230/a--26231]
+
+;; how to use substitution model to prove this?
+(my-car (my-cons 1 2))
+;; =>
+((my-cons 1 2) (fn [p q] p))
+;; => 
+((fn [m] (m  1 2)) (fn [p q] p))
+;; =>
+((fn [p q] p) 1 2)
+;; =>
+1
+
+;;; Ex 2.5. (p. 92)
+;;; Show that we can represent a pair of non-negative numbers `a` and `b` as a single number 
+;;; 2^a * 3^b
+;;; Resources
+;;; - https://www.mathsisfun.com/prime-factorization.html
+;;; - https://www.geeksforgeeks.org/print-all-prime-factors-of-a-given-number/
+
+;; First a generative test
+(defspec pairs-as-number 10
+  (prop/for-all [[x y] (gen/tuple gen/small-integer)]
+                (let [my-pair (my-cons x y)]
+                  (and (= x (my-car my-pair))
+                       (= y (my-cdr my-pair))))))
+
+;; then implementations of cons, car, cdr
+(defn my-cons [x y]
+  (*' (fast-exp 2 x)
+      (fast-exp 3 y)))
+
+;; helper function needed to find prime factors and corresponding exponents
+(defn- factor-exponent [z factor]
+  (loop [n z
+         exp 0]
+    (if (zero? (mod n factor))
+      (recur (quot n factor)
+             (inc exp))
+      exp)))
+
+(defn my-car [z]
+  (factor-exponent z 2))
+(my-car (my-cons 10 9))
+;; => 10
+
+(defn my-cdr [z]
+  (factor-exponent z 3))
+(my-cdr (my-cons 10 9))
+;; => 9
+
+;; this representaiton doesn't play well with huge numbers :(
+;; takes way too long (and much longer for even larger numbers)
+#_(time (my-car (my-cons 102401 120)))
+;; "Elapsed time: 4017.907974 msecs"
+
+
+;;; Ex 2.6. Church Numerals (p. 93)
+;;; Check http://community.schemewiki.org/?sicp-ex-2.6
+;;; This is quite hard :(
+
+(defn zero [f]
+  (fn [x] x))
+((zero identity) 0)
+
+(defn add-1 [n]
+  (fn [f]
+    (fn [x] (f ((n f) x)))))
+
+(defn one [f]
+  (fn [x] (f x)))
+(defn two [f]
+  (fn [x] (f (f x))))
+(defn three [f]
+  (fn [x] (f (f (f x)))))
+
+;; how to test? => use `inc` function!
+(defn church-to-int [cn]
+  ((cn inc) 0))
+(church-to-int three)
+;; => 3
+(church-to-int (add-1 (add-1 zero)))
+;; => 2
+
+(defn plus [a b]
+  (fn [f]
+    (fn [x]
+      ((a f) ((b f) x)))))
+
+(church-to-int (plus two three))
+;; => 5
+
+((two square) 2)
+;; => 16
+
+(((plus two one) square) 2)
+;; => 256 (that is 2^(square^3) )
+
+
+
+
+;;;; -----------------------------------------------------------------------------------------------
+;;;; 2.1.4 Interval Arithmetic (p. 93)
+;;;;
+(defn- make-interval [l u]
+  [l u])
+
+;;; This is actually an exercise 2.7
+(defn- lower-bound [x]
+  (first x))
+(defn- upper-bound [x]
+  (second x))
+
+(defn add-interval [x y]
+  (make-interval
+   (+ (lower-bound x) (lower-bound y))
+   (+ (upper-bound x) (upper-bound y))))
+
+(add-interval (make-interval 8 10)
+              (make-interval 7.2 11.4))
+;; => [15.2 21.4]
+
+(defn mult-interval [x y]
+  (let [p1 (* (lower-bound x) (lower-bound y))
+        p2 (* (lower-bound x) (upper-bound y))
+        p3 (* (upper-bound x) (lower-bound y))
+        p4 (* (upper-bound x) (upper-bound y))]
+    (make-interval
+     (min p1 p2 p3 p4)
+     (max p1 p2 p3 p4))))
+
+(mult-interval (make-interval 8 10)
+              (make-interval 4 11))
+;; => [32 110]
+
+;; my div-interval
+;; => this is actually incorrect for negative numbers?
+(defn div-interval [x y]
+  (make-interval
+   (/ (lower-bound x) (upper-bound y))
+   (/ (upper-bound x) (lower-bound y))))
+
+(div-interval (make-interval 1 4)
+              (make-interval 10 40))
+;; => [1/40 2/5]
+
+;; But this is Incorrect!!!
+(div-interval (make-interval -4 4)
+              (make-interval -10 40))
+;; => [-1/10 -2/5]
+
+;; div-interval from the book
+(defn div-interval [x y]
+  (mult-interval
+   x
+   (make-interval
+    (/ 1.0 (upper-bound y))
+    (/ 1.0 (lower-bound y)))))
+
+(div-interval (make-interval 1 4)
+              (make-interval 10 40))
+;; => [0.025 0.4] (the same thing as above)
+
+;; But this gives correct result!!
+(div-interval (make-interval -4 4)
+              (make-interval -10 40))
+;; => [-0.4 0.4]
+
+;;; Exercise 2.9 (p. 95)
+;;; sub-interval
+(defn sub-interval [x y]
+  (make-interval
+   (- (lower-bound x) (upper-bound y))
+   (- (upper-bound x) (lower-bound y))))
+
+(sub-interval (make-interval 8 10)
+              (make-interval 4 11))
+;; => [-3 6]
+
+;; is alternative implementation possible?
+(defn sub-interval [x y]
+  (add-interval
+   x
+   (make-interval
+    (- (upper-bound y))
+    (- (lower-bound y)))))
+(sub-interval (make-interval 8 10)
+              (make-interval 4 11))
+;; => [-3 6]
+
+
+;;; 2.9. (p. 95)
+(defn interval-width [x]
+  (/ (- (upper-bound x) (lower-bound x))
+     2))
+(interval-width (make-interval 40 50))
+;; => 5
+(interval-width (make-interval 1 2))
+;; => 1/2
+
+;; width of the interval is really just sum of them
+(interval-width (add-interval (make-interval 40 50)
+                              (make-interval 1 2)))
+;; => 11/2
+
+;; and the same holds for subtraction!
+(interval-width (sub-interval (make-interval 40 50)
+                              (make-interval 1 2)))
+;; => 11/2
+
+
+;; ... but not multiplication and division
+(interval-width (mult-interval (make-interval 40 50)
+                               (make-interval 1 2)))
+;; => 30
+
+(interval-width (div-interval (make-interval 40 50)
+                              (make-interval 1 2)))
+;; => 15.0
+
+
+;;; Ex. 2.10 (p. 95)
+;;; What does it mean to divide by an interval that spans zero?
+
+(defn div-interval [x y]
+  (when (or (zero? (upper-bound y))
+            (zero? (lower-bound y)))
+    (throw (IllegalArgumentException. (str "second interval cannot span zero!" y))))
+  (mult-interval
+   x
+   (make-interval
+    (/ 1.0 (upper-bound y))
+    (/ 1.0 (lower-bound y)))))
+
+#_(div-interval (make-interval 1 4)
+              (make-interval 0 40))
+
+
+;;; Ex. 2.11 (p. 95)
+;;; By testing the signs of endpoints of an interval it's possible to break down
+;;; `mult-interval` into 9 cases only one of which requires more than 2 multiplications
+(defn ben-mult-interval [x y]
+  (let [p1 (* (lower-bound x) (lower-bound y))
+        p2 (* (lower-bound x) (upper-bound y))
+        p3 (* (upper-bound x) (lower-bound y))
+        p4 (* (upper-bound x) (upper-bound y))]
+    (make-interval
+     (min p1 p2 p3 p4)
+     (max p1 p2 p3 p4)))
+
+  (let [xl (lower-bound x)
+        xh (upper-bound x)
+        yl (lower-bound y)
+        yh (upper-bound y)]
+    ;;; ???
+    (cond
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (neg? xh) (pos? yl) (pos? yh))
+      (and (neg? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      (and (pos? xl) (pos? xh) (pos? yl) (pos? yh))
+      ))
+  
+  )
