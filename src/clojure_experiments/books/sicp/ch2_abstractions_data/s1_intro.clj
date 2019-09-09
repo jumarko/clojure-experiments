@@ -710,7 +710,7 @@
 
 ;;; dealing with center values and additive tolerance (p. 95)
 
-;; Ex. 2.12
+;;; Ex. 2.12
 (defn make-center-width [c w]
   (make-interval (- c w) (+ c w)))
 
@@ -732,7 +732,7 @@
 ;; => 0.5
 
 (defn make-center-percent [c p]
-  (make-center-width c (* c (/ p 100))))
+  (make-center-width c (double (* c (/ p 100)))))
 
 (make-center-percent 0.5 20)
 ;; => [0.4 0.6]
@@ -744,5 +744,79 @@
 (percent (make-center-percent 0.5 20))
 ;; => 19.999999999999996
 
+;;; Ex. 2.13 (p. 96)
+;;; Show that under the assumption of small percentage tolerances
+;;; there's a simple formula for a product of two intervals in terms of the tolerances of the factors
 
-;; Ex. 2.13
+;; simple guess
+;; let's say that intervals x, y defined by
+;; x = 10 +- 0.01 (1%)
+;; y = 8 +- 0.02
+;; x * y = 10 * 8 +- ???
+;; where ??? could be ?
+;; ....
+[(* 9.9 7.84) (* 10.1 8.16)]
+;; => [77.616 82.416]
+(apply - [(* 10.1 8.16) (* 9.9 7.84)])
+;; => 4.799999999999997
+;; 4.8 is the result of what operation??
+(/ 4.8 80)
+;; => 0.06 (6 %)
+;; could it be 2 * (x_tolerance + y_tolerance)
+;; that is in our case 2 * (0.01 + 0.02) ?
+(percent [9.9 10.1])
+;; => 0.9999999999999963
+(defn product-with-small-tolerance [x y]
+  (let [product-center (* (center x) (center y))
+        product-percent (+ (percent x) (percent y))]
+    (make-center-percent product-center product-percent)))
+
+;; THe result of this is almost the same as our handwritten computation
+;; -> see line 759
+(product-with-small-tolerance
+ (make-center-percent 10 1)
+ (make-center-percent 8 2))
+;; => [77.6 82.4]
+
+
+
+;;; Ex. 2.14 and 2.15 (p. 96-97)
+;;; Issues with equivalent algebraic representations
+;;; (R1*R2) / (R1+R2)
+;;; Vs.
+;;; 1 / (1/R1 + 1/R2)
+(defn par1 [r1 r2]
+  (div-interval (mult-interval r1 r2)
+                (add-interval r1 r2)))
+(def par1-result (par1 (make-center-percent 10 1)
+                       (make-center-percent 8 2)))
+;; => [4.250602409638555 4.645772266065388]
+(percent par1-result)
+;; => 4.441920117259056
+
+(defn par2 [r1 r2]
+  (let [interval-1 (make-interval 1 1)]
+    (div-interval interval-1
+                  (add-interval (div-interval interval-1
+                                              r1)
+                                (div-interval interval-1
+                                              r2)))))
+(def par2-result (par2 (make-center-percent 10 1)
+                       (make-center-percent 8 2)))
+;; => [4.375197294250282 4.513472070098576]
+(percent par2-result)
+;; => 1.5556296469176119
+
+;;=> it seems that `par2` produces 'tighter' error interval
+;; that means (ex. 2.15) that Eva Lu Ator could be right
+;; that a formula where no variable representing an interval (uncertain number)
+;; is repeated is BETTER than formulas with repeated variables
+;; WHY?
+;; That might be true because when we don't repeat variables we have less number of "uncertain" operations
+;; e.g. with R1 * R2 / (R1 + R2) we have 3 operations on uncertain numbers
+;; whereas with 1 / (1/R1 + 1/R2) we have only 1 operaiton (that is +) because [1 1] interval is "precise"
+
+
+;; 2.16: http://wiki.drewhess.com/wiki/SICP_exercise_2.16
+;; I didn't bother to solve this but it's interesting explanation
+;; that, in general, equivalent algebraic expressions using Interval arithmetic may give different answers!
