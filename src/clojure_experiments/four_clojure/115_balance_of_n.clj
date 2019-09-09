@@ -36,7 +36,7 @@
         [f s] (halves n)]
     (= (sum-digits f) (sum-digits s))))
 
-
+(defn i [x] (inc x))
 
 (deftest balanced-test
   (testing "balanced numbers"
