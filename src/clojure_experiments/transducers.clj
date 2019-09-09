@@ -537,18 +537,8 @@
   (doall (clojure.core/take 10 res))
   @cnt2)
 
-;; eduction starts a new loop for every sequence operation
-(def cnt1 (atom 0))
-(let [res (eduction (map #(do (swap! cnt1 inc) %)) (range 10))]
-  (conj (rest res) (first res))
-  @cnt1)
-;; 20
+;; for more on eduction see eduction.clj
 
-(def cnt2 (atom 0))
-(let [res (sequence (map #(do (swap! cnt2 inc) %)) (range 10))]
-  (conj (rest res) (first res)) ; (2)
-  @cnt2)
-;; 10
 
 
 ;;; https://stackoverflow.com/questions/47333668/split-lines-in-clojure-while-reading-from-file
