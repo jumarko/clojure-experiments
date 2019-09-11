@@ -656,3 +656,34 @@
 ;;     ("4De" "0caUY25")
 ;;     ("F2A")
 ;;     ("jePAaU1" "ks6Ilinby"))
+
+
+;;; every-kv and 'associative collections'
+
+(s/def ::fun (s/every-kv integer? keyword?))
+(s/valid? ::fun {})
+;; => true
+(s/valid? ::fun {:a :b})
+;; => false
+(s/valid? ::fun {0 :b})
+;; => true
+
+;; now with vectors!
+(s/valid? ::fun [])
+;; => true
+;; why this fails??
+(s/valid? ::fun [:a])
+;; => false
+(associative? [:a])
+;; => true
+;; But if works for a vector of tuples
+(s/valid? ::fun [[0 :a]])
+;; => true
+
+
+;; Btw. this also fails! https://clojure.atlassian.net/browse/CLJ-2065
+#_(reduce-kv
+ (fn [a k v]
+   (conj a k v))
+ []
+ (subvec [:a :b :c] 0 1))
