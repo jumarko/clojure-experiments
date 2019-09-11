@@ -30,10 +30,18 @@
   (mm/measure (vec (range 1000)))
 ;; => "28.8 KB"
 
+;; `vector-of` !
+(mm/measure (apply (partial vector-of :long) (range 1000)))
+;;=>  "9.3 KB"
+(mm/measure (apply (partial vector-of :int) (range 1000)))
+;; => "5.4 KB"
+
   (mm/measure (doall (range 1000000)))
 ;; => "91.6 MB"
   (mm/measure (vec (range 1000000)))
 ;; => "28.1 MB"
+
+
 
 
   ;;; JOL layout
