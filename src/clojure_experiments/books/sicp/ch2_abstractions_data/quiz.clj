@@ -23,3 +23,11 @@
 (defn plus ,,,)
 
 
+;;; Section 2.2 Hierarchical Data Structures and 'Closure' property
+
+;; What is a 'sequence'
+
+;; Ex. 2.18 (p. 103)
+;; Write the 'reverse' function
+
+

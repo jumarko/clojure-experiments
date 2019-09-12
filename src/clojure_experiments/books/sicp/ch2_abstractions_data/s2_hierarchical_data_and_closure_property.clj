@@ -1,6 +1,7 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.s2-hierarchical-data-and-closure-property
   "This deals with exampels from the section 2.2 - pages 97 - 141?
-  TODO: maybe separate the Picture Language exercise?")
+  TODO: maybe separate the Picture Language exercise?"
+  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]))
 
 ;;;; ----------------------------
 ;;;; 2.2.1.Representing sequences
@@ -102,4 +103,144 @@ one-through-four
 ;; => (25 16 9 4 1)
 
 
+;;; Ex. 2.19 (p. 103-104)
+;;; Using change-counting program from p. 40-41 make it more flexible by accepting any currency
 
+;; This is the original program from page 41
+(defn- first-denomination [kinds-of-coins]
+  (condp = kinds-of-coins
+    1 1
+    2 5
+    3 10
+    4 25
+    5 50))
+
+(defn change
+  ([amount] (change amount 5))
+  ([amount kinds-of-coins]
+   (cond
+     (zero? amount)
+     1
+
+     (or (neg? amount) (zero? kinds-of-coins))
+     0
+
+     :else
+     (+ (change amount
+                (dec kinds-of-coins))
+        (change (- amount (first-denomination kinds-of-coins))
+                kinds-of-coins)))))
+(change 100)
+;; => 292
+
+;; Now modify it to accept arbitrary currency
+(def us-coins [50 25 10 5 1])
+(def uk-coins [100 50 20 10 5 2 1 0.5])
+
+(defn- first-denomination [coins-values]
+  (first coins-values))
+
+(defn- except-first-denomination [coins-values]
+  (rest coins-values))
+
+(defn- no-more? [coins]
+  (empty? coins))
+
+(defn change
+  ([amount] (change amount us-coins))
+  ([amount coins-values]
+   (cond
+     (zero? amount)
+     1
+
+     (or (neg? amount) (no-more? coins-values))
+     0
+
+     :else
+     (+ (change amount
+                (except-first-denomination coins-values))
+        (change (- amount (first-denomination coins-values))
+                coins-values)))))
+(change 100)
+;; => 292
+(change 100 uk-coins)
+;; => 104561
+
+
+;;; Mapping over lists (p. 105)
+(defn scale-list [items factor]
+  (when-not (empty? items)
+    (cons (* factor (first items))
+          (scale-list (rest items) factor))))
+(scale-list (range 10) 3)
+;; => (0 3 6 9 12 15 18 21 24 27)
+
+;; Now with `map` we can do better
+(defn my-map [f items]
+  (when-not (empty? items)
+    (cons (f (first items))
+          (my-map f (rest items)))))
+(my-map (partial * 3) (range 10))
+;; => (0 3 6 9 12 15 18 21 24 27)
+
+;; of course that map implementation is very rough, at least it should work for large lists
+#_(take 10 (my-map (partial * 3) (range 100000)))
+(defn my-map [f items]
+  (loop [items items
+         acc []]
+    (if (empty? items)
+      acc
+      (recur (rest items)
+             (conj acc (f (first items)))))))
+(take 10 (my-map (partial * 3) (range 100000)))
+;; => (0 3 6 9 12 15 18 21 24 27)
+
+
+;;; Ex. 2.21 (p. 106)
+(defn square-list [l]
+  (if (empty? l)
+    (empty l)
+    (cons (square (first l))
+          (rest l))))
+(square-list '(1 2 3 4))
+;; => (1 2 3 4)
+
+(defn square-list [l]
+  (map square l))
+(square-list '(1 2 3 4))
+;; => (1 4 9 16)
+
+
+;;; Ex. 2.22
+;;; Writes the `square-list` iterative variant
+(defn square-list-iter [items]
+  (letfn [(iter [things answer]
+            (if (empty? things)
+              answer
+              (iter (rest things)
+                    (cons (square (first things))
+                          answer))))]
+    (iter items '())))
+(square-list-iter '(1 2 3 4))
+;; => (16 9 4 1)
+;; this happens because we're prepending to the list as we traverse over the list
+;; so the last element 4 will be squared and added as the first element to the 'answer'
+
+;; Now Louis tries to fix the bug...
+(defn square-list-iter [items]
+  (letfn [(iter [things answer]
+            (if (empty? things)
+              answer
+              (iter (rest things)
+                    (cons answer
+                          (square (first things))))))]
+    (iter items '())))
+;; in clojure this throws an exception
+#_(square-list-iter '(1 2 3 4))
+
+
+;;; Ex. 2.23 (p. 107)
+(defn for-each [f items]
+  (doall (map f items))
+  true)
+(for-each println '(1 2 3 4));; => true
