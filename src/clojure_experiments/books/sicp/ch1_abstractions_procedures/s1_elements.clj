@@ -143,17 +143,18 @@
    (cond
      (zero? amount)
      1
+
      (or (neg? amount) (zero? kinds-of-coins))
      0
 
      :else
-     (+ (change amount (dec kinds-of-coins))
-        (change (- amount (first-denomination
+     (+ (change amount
+                (dec kinds-of-coins))
+        (change (- amount (first-denomination kinds-of-coins))
+                kinds-of-coins)))))
 
-                           kinds-of-coins)))))))
-
-;;; WTF??
-(change 10)
+(change 100)
+;; => 292
 
 
 
