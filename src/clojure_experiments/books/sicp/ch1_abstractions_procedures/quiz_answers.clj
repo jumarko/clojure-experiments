@@ -121,9 +121,22 @@
 
 
 ;;; GCD: why the algorithm makes sense?
-;;; how can you 'invent' it?
+;;; how can you 'invent' it? (pretty hard :o)
 (defn gcd [a b]
-  )
+  (if (zero? b)
+    a
+    (gcd b (mod a b))))
+
+(deftest gcd-test
+  (testing "relative primes"
+    (is (= 1
+           (gcd 7 36))))
+  (testing "the same number"
+    (is (= 9 (gcd 9 9))))
+  (testing "gcd larger than one"
+    (is (= 7
+           (gcd 14 21)))))
+
 
 ;;; expmod (p. 51)
 ;;; x^n mod m
