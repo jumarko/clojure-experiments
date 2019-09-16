@@ -6,3 +6,9 @@
 
 
 ;;; Ex. 2.20 (p. 104)?
+
+
+;; Ex. 2.29 (p. 111)
+;; binary mobile
+;; This shouldn't be hard but I don't need to do every exercises the first time
+

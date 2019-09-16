@@ -1,7 +1,8 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.s2-hierarchical-data-and-closure-property
   "This deals with exampels from the section 2.2 - pages 97 - 141?
   TODO: maybe separate the Picture Language exercise?"
-  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]))
+  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]
+            ))
 
 ;;;; ----------------------------
 ;;;; 2.2.1.Representing sequences
@@ -244,3 +245,392 @@ one-through-four
   (doall (map f items))
   true)
 (for-each println '(1 2 3 4));; => true
+
+
+;;;; ----------------------------
+;;;; 2.2.2 Hierarchical Structures (Trees - p. 107)
+;;;; ----------------------------
+
+;;; recursion is a natural way to deal with trees
+;;; we perform operation on branches, then on branches of the branches, ..., until we reach leaves.
+
+;; example: count-leaves
+(defn count-leaves [l]
+  (cond
+    (empty? l) 0
+    (seqable? (first l)) (+ (count-leaves (first l)) (count-leaves (rest l)))
+    :leaf (+ 1 (count-leaves (rest l)))))
+    
+(count-leaves '(((1 2) 3 4)
+                ((1 2) 3 4)))
+;; => 8
+
+
+;;; Ex. 2.224 (p. 110)
+;;; We want to evaluate (list 1 (list 2 (list 3 4)))
+(list 1 (list 2 (list 3 4)))
+;; => (1 (2 (3 4)))
+
+;; box-and-pointer representation: check http://community.schemewiki.org/?sicp-ex-2.24
+;; [] - [] - [] - [] - nil
+;;  1    2 -  3    4
+
+;; tree representation
+;;(1 (2 (3 4)))
+;; |   |
+;; 1 (2 (3 4))
+;;        |
+;;       3 4
+
+
+;;; Ex. 2.25 (p. 110)
+;;; Give combinations of car and cdr which will pick 7 from following lists
+(-> '(1 2 (5 7) 9)
+    rest
+    rest
+    first
+    rest
+    first)
+;; => 7
+
+(-> '((7))
+    first
+    first)
+;; => 7
+
+;; THIS IS TRICKY!
+(-> '(1 (2 (3 (4 (5 (6 7))))))
+    rest
+    first
+    rest
+    first
+    rest
+    first
+    rest
+    first
+    rest
+    first
+    rest
+    first
+    )
+;; => 7
+
+
+;;; Ex. 2.26 (p. 110)
+;;; What result is printed when invoking the expressions?
+(def x (list 1 2 3))
+(def y (list 4 5 6))
+
+(append x y)
+;; => (1 2 3 4 5 6)
+
+(cons x y)
+;; => ((1 2 3) 4 5 6)
+
+(list x y)
+;; => ((1 2 3) (4 5 6))
+
+
+;;; Ex. 2.27 (p. 110)
+;;; Modify reverse procedue to do a "deep reverse"
+(def x '((1 2) (3 4)))
+(reverse x)
+;; => ((3 4) (1 2))
+#_(deep-reverse x)
+;; => ((4 3) (2 1))
+
+;; not this is hard to optimize for tail call?
+;; Well, actually it seems that my implementation is ok, just cannot process _very_ deep trees
+;; but can handle a top-level list with lots of elements
+(defn deep-reverse [l]
+  (loop [acc ()
+         l l]
+    (if (empty? l)
+      acc
+      (if (seqable? (first l))
+        ;; we need to go deep
+        (recur (cons (deep-reverse (first l)) acc) (next l))
+        ;; simple element, just cons
+        (recur (cons (first l) acc) (next l))))))
+(deep-reverse x)
+;; => ((4 3) (2 1))
+
+(count (deep-reverse (concat x (range 100000))))
+
+
+;;; Ex. 2.28 (p. 111)
+;;; `fringe` returns all the leaves of the tree
+;;; Check also solutions: http://community.schemewiki.org/?sicp-ex-2.28
+(defn fringe [l]
+  (loop [leaves []
+         l l]
+    (if (empty? l)
+      leaves
+      (if (seqable? (first l))
+        ;; we need to go deep
+        (recur (append (fringe (first l)) leaves)
+               (next l))
+        ;; just found a leaf!
+        (recur (conj leaves (first l)) (next l))))))
+(fringe x)
+;; => (3 4 1 2)
+
+(fringe '(1 (2 (3 (4 (5 (6 7)))))))
+;; => (6 7 5 4 3 2 1)
+
+
+;; From solutions: http://community.schemewiki.org/?sicp-ex-2.28
+(defn fringe [tree] 
+  (cond (nil? tree) nil 
+        (not (seqable? tree)) (list tree) 
+        :else (append (fringe (first tree)) (fringe (next tree))))) 
+;; works on a simple list
+(fringe x)
+;; => (1 2 3 4)
+
+(fringe '(1 (2 (3 (4 (5 (6 7)))))))
+;; => (1 2 3 4 5 6 7)
+
+
+;;; Ex. 2.29 left out
+
+
+
+;;; Mapping over trees (p. 112)
+;;; map together with a recursion if a powerful abstraction for dealing with trees
+
+;; start with `scale-tree` implementation:
+(defn scale-tree [tree factor]
+  ;; `seq?` is enough since we use `next`
+  (cond
+    (nil? tree) nil
+
+    (number? tree) (* tree factor)
+
+    :branch
+    (cons (scale-tree (first tree) factor)
+          (scale-tree (next tree) factor))))
+
+(scale-tree '(1 (2 (3 (4 (5 (6 7))))))
+            2)
+;; => (2 (4 (6 (8 (10 (12 14))))))
+
+
+;; alternative implementation of `scale-tree` will use `map` and recursion
+
+(defn scale-tree-map [tree factor]
+  (map
+   (fn [sub-tree]
+     (if (seq? sub-tree)
+       (scale-tree-map sub-tree factor)
+       (* sub-tree factor)))
+   tree)
+  )
+(scale-tree-map '(1 (2 (3 (4 (5 (6 7))))))
+                2)
+;; => (2 (4 (6 (8 (10 (12 14))))))
+
+
+;;; Ex. 2.30 (p. 112)
+;;; Define square-tree similar to square-list
+;;; Show both `map`-based and recursion-based implementation.
+
+(defn square-tree [tree]
+  (cond
+    (nil? tree) nil
+    (number? tree) (square tree)
+    :branch (cons (square-tree (first tree))
+                  (square-tree (next tree)))))
+(square-tree '(1 (2 (3 (4 (5 (6 7)))))))
+;; => (1 (4 (9 (16 (25 (36 49))))))
+
+(defn square-tree-map [tree]
+  (map
+   (fn [sub-tree]
+     (if (seq? sub-tree)
+       (square-tree-map sub-tree)
+       (square sub-tree)))
+   tree))
+(square-tree-map '(1 (2 (3 (4 (5 (6 7)))))))
+;; => (1 (4 (9 (16 (25 (36 49))))))
+
+
+;;; Ex. 2.31 (p.113)
+;;; Abstract 2.30 to a higher-order procedure `tree-map`:
+;;; so you can define `square-tree` easily using this `tree-map` procedure:
+(defn tree-map [f tree]
+  (map
+   (fn [sub-tree]
+     (if (seq? sub-tree)
+       (tree-map f sub-tree)
+       (f sub-tree)))
+   tree))
+
+(defn square-tree2 [tree]
+  (tree-map square tree))
+
+(square-tree2 '(1 (2 (3 (4 (5 (6 7)))))))
+;; => (1 (4 (9 (16 (25 (36 49))))))
+
+;; the same should work with `clojure.core/tree-seq`
+;; ???
+(defn square-tree3 [tree]
+  (map square (tree-seq seq? seq tree)))
+
+;; doesn't work:
+(tree-seq seq? seq '(1 (2 (3 (4 (5 (6 7)))))))
+(square-tree3 '(1 (2 (3 (4 (5 (6 7)))))))
+
+;;; Ex. 2.32 (p.113)
+;;; Set of all subsets
+(defn subsets [s]
+  (let [xs (set s)]
+    (if (empty? xs)
+      #{#{}} ; this is an important bit - set containing an empty set, NOT JUST #{} !!! 
+      (let [rst (subsets  (next xs))]
+        ;; `append` doesn't really work for us because it produces `(nil)`
+        (clojure.set/union rst (set (map (fn [subset-for-remaining-elems]
+                                (conj subset-for-remaining-elems
+                                      (first xs)))
+                              rst)))))))
+
+(subsets #{1 2 3 })
+;; => #{#{} #{3} #{2} #{1} #{1 3 2} #{1 3} #{1 2} #{3 2}}
+
+
+
+;;;; ----------------------------
+;;;; 2.2.3. Sequences as conventional interfaces (p. 113)
+;;;; ----------------------------
+
+;;; consider this implementation similar to count-leaves which sums squares of leaves that are odd:
+(defn sum-odd-squares [tree]
+  (cond
+    (number? tree) (if (odd? tree) (square tree) 0)
+    (empty? tree) 0
+    :branch (+ (sum-odd-squares (first tree))
+               (sum-odd-squares (rest tree)))))
+(sum-odd-squares '(1 (2 (3 (4 (5 (6 7)))))))
+;; => 84
+
+;;; Compare `sum-odd-squares` to `even-fibs` which constructs a list of all even fibonacci numbers
+
+;; (copied from Chapter 1)
+(defn fibr [n]
+  (cond
+    (zero? n) 0
+    (= 1 n) 1
+    (< 1 n) (+ (fibr (- n 1))
+               (fibr (- n 2)))))
+
+(defn even-fibs [n]
+  (letfn [(nxt [k]
+            (if (> k n)
+              []
+              (let [fib-num (fibr k)]
+                (if (even? fib-num)
+                  (cons fib-num (nxt (+ k 1)))
+                  (nxt (inc k))))))]
+    (nxt 0)))
+(even-fibs 10)
+;; => (0 2 8 34)
+;; compare to:
+(map fibr (range 11))
+;; => (0 1 1 2 3 5 8 13 21 34 55)
+;;     *     *     *       *
+
+
+;;; let's implement filter since we already have map
+(defn my-filter [pred xs]
+  (cond
+    (empty? xs) ()
+    (pred (first xs)) (cons (first x) (my-filter pred (rest xs)))
+    :else  (my-filter pred (rest x))))
+
+(filter odd? (range 10))
+;; => (1 3 5 7 9)
+
+;;; and also implement `accumulate`
+(defn accumulate [op initial xs]
+  (if (empty? xs)
+    initial
+    (op (first xs)
+        (accumulate op initial (rest xs)))))
+
+(accumulate + 0 (range 1 6))
+;
+(accumulate * 1 (range 1 6))
+;; => 120
+
+;;; Now the only thing that remains is the "enumeration"
+;;; This is different for even-fibs and sum-odd-squares, respectively:
+
+;; even-fibs need enumeration of interval:
+(defn enumerate-interval [low high]
+  (if (> low high)
+    ()
+    (cons low (enumerate-interval (inc low) high))))
+(enumerate-interval 2 7)
+;; => (2 3 4 5 6 7)
+
+;; sum-odd-squares needs enumeration of leaves in a tree:
+(defn enumerate-tree [tree]
+  (cond
+    (nil? tree) ()
+
+    (seq? tree) (append (enumerate-tree (first tree))
+                        (enumerate-tree (next tree)))
+    :leaf (list tree)))
+
+(enumerate-tree (list 1 (list 2 (list 3 4)) 5))
+;; => (1 2 3 4 5)
+
+
+;;; Now we can redefine sum-odd-squares and even-fibs in terms of the helper procedures
+;;; to follow the signal-flow representation more closely:
+(defn sum-odd-squares [tree]
+  (->> tree
+       (enumerate-tree)
+       (filter odd?)
+       (map square)
+       (accumulate + 0)))
+(sum-odd-squares '(1 (2 (3 (4 (5 (6 7)))))))
+;; => 84
+
+;; or alternatively using another format from the book:
+(defn sum-odd-squares [tree]
+  (accumulate + 0
+              (map square
+                   (filter odd?
+                           (enumerate-tree tree)))))
+(sum-odd-squares '(1 (2 (3 (4 (5 (6 7)))))))
+;; => 84
+
+
+(defn even-fibs [n]
+  (->> (enumerate-interval 0 n)
+       (map fibr)
+       (filter even?)
+       (accumulate cons nil)))
+(even-fibs 10)
+;; => (0 2 8 34)
+
+
+;;; We can now also combine pieces from even-fibs and sum-odd-squares to create
+;;; a funtion which lists squares of fibonacci numbers:
+(defn list-fib-squares [n]
+  (accumulate cons
+              nil
+              (map square
+                   (map fibr
+                        (enumerate-interval 0 n)))))
+;; or more Clojur-y syntax:
+(defn list-fib-squares [n]
+  (->> (enumerate-interval 0 n)
+       (map fibr)
+       (map square)
+       (accumulate cons nil)))
+(list-fib-squares 10)
+;; => (0 1 1 4 9 25 64 169 441 1156 3025)
+
+
