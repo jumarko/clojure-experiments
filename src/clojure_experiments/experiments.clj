@@ -1187,3 +1187,19 @@ d-m
 #_(ud/? (map (fn [x] (inc x))
            (range 10)))
 
+
+;;; Question on Slack:
+;; Christian Barraza  Hey everyone! Working through Brave and True so I can help with a particular project-
+;; came across a suggestion to try and re-implement the 'comp' function
+;; Anyways, here is my code, which works with two arguments, but no more.
+;; And I'm really struggling to understand why:
+(defn my-comp
+  [f & g]
+  (fn [& args]
+    (f (if (= (count g) 1)
+         (apply (first g) args)
+         (apply (apply my-comp g) args)))))
+((my-comp inc inc *) 2 3)
+;; => 8
+
+(comp)
