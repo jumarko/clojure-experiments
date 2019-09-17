@@ -129,3 +129,18 @@
                              (println "finished.")
                              :value))))
 
+;;; Limit blocking tasks to given timeout
+;;; Useful for bounding total time of an HTTP call
+(defn- with-timeout [timeout task-fn timeout-failed-fn]
+  (let [task (future (task-fn))
+        task-result (deref task timeout :timeout)]
+    (if (= :timeout task-result)
+      (do 
+        (if (future-cancel task)
+          ;; TODO: replace with `log/debug` in production code
+          (println "Task cancelled")
+          (println "Task could not be canceled - maybe it's already finished."))
+        (timeout-failed-fn))
+      task-result)))
+
+
