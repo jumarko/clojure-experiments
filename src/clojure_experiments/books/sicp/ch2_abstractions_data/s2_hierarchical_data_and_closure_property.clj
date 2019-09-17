@@ -634,3 +634,165 @@ one-through-four
 ;; => (0 1 1 4 9 25 64 169 441 1156 3025)
 
 
+;;; Ex. 2.33 (p. 119)
+;;; Fill in the blanks to define `map`, `append`, `length` via `accumulate`
+(defn map2 [f xs]
+  (accumulate (fn [y rst]
+                (cons (f y) rst))
+              ;; if we used list and cons we'd have to 'reverse' it at the end?
+              ()
+              xs))
+(map2 inc (range 9))
+;; => (1 2 3 4 5 6 7 8 9)
+(defn append2 [xs ys]
+  (accumulate cons
+              ys
+              xs))
+(append2 (range 10) (range 100 110))
+;; => (0 1 2 3 4 5 6 7 8 9 100 101 102 103 104 105 106 107 108 109)
+
+(defn length2 [xs]
+  (accumulate (fn [x length-1]
+                (inc length-1))
+              0
+              xs))
+(length2 (range 10))
+;; => 10
+
+
+;;; Ex. 2.34 (p.119)
+;;; Evaluate polynomial using Horner's rule
+(defn horner-eval [x coefficient-seq]
+  (accumulate
+   (fn [coef xn-1-result]
+     (+ coef (* x xn-1-result)))
+   0
+   coefficient-seq))
+
+(horner-eval 2 '(1 3 0 5 0 1))
+;; => 79
+;; you can verify the result manually by converting to polynomial representation:
+;; x^5 + 5*x^3 + 3*x + 1
+;; = 32 + 40 + 6 + 1
+;; = 79
+
+
+
+;;; Ex. 2.35 (p. 120)
+;;; Redefine count-leaves as an accumulation
+(defn count-leaves2 [tree-list]
+  ;; cheating!?
+  (length (enumerate-tree tree-list)))
+(count-leaves2 '(((1 2) 3 4)
+                 ((1 2) 3 4)))
+;; => 8
+
+;; another try - again "cheating" with `enumerate-tree`
+(defn count-leaves3 [tree-list]
+  (accumulate
+   (fn [fst rest-count]
+     (inc rest-count)) 
+   0
+   (enumerate-tree tree-list)))
+(count-leaves3 '(((1 2) 3 4)
+                 ((1 2) 3 4)))
+;; => 8
+
+;; another try - completely manual recursion
+(defn count-leaves4 [tree-list]
+  (accumulate
+   (fn [left right-count]
+     (let [left-count (if (seq? left)
+                        (count-leaves4 left)
+                        1)]
+       (+ left-count right-count)))
+   0
+   tree-list))
+(count-leaves4 '(((1 2) 3 4)
+                 ((1 2) 3 4)))
+;; => 8
+(count-leaves4 ())
+;; => 0
+
+
+;;; Ex. 2.36 (p.120)
+;;; Write accumulate-n which can accept multiple sequences in the last arg (sequence of seqs)
+(defn accumulate-n [op init seqs]
+  (if (nil? (first seqs))
+    ()
+    (cons (accumulate op init (map first seqs))
+          (accumulate-n op init (map next seqs)))))
+(accumulate-n
+ +
+ 0
+ [[1 2 3]
+  [4 5 6]
+  [7 8 9]
+  [10 11 12]])
+;; => (22 26 30)
+
+
+;;; Ex. 2.37 Matrix operations (p.120)
+;;; matrices are represented as sequence of vectors
+;; | 1 2 3 4|
+;; | 4 5 6 6|
+;; | 6 7 8 9|
+;; is represented as:
+(def my-matrix 
+  [[1 2 3 4]
+   [4 5 6 6]
+   [6 7 8 9]])
+
+;; dot-product is defined:
+(defn dot-product [v w]
+  (accumulate + 0 (map * v w)))
+(dot-product [1 2 3 4] [4 5 6 6])
+;; => 56
+
+;; Complete definitions for other operations
+(defn matrix-*-vector [m v]
+  (map (fn [mv] (dot-product mv v))
+       m))
+(matrix-*-vector
+ my-matrix
+ [1 2 3 4])
+;; => (30 56 80)
+
+(defn transpose [m]
+  (accumulate-n
+   cons
+   []
+   m))
+(transpose my-matrix)
+;; => ((1 4 6) (2 5 7) (3 6 8) (4 6 9))
+
+(defn matrix-*-matrix [m n]
+  (let [ncols (transpose n)]
+    (map
+     (fn [mrow]
+       ;; notice that this is just `matrix-*-vector` http://community.schemewiki.org/?sicp-ex-2.37
+       (map
+        (fn [ncol]
+          (dot-product mrow ncol))
+        ncols))
+     m)))
+(matrix-*-matrix my-matrix my-matrix)
+;; => ((27 33 39 43)
+;;     (60 75 90 100)
+;;     (82 103 124 138))
+
+(defn matrix-*-matrix [m n]
+  (let [ncols (transpose n)]
+    (map
+     (fn [mrow]
+       (matrix-*-vector ncols mrow))
+     m)))
+(matrix-*-matrix my-matrix my-matrix)
+;; => ((27 33 39 43)
+;;     (60 75 90 100)
+;;     (82 103 124 138))
+
+
+
+
+

@@ -1,6 +1,7 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.quiz
   "Exercises to practice the most important ideas from Chapter 2."
-  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]))
+  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]
+            [clojure-experiments.books.sicp.ch2-abstractions-data.s2-hierarchical-data-and-closure-property :refer [accumulate]]))
 
 ;;; Section 2.1 Data Abstraction and Abstraction Barriers
 ;;; Describe how would you implement operations on rational numbers
@@ -79,3 +80,37 @@
     (< 1 n) (+ (fibr (- n 1))
                (fibr (- n 2)))))
 (defn even-fibs [n])
+
+
+;;; Ex. 2.34 (p.119)
+;;; Evaluate polynomial using Horner's rule and `accumulate` function
+(defn horner-eval [x coefficient-seq]
+  (accumulate
+   ,,,
+   coefficient-seq
+   ))
+
+(horner-eval 2 '(1 3 0 5 0 1))
+;; => 79
+
+
+
+;;; Ex. 2.36 and 2.37 (p.120)
+;;; Write accumulate-n which can accept multiple sequences in the last arg (sequence of seqs)
+;;; Optional: Then use this to define matrix operation function(s): dot-product, matrix-*-vector, transpose, matrix-*-matrix
+;;;            (this is not that valuable and quite time-consuming!)
+(defn accumulate-n [op init seqs]
+  (if (nil? (first seqs))
+    ()
+    (cons ,,,)))
+(accumulate-n
+ +
+ 0
+ [[1 2 3]
+  [4 5 6]
+  [7 8 9]
+  [10 11 12]])
+;; => (22 26 30)
+
+
+
