@@ -794,5 +794,41 @@ one-through-four
 
 
 
+;;; Ex. 2.38 (p. 121) 
+;;; accumulate is the same as `fold-right`
+(def fold-right accumulate)
 
+(defn fold-left [op initial xs]
+  (letfn [(iter [result rst]
+            (if (nil? rst)
+              result
+              (iter (op result (first rst))
+                    (next rst))))]
+    (iter initial xs)))
+(fold-right / 1 (list 1 2 3))
+;; => 3/2
+(fold-left / 1 (list 1 2 3))
+;; => 1/6
 
+(fold-right list () (list 1 2 3))
+;; => (1 (2 (3 ())))
+(fold-left list () (list 1 2 3))
+;; => (((() 1) 2) 3)
+
+;; What property has xs satisfy to give same results for both fold-left and fold-right?
+;; associativity?
+(fold-right * 1 (list 1 2 3))
+;; => 6
+(fold-left * 1 (list 1 2 3))
+;; => 6
+(fold-right + 0 (list 1 2 3))
+;; => 6
+(fold-left + 0 (list 1 2 3))
+;; => 6
+
+;; commutativity? - counterexample that associative fn which isn't commutative (string concatenation)
+;;                  still does work
+(fold-right str "" (list "abc" "def" "ghi"))
+;; => "abcefdghi"
+(fold-left str "" (list "abc" "def" "ghi"))
+;; => "abcdefghi"
