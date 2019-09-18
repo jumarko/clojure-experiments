@@ -2,6 +2,7 @@
   "This deals with exampels from the section 2.2 - pages 97 - 141?
   TODO: maybe separate the Picture Language exercise?"
   (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]
+            [clojure-experiments.books.sicp.ch1-abstractions-procedures.s2-procedures-and-processes :refer [prime?]]
             ))
 
 ;;;; ----------------------------
@@ -832,3 +833,90 @@ one-through-four
 ;; => "abcefdghi"
 (fold-left str "" (list "abc" "def" "ghi"))
 ;; => "abcdefghi"
+
+
+;;; Ex. 2.39 (p.122)
+;;; define `reverse` in terms of fold-left and fold-right
+(defn reverse [xs]
+  (fold-left
+   (fn [acc x] (cons x acc))
+   ()
+   xs))
+(reverse (range 10))
+;; => (9 8 7 6 5 4 3 2 1 0)
+(defn reverse [xs]
+  (fold-right
+   (fn [x y] (conj y x))
+   []
+   xs))
+(reverse (range 10))
+;; => [9 8 7 6 5 4 3 2 1 0]
+
+;; or using solution from the web: http://community.schemewiki.org/?sicp-ex-2.39
+(defn reverse [xs]
+  (fold-right
+   (fn [x already-reversed] (append already-reversed (list x)))
+   ()
+   xs))
+(reverse (range 10))
+;; => (9 8 7 6 5 4 3 2 1 0)
+
+
+
+;;; Nested Mappings (p. 122) - alternative to for loops
+;;; Generating sequence of pairs i,j such that 1 <= j < i <= n and i+j is prime
+;;; 
+;; first little cheating with clojure.core/for
+(defn prime-pairs [n]
+  (for [i (range 1 (inc n))
+        j (range 1 i)
+        :when (prime? (+ i j))]
+    [i j (+ i j)]))
+(prime-pairs 6)
+;; => ([2 1 3] [3 2 5] [4 1 5] [4 3 7] [5 2 7] [6 1 7] [6 5 11])
+
+;; now manual method using nested mappings
+(defn- prime-sum? [[i j]] (prime? (+ i j)))
+;; first start
+(->> (enumerate-interval 1 6)
+     (map (fn [i] (map (fn [j] [i j])
+                       (enumerate-interval 1 (dec i)))))
+     (accumulate append ()))
+;; => (nil [2 1] [3 1] [3 2] [4 1] [4 2] [4 3] [5 1] [5 2] [5 3] [5 4] [6 1] [6 2] [6 3] [6 4] [6 5])
+
+;; accumulate & append is common enough that `flatmap` exists
+(defn flatmap [proc xs]
+  (accumulate append () (map proc xs)))
+(defn- make-pair-sum [[i j]]
+  [i j (+ i j)])
+(defn prime-pairs2 [n]
+  (->> (enumerate-interval 1 n)
+       (flatmap (fn [i] (map (fn [j] [i j])
+                             (enumerate-interval 1 (dec i)))))
+       (filter prime-sum?)
+       (map make-pair-sum)))
+
+(prime-pairs2 6)
+;; => ([2 1 3] [3 2 5] [4 1 5] [4 3 7] [5 2 7] [6 1 7] [6 5 11])
+
+
+
+;;; Set permutations (p.123 - 124)
+;;; Generating a sequence of all permutations
+;; start with helper remove procedure which will remove an element from a sequence
+(defn remove2 [x xs]
+  (filter #(not= % x) xs))
+(remove2 3 (range 5))
+;; => (0 1 2 4)
+
+(defn permutations [s]
+  (if (empty? s)
+    '(()) ;; notice a list containing an empty list
+    (flatmap
+     (fn [x]
+       (map (fn [p] (cons x p))
+            (permutations (remove2 (first s) s))))
+     s)))
+(permutations #{1 2 3})
+;; => ((1 3 2) (1 2 2) (3 3 2) (3 2 2) (2 3 2) (2 2 2))
+
