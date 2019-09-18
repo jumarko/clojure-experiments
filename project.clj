@@ -4,12 +4,15 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
-                 [org.clojure/clojure "1.10.0"]
+                 [org.clojure/clojure "1.10.1"]
                  ;; leads to "No matching method maybeSpecialTag" error - may be connected with virgil?
-                 [org.clojure/clojure "1.10.0" :classifier "sources"]
-                 [org.clojure/tools.deps.alpha "0.5.460"]
+                 [org.clojure/clojure "1.10.1" :classifier "sources"]
+                 ;; why would I need this in projects dependencies?
+                 #_[org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0"]
-                 [org.apache.pdfbox/pdfbox "2.0.7"]
+                 [org.apache.pdfbox/pdfbox "2.0.7"
+                  ;; we prefer log4j2
+                  :exclusions [commons-logging]]
                  [net.java.dev.jna/jna "4.4.0"]
                  [org.flatland/useful "0.11.5"]
                  [org.apache.poi/poi-ooxml "3.17"]
@@ -62,7 +65,9 @@
                  [com.taoensso/truss "1.5.0"]
                  [net.cgrand/xforms "0.18.2"]
                  ;; this can break cider?! - dev profile plugins: https://github.com/Clojure2D/clojure2d/blob/master/project.clj
-                 [clojure2d "1.1.0"]
+                 [clojure2d "1.1.0"
+                  ;; we use log4j2 logging preferably
+                  :exclusions [org.slf4j/slf4j-simple]]
                  [datascript "0.16.6"]
                  [lambdaisland/deep-diff "0.0-8"]
                  [bocko "1.0.0"]
@@ -113,6 +118,18 @@
 
                  ;; simple profiling
                  [com.taoensso/tufte "2.0.1"]
+
+                 ;;; logging with clojure.tools.logging and log4j2
+                 ;;; http://brownsofa.org/blog/2015/06/14/clojure-in-production-logging/
+                 ;;; https://github.com/clojure/tools.logging
+                 ;;; https://logging.apache.org/log4j/2.x/manual/configuration.html
+                 [org.clojure/tools.logging "0.5.0"]
+                 ;; Note: this is really needed https://logging.apache.org/log4j/2.x/maven-artifacts.html
+                 ;; Otherwise you'd get "ERROR StatusLogger No Log4j 2 configuration file found. " 
+                 [org.apache.logging.log4j/log4j-api "2.12.1"]
+                 [org.apache.logging.log4j/log4j-core"2.12.1"]
+                 ;; also this slf4j bridge
+                 [org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
                  ]
   :java-source-paths ["src/java"]
   :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]

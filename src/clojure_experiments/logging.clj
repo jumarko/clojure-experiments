@@ -1,6 +1,74 @@
 (ns clojure-experiments.logging
-  (:require [taoensso.timbre :as log]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.tools.logging :as logging]
+            [taoensso.timbre :as log])
+  (:import (org.apache.logging.log4j Level LogManager)
+           (org.apache.logging.log4j Level)))
 
+;;;; clojure.tools.logging
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; TODO: this whole thing requires proper configuration first!
+;;; perhaps there's some conflict with SLF4j?
+
+(defn log-levels []
+  (->> (Level/values)
+       seq
+       (map (fn [log-level]
+              [(-> log-level str clojure.string/lower-case keyword)
+               log-level]))
+       (into {}))
+  #_{:fatal Level/FATAL
+     :error Level/ERROR
+     :warn Level/WARN
+     :info Level/INFO
+     :debug Level/DEBUG
+     :trace Level/TRACE
+     :off Level/OFF
+     :all Level/ALL}
+  )
+(s/def ::log-level (set (keys (log-levels))))
+(s/fdef set-level!
+  :args (s/cat :level ::log-level)
+  :ret nil?)
+(defn set-level!
+  "Sets new log level for the Root logger. "
+  [level]
+  (if-let [log-level (get (log-levels) level)]
+    ;; Using log4j2 API for setting log level: https://stackoverflow.com/a/23434603/1184752
+    (let [logger-context (LogManager/getContext false)
+          logger-config  (-> logger-context
+                             .getConfiguration
+                             (.getLoggerConfig LogManager/ROOT_LOGGER_NAME))]
+      (.setLevel logger-config log-level)
+      ;; This causes all Loggers to refetch information from their LoggerConfig.
+      (.updateLoggers logger-context)
+      ;; finally, we need to update logger-factory used internally by clojure.tools.logging
+      ;; otherwise it would cache the log level set when it was initialized
+      (alter-var-root #'logging/*logger-factory* (fn [_] (clojure.tools.logging.impl/find-factory))))
+    (throw (IllegalArgumentException. (str "Invalid log level: " level)))))
+
+(comment
+
+  ;; nothing should be printed
+  (logging/debug "ahoj")
+  ;; this should be printed
+  (logging/error "ahoj")
+
+  ;; and now it should
+  ;; BUT it's not (there's some problem with SLF4J bridge?; when clojure.tools.logging doesn't autodetect
+  ;; any slf4j dependencies and picks log4j2 instead it works)
+  (set-level! :debug)
+  (logging/debug "ahoj")
+
+  ;;
+  )
+
+
+
+
+;;;; Timbre
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Masking secrets in logs
 ;;; 
 (def secrets-log-patterns
@@ -58,3 +126,4 @@
   (mask-secrets-log-config)
   (log/info "Bearer XYZ")
   )
+
