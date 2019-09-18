@@ -59,8 +59,8 @@ one-through-four
 (def odds '(1 3 5 7 ))
 
 (defn append [l1 l2]
-  (if l1
-    (cons (first l1) (append (next l1) l2))
+  (if (seq l1)
+    (cons (first l1) (append (rest l1) l2))
     l2))
 
 (append squares odds)  
