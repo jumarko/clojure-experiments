@@ -74,6 +74,11 @@
 ;; when the first photo is uploaded
 (defn upload [headshot c]
   ;; TODO: Thread/sleep inside `go` looks suspicious; should we use `a/thread`?
+  ;; => SEE https://eli.thegreenplace.net/2017/clojure-concurrency-and-blocking-with-coreasync/
+  ;; Also check this: https://clojureverse.org/t/to-block-or-not-to-block-in-go-blocks/2104/10?u=jumar
+  ;;  - Similarly, you should be very careful with anything that creates a new thread per channel value. ... it throws away backpressure.
+  ;;    ... You should instead spin up a fixed number of threads and let them handle each value as they can. 
+  ;;    => Don't use a/thread inside a go block!?
   (a/thread (Thread/sleep (rand 100))
         (a/>!! c headshot)))
 (comment
