@@ -44,8 +44,6 @@
   )
 
 ;; but even non-blocking puts can block the current thread if the 'put queue' is too long?
-
-
 (comment
   (let [ch (a/chan)] (a/go (dotimes [i 10000] (a/put! ch i)))
        (dotimes [i 3] (println (a/<!! ch))))

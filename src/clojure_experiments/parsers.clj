@@ -6,10 +6,18 @@
             #_[clojure.tools.emitter.jvm :as e]
             [clojure.tools.reader :as r]
             [clojure.tools.reader.edn :as re]
-            [net.cgrand.sjacket.parser :as sjp]))
+            [net.cgrand.sjacket.parser :as sjp]
+            [clojure-experiments.clipboard :as clipboard])
+  (:import (java.awt Toolkit)))
 
 ;;;; See `clojure-experiments.parsers.spec` 
 ;;;; =========================================
+
+
+;;; simple function to parse clojure data from string copied into the system clipboard
+;;; useful mainly for quoting sequences/lists and then paste to the REPL
+#_(clipboard/read-string-from-clipboard!)
+;; => (1 2 3 {:a (1 2 3)})
 
 
 ;;; tools.reader
