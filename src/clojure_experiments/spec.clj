@@ -173,6 +173,7 @@
 
 ;; try it out
 (s/conform ::fizz 4)
+(s/conform ::fizz 3)
 (s/exercise ::fizz)
 
 ;; specify all of FizzBuzz so it can generate
@@ -184,6 +185,7 @@
 
 ;; take it for a stroll...
 (s/exercise ::fizzbuzznum 25)
+
 
 ;; oops, almost forgot to solve the problem...
 (def fizzbuzz-transducer (map (partial s/conform ::fizzbuzznum)))
@@ -213,6 +215,30 @@
         :args (s/cat :m (s/keys :req-un [::name])))
 
 #_(stest/instrument)
+
+
+;;; conform and unform
+(s/conform (s/and :a int? :b string? :c map?)
+           {})
+;; => [:c {}]
+(s/unform (s/or :a int? :b string? :c map?)
+          [:c {}])
+;; => {}
+
+(s/conform (s/and int? #(> % 10))
+           11)
+;; => 11
+(s/unform(s/and int? #(> % 10))
+           11)
+
+(s/conform (s/and int? (s/or :pos #(> % 10)
+                             :neg #(< % -10)))
+           -11)
+;; => [:neg -11]
+(s/unform (s/and int? (s/or :pos #(> % 10)
+                            :neg #(< % -10)))
+          [:neg -11])
+;; => -11
 
 
 ;;; spec on multi-arity functions
