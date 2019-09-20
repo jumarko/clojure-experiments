@@ -109,3 +109,29 @@
   ;; end
   )
 ;; => nil
+
+
+;;; remove item from a vector
+;;; https://stackoverflow.com/questions/1394991/clojure-remove-item-from-vector-at-a-specified-location/1409560
+(def a [1 2 3 4 5])
+(comment
+  
+  (time (dotimes [n 100000]
+          (vec (concat (take 2 a)
+                       (drop 3 a)))))
+  ;; "Elapsed time: 102.644533 msecs"
+
+  (time (dotimes [n 100000]
+          (vec (concat (subvec a 0 2)
+                       (subvec a 3)))))
+  ;; "Elapsed time: 73.179752 msecs"
+  (time (dotimes [n 100000]
+          (into (subvec a 0 2)
+                (subvec a 3))))
+  
+  ;; "Elapsed time: 51.902917 msecs"
+
+  ;;
+  )
+
+
