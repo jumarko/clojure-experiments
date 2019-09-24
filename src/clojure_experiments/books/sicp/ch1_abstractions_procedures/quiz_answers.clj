@@ -140,8 +140,58 @@
 
 ;;; expmod (p. 51)
 ;;; x^n mod m
-;;; show also the native version and what's wrong with it..
+;;; show also the naive version and what's wrong with it..
 (defn expmod [x n m])
+
+;; So here's my naive version
+(defn expmod-naive [x n m]
+  (mod (fast-exp x n)
+       m))
+;; works fine for small numbers
+(expmod-naive 2 10 7)
+;; => 2
+;; just check the result
+(* 146 7)
+;; => 1022
+
+;; but not so well for big nums
+;; this won't complete in a reasonable time frame
+#_(expmod-naive 14115123 107912312 7)
+
+;; => let's try doing a better job...
+;; we can use "successive squaring" idea 
+(defn expmod
+  "Computes x^n mod m.
+  x must be a positive integer"
+  [x n m]
+  {:pre [(pos? x)]}
+  (cond
+    ;; extra condition added to make sure it works properly with m = 1
+    (= m 1) 0
+
+    (= n 0) 1 ; I got this base case wrong (I used (= n 1) (mod x m) instead of the simpler condition)
+    (odd? x) (mod (* x (expmod x (dec n) m))
+                  m)
+    ;; this is the interesting part
+    (even? x) (mod
+               (square (expmod x (quot n 2) m))
+               m)))
+  
+;; 243 mod 7
+(expmod 3 5 7)
+;; 34 * 7 = 238
+;; => 5
+
+(expmod 4 3 7)
+;; => 1
+
+;; Note that using simplified base case from the book doesn't work when the mod is 1,
+;; but that is really a trivial case, where the answer is always zero!
+(expmod 4 0 1)
+;; => 1
+(mod 1 1)
+;; => 0
+
 
 ;; use expmod to implement `fermat-test`
 (defn fermat-prime? [n]

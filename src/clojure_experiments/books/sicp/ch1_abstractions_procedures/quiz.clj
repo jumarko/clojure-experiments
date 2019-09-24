@@ -27,7 +27,7 @@
 
 ;; expmod (p. 51)
 ;; x^n mod m
-;; show also the native version and what's wrong with it..
+;; show also the naive version and what's wrong with it..
 (defn expmod [x n m])
 
 ;; use expmod to implement `fermat-test`
