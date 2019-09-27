@@ -1,0 +1,10 @@
+;; THIS IS JUST AN EXAMPLE OF A CUSTOM CONFIGURATION FILE - NOT REALLY USED FOR ANYTHING USEFUL IN THIS PROJECT!
+;;
+;; Cutom values overriding defaults in config.edn
+{
+ :port 3003
+ :db-password "changeme"
+ :db-run-migrations true
+ :conn-timeout 5000
+ :auth-session {:encryption-key "abcdefghijklmnop"}
+ }

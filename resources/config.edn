@@ -1,0 +1,25 @@
+;; THIS IS JUST AN EXAMPLE OF A CONFIGURATION FILE - NOT REALLY USED FOR ANYTHING USEFUL IN THIS PROJECT!
+;; 
+;; List of all Scene configuration properties with their default values.
+;; A user can override the defaults either with Java system properties or with environment variables.
+;; Don't forget to add a proper spec when you add a new configuration property!
+;; See `config.clj` for more details.
+;; Note: all configurable properties must be stated here (even if using nil as their value)
+;;       otherwise they won't be recognized by cprop library
+;;       and user won't be able to override them via system props or env vars
+{
+ :port 3003
+ :db-password "changeme"
+ :db-run-migrations false
+ :conn-timeout 5000
+
+ ;; persistent authentication session - used if encryption-key is set;
+ ;; by default, in memory session store is used
+ :auth-session {
+                ;; by default nil; otherwise must have 16 bytes
+                ;; must still be present here though to make sure it can be overriden via system property
+                ;; or environment variable
+                :encryption-key nil 
+                :max-age-seconds 1209600} ; 14 days
+}
+

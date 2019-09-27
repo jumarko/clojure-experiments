@@ -132,7 +132,9 @@
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
                  ]
   :java-source-paths ["src/java"]
-  :jvm-opts ["-Djdk.attach.allowAttachSelf=true"]
+  :jvm-opts ["-Djdk.attach.allowAttachSelf=true"
+             ;; just as an example of overriding default configuration values
+             "-Dconf=my-config.edn"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
