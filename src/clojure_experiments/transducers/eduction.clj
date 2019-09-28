@@ -28,6 +28,19 @@
    (println "Hello")
    (println (clojure.core/take 10 res))
    (println "Done")))
+;; Hello
+;; (1 3 5 7 9 11 13 15 17 19)
+;; Done
+;; "Elapsed time: 1.734041 msecs"
+
+;; also an alternative experiment:
+;; Do they say that eduction/sequence realize everything once asked for the first element?
+(def my-seq (range 40))
+(let [xs (eduction (map #(doto % print inc)) my-seq)]
+  (first xs))
+;; prints (not all elements!)
+;; 01234567891011121314151617181920212223242526272829303132
+
 
 ;;; Long example from https://livebook.manning.com/book/clojure-the-essential-reference/chapter-7/v-25/291
 ;;; ------------------------------------------------------------------------------------------------

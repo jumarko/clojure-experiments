@@ -10,6 +10,7 @@
                  ;; why would I need this in projects dependencies?
                  #_[org.clojure/tools.deps.alpha "0.5.460"]
                  [org.clojure/test.check "0.10.0"]
+                 [com.gfredericks/test.chuck "0.2.10"]
                  [org.apache.pdfbox/pdfbox "2.0.7"
                   ;; we prefer log4j2
                   :exclusions [commons-logging]]
@@ -119,10 +120,10 @@
                  ;; simple profiling
                  [com.taoensso/tufte "2.0.1"]
 
-                 ;;; logging with clojure.tools.logging and log4j2
-                 ;;; http://brownsofa.org/blog/2015/06/14/clojure-in-production-logging/
-                 ;;; https://github.com/clojure/tools.logging
-                 ;;; https://logging.apache.org/log4j/2.x/manual/configuration.html
+;;; logging with clojure.tools.logging and log4j2
+;;; http://brownsofa.org/blog/2015/06/14/clojure-in-production-logging/
+;;; https://github.com/clojure/tools.logging
+;;; https://logging.apache.org/log4j/2.x/manual/configuration.html
                  [org.clojure/tools.logging "0.5.0"]
                  ;; Note: this is really needed https://logging.apache.org/log4j/2.x/maven-artifacts.html
                  ;; Otherwise you'd get "ERROR StatusLogger No Log4j 2 configuration file found. " 
@@ -130,7 +131,22 @@
                  [org.apache.logging.log4j/log4j-core"2.12.1"]
                  ;; also this slf4j bridge
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
+                 ;; https://github.com/RickMoynihan/lein-tools-deps
+                 [lein-tools-deps "0.4.5"]
+
+                 ;; https://github.com/zane/vega.repl
+                 ;;  the simplest possible way to go from Clojure data and a Vega or Vega-Lite spec to a rendered visualization
+                 ;; built from custom ~/workspace/clojure/vega.repl/project.clj
+                 [vega.repl/vega.repl "0.1.0-SNAPSHOT"]
+
+                 ;; to demo spec-based configuration checking -> see config.clj
+                 [cprop "0.1.14"]
                  ]
+
+  ;; https://github.com/RickMoynihan/lein-tools-deps
+  :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
+  :lein-tools-deps/config {:config-files [:install :user :project]}
+
   :java-source-paths ["src/java"]
   :jvm-opts ["-Djdk.attach.allowAttachSelf=true"
              ;; just as an example of overriding default configuration values
