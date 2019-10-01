@@ -84,10 +84,3 @@
 ;; (0 ...)
 
 
-;; Do they say that eduction/sequence realize everything once asked for the first element?
-(def my-seq (range 40))
-(let [xs (eduction (map #(doto % print inc)) my-seq)]
-  (first xs))
-;; prints (not all elements!)
-;; 01234567891011121314151617181920212223242526272829303132
-
