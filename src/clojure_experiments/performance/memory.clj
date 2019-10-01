@@ -16,6 +16,28 @@
 (def my-map {:a 1 :b 2 :c 3})
 #_(cljol/view my-map)
 
+
+;;; cljol - lazy sequences: https://github.com/jafingerhut/cljol/blob/master/doc/README-gallery.md
+
+;; we need to tweek cljol opts to avoid realizing the lazy sequence fully
+(def opts {})
+
+
+;; let's define fibonacci numbers seq
+(defn fib-fn [a b]
+  (lazy-seq (cons a (fib-fn b (+' a b)))))
+(def fib-seq (fib-fn 0 1))
+(take 10 fib-seq)
+;; => (0 1 1 2 3 5 8 13 21 34)
+
+(cljol/view [fib-seq] opts)
+
+
+(cljol/view [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]] opts)
+(cljol/write-dot-file [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]]
+                  "lazy-fib-seq-vector-of-nthrest.dot" opts)
+
+
 ;;; Memory-Meter: Comparing sizes of various collections
 
 ;; vectors vs seqs - 1,000,000 elements
