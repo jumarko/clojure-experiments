@@ -37,3 +37,4 @@
 ;;   (1 2 3 {:a (1 2 3)})
 #_(read-string-from-clipboard!)
 ;; => (1 2 3 {:a (1 2 3)})
+

@@ -6,11 +6,8 @@
   (:import (org.apache.logging.log4j Level LogManager)
            (org.apache.logging.log4j.core.config Configurator)))
 
-;;;; clojure.tools.logging
+;;;; clojure.tools.logging and dynamic log level setting
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; TODO: this whole thing requires proper configuration first!
-;;; perhaps there's some conflict with SLF4j?
 
 (defn log-levels []
   (->> (Level/values)

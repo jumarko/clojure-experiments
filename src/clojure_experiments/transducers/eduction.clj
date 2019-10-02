@@ -114,6 +114,8 @@
 
 ;; Per Alex Miller it should consume entire thing eagerly when you ask for the first value?
 ;; => that's not what I observe....
+;; UPDATE: alexmiller  I shouldn't have said "eager" there. 
+;;   it's a delayed reduction, how eager it is depends on what you do with it
 (time (let [res (eduction (map inc) (filter odd?)
                      (range 100000000))]
    (println "Hello")
