@@ -141,6 +141,9 @@
 
                  ;; to demo spec-based configuration checking -> see config.clj
                  [cprop "0.1.14"]
+
+                 ;; spectrum for static-type checks based on spec
+                 [spectrum "0.2.5"]
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
