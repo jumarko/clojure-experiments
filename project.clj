@@ -68,12 +68,18 @@
                  ;; this can break cider?! - dev profile plugins: https://github.com/Clojure2D/clojure2d/blob/master/project.clj
                  [clojure2d "1.1.0"
                   ;; we use log4j2 logging preferably
-                  :exclusions [org.slf4j/slf4j-simple]]
+                  :exclusions [org.slf4j/slf4j-simple
+                               ;; this is included as extra dep for clindex (see below)
+                               org.clojure/tools.namespace]]
                  [datascript "0.16.6"]
                  [lambdaisland/deep-diff "0.0-8"]
                  [bocko "1.0.0"]
                  ;; OZ - powerful data visualizations https://github.com/metasoarous/oz
-                 [metasoarous/oz "1.6.0-alpha1"]
+                 [metasoarous/oz "1.6.0-alpha1"
+                  :exclusions [
+                               ;; this is included as extra dep for clindex (see below)
+                               org.clojure/tools.namespace
+                               ]]
                  ;; even easier Vega lite visualizations: https://github.com/jsa-aerial/hanami
                  ;; -> installed from local repo: ~/workspace/clojure/hanami
                  [aerial.hanami "0.10.11"]
@@ -149,13 +155,13 @@
                  ;; spectrum for static-type checks based on spec
                  [spectrum "0.2.5"]
 
-                 ;; Note: this is also in ~/.lein/profiles.clj
+                 ;; Note: this is also in ~/.lein/profiles.clj !!!
                  ;; clindex is a cool tool for indexing project dependencies: https://github.com/jpmonettas/clindex
                  ;; check also clograms: https://github.com/jpmonettas/clograms
                  [clindex "0.2.3"]
-                 ;; explicit require of latest tools.namespace used by clindex
-                 ;; (otherwise I could get 0.2.11 from some other dependency)
-                 [org.clojure/tools.namespace "0.3.1"]
+                 ;; custom tools.namespace version required for clindex
+                 ;; -> see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/clojure/cV6rvgR9Pfs/Z_kOOAwwBAAJ
+                 [jpmonettas/tools.namespace "0.3.2"]
 
                  ]
 
