@@ -74,7 +74,9 @@
                  [bocko "1.0.0"]
                  ;; OZ - powerful data visualizations https://github.com/metasoarous/oz
                  [metasoarous/oz "1.6.0-alpha1"]
-                 [aerial.hanami "0.2.0"]
+                 ;; even easier Vega lite visualizations: https://github.com/jsa-aerial/hanami
+                 ;; -> installed from local repo: ~/workspace/clojure/hanami
+                 [aerial.hanami "0.10.11"]
                  ;; modern version of sente required by oz
                  #_[com.taoensso/sente "1.13.1"]
                  ;; and sente requires newer transit version
@@ -83,6 +85,8 @@
 
                  [org.clojure/java.data "0.1.1"]
                  [fn-fx/fn-fx-javafx "0.5.0-SNAPSHOT"]
+                 ;; cool alternative to fn-fx: https://github.com/cljfx/cljfx
+                 [cljfx "1.5.1"]
                  [rewrite-clj "0.6.1"]
                  [amperity/greenlight "0.1.2"]
                  [bronsa/tools.decompiler "0.1.0-alpha1"]
@@ -144,6 +148,15 @@
 
                  ;; spectrum for static-type checks based on spec
                  [spectrum "0.2.5"]
+
+                 ;; Note: this is also in ~/.lein/profiles.clj
+                 ;; clindex is a cool tool for indexing project dependencies: https://github.com/jpmonettas/clindex
+                 ;; check also clograms: https://github.com/jpmonettas/clograms
+                 [clindex "0.2.3"]
+                 ;; explicit require of latest tools.namespace used by clindex
+                 ;; (otherwise I could get 0.2.11 from some other dependency)
+                 [org.clojure/tools.namespace "0.3.1"]
+
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
