@@ -1108,12 +1108,13 @@ d-m
 
 ;;; 4clojure 53 - leetwinski elegant solution: http://www.4clojure.com/problem/solutions/53
 ;; also interesting example of using debux
-(require '[debux.core :refer [dbg dbgn]])
+;; I dont' use debux anymore
+;; (require '[debux.core :refer [dbg dbgn]])
 (defn longest-increasing-subseq [numbers]
-  (or (dbg (->> (range (count numbers) 1 -1)
-                (mapcat #(partition % 1 numbers))
-                (filter #(apply < %))
-                first))
+  (or (->> (range (count numbers) 1 -1)
+           (mapcat #(partition % 1 numbers))
+           (filter #(apply < %))
+           first)
       []))
 
 (longest-increasing-subseq [1 0 1 2 3 0 4 5])
