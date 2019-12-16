@@ -42,12 +42,15 @@
                  ;; tupelo library with lots of useful functionsl ike `spy`, `lazy-cons`, `with-exception-default`
                  [tupelo "0.9.71"]
 
-                 [com.clojure-goes-fast/clj-java-decompiler "0.2.1"]
+                 ;; https://github.com/clojure-goes-fast/clj-java-decompiler
+                 ;; 0.3.0-SNAPSHOT fixes the issue with JDK 11: https://github.com/clojure-goes-fast/clj-java-decompiler/pull/4
+                 [com.clojure-goes-fast/clj-java-decompiler "0.3.0-SNAPSHOT"]
                  ;; http://clojure-goes-fast.com/blog/profiling-tool-async-profiler/
                  [com.clojure-goes-fast/clj-async-profiler "0.4.0"]
                  ;; http://clojure-goes-fast.com/blog/latency-tool-jvm-hiccup-meter/
                  [com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                  [com.clojure-goes-fast/clj-memory-meter "0.1.2"]
+                 [com.clojure-goes-fast/jvm-alloc-rate-meter "0.1.3"]
 
                  [org.clojars.pntblnk/clj-ldap "0.0.15"]
                  [vvvvalvalval/scope-capture "0.1.4"]
@@ -70,7 +73,8 @@
                   ;; we use log4j2 logging preferably
                   :exclusions [org.slf4j/slf4j-simple
                                ;; this is included as extra dep for clindex (see below)
-                               org.clojure/tools.namespace]]
+                               org.clojure/tools.namespace
+                               cider.nrepl]]
                  [datascript "0.16.6"]
                  [lambdaisland/deep-diff "0.0-8"]
                  [bocko "1.0.0"]
@@ -95,7 +99,9 @@
                  [cljfx "1.5.1"]
                  [rewrite-clj "0.6.1"]
                  [amperity/greenlight "0.1.2"]
-                 [bronsa/tools.decompiler "0.1.0-alpha1"]
+                 ;; cool experiment but not actively developed and obsolete
+                 ;; also includes old rrb.vector version transitvely which makes it fail for JDK 11
+                 ;; [bronsa/tools.decompiler "0.1.0-alpha1"]
 
                  ;; REBL: https://github.com/cognitect-labs/REBL-distro
                  ;; It has to be installed in the local repository first
@@ -158,10 +164,11 @@
                  ;; Note: this is also in ~/.lein/profiles.clj !!!
                  ;; clindex is a cool tool for indexing project dependencies: https://github.com/jpmonettas/clindex
                  ;; check also clograms: https://github.com/jpmonettas/clograms
-                 [clindex "0.2.3"]
+                 [clindex "0.2.4-SNAPSHOT"]
                  ;; custom tools.namespace version required for clindex
                  ;; -> see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/clojure/cV6rvgR9Pfs/Z_kOOAwwBAAJ
                  [jpmonettas/tools.namespace "0.3.2"]
+
 
                  ]
 
