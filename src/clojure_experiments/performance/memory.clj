@@ -1,6 +1,7 @@
 (ns clojure-experiments.performance.memory
   (:require [clj-memory-meter.core :as mm]
-            [cljol.dig9 :as cljol])
+            [cljol.dig9 :as cljol]
+            [jvm-alloc-rate-meter.core :as ameter])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
 
@@ -91,4 +92,51 @@
 
 ;; end
   )
+
+
+;;; Measuring allocation rates via jvm-alloc-rate-meter: https://github.com/clojure-goes-fast/jvm-alloc-rate-meter
+;;; WATCH OUT! it uses System.currentTimeMillis ! https://github.com/clojure-goes-fast/jvm-alloc-rate-meter/blob/master/src/jvm_alloc_rate_meter/MeterThread.java#L45
+(comment
+
+  (def am (ameter/start-alloc-rate-meter #(println "Rate is:" (/ % 1e6) "MB/sec")))
+  ;; typical output in "rest"
+  ;; (BUT this was run in Cider and mostly because of cider's overhead (printing, etc.))
+  ;; (in lein repl it was much less frequent)
+  ;; Rate is: 4.185932 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 2.092966 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 2.084644 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 0.0 MB/sec
+  ;; Rate is: 2.084644 MB/sec
+  ;; Rate is: 0.0 MB/sec
+
+
+  ;; Test it out
+  (while true
+    (byte-array 1e7)
+    (Thread/sleep 100))
+
+  ;; The meter should report ~100 MB/sec allocation rate into the console.
+
+  ;; To stop the meter thread
+  (am)
+
+;;
+  )
+
+
+;;; TODO: add jvm-hiccup-meter: https://github.com/clojure-goes-fast/jvm-hiccup-meter
+
 
