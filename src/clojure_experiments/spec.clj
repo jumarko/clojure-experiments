@@ -54,6 +54,8 @@
 ;; now we can exercise the function to see if it works as expected
 (s/exercise-fn `ranged-rand)
 
+(ranged-rand 10 2)
+
 ;; we can also check function by running generative tests
 ;; notice that we changed the num-tests from default 1000 to 10,000
 ;; to increase the probability that we find an error
