@@ -867,12 +867,12 @@ one-through-four
 ;;; Generating sequence of pairs i,j such that 1 <= j < i <= n and i+j is prime
 ;;; 
 ;; first little cheating with clojure.core/for
-(defn prime-pairs [n]
+(defn prime-sum-pairs [n]
   (for [i (range 1 (inc n))
         j (range 1 i)
         :when (prime? (+ i j))]
     [i j (+ i j)]))
-(prime-pairs 6)
+(prime-sum-pairs 6)
 ;; => ([2 1 3] [3 2 5] [4 1 5] [4 3 7] [5 2 7] [6 1 7] [6 5 11])
 
 ;; now manual method using nested mappings
@@ -889,14 +889,14 @@ one-through-four
   (accumulate append () (map proc xs)))
 (defn- make-pair-sum [[i j]]
   [i j (+ i j)])
-(defn prime-pairs2 [n]
+(defn prime-sum-pairs2 [n]
   (->> (enumerate-interval 1 n)
        (flatmap (fn [i] (map (fn [j] [i j])
                              (enumerate-interval 1 (dec i)))))
        (filter prime-sum?)
        (map make-pair-sum)))
 
-(prime-pairs2 6)
+(prime-sum-pairs2 6)
 ;; => ([2 1 3] [3 2 5] [4 1 5] [4 3 7] [5 2 7] [6 1 7] [6 5 11])
 
 
@@ -920,3 +920,30 @@ one-through-four
 (permutations #{1 2 3})
 ;; => ((1 3 2) (1 2 2) (3 3 2) (3 2 2) (2 3 2) (2 2 2))
 
+
+;;; Ex. 2.40 (p. 123)
+;;; generate a sequence of pairs i,j such that 1 <= j < i <= n
+;;; Use that to simplify `prime-sum-pairs` above
+(defn unique-pairs [n]
+  (flatmap
+   (fn [i] (map (fn [j] [i j])
+                (range 1 i)))
+   (range 2 (inc n))))
+(unique-pairs 5)
+;; => ([2 1] [3 1] [3 2] [4 1] [4 2] [4 3] [5 1] [5 2] [5 3] [5 4])
+
+;; simiplify prime-sum-pairs (I call it prime-pairs)
+(defn prime-sum-pairs3 [n]
+  (->> (unique-pairs n)
+       (filter prime-sum?)
+       (map make-pair-sum)))
+
+(prime-sum-pairs3 6)
+;; => ([2 1 3] [3 2 5] [4 1 5] [4 3 7] [5 2 7] [6 1 7] [6 5 11])
+
+
+
+;;; Ex. 2.41 (p. 124)
+;;; Find all tripls i,j,k <= given n: (i + j + k) = given s
+(defn triples [n s]
+  )

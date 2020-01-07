@@ -13,16 +13,18 @@
 ;; How do you represent them and how you can use them
 ;; If stuck see http://community.schemewiki.org/?sicp-ex-2.6
 
-(defn zero ,,,)
-(defn one ,,,)
-(defn two ,,,)
-(defn three ,,,)
+(comment
+  
+  (defn zero ,,,)
+  (defn one ,,,)
+  (defn two ,,,)
+  (defn three ,,,)
 
-(defn church-to-int [church-number] ,,,)
+  (defn church-to-int [church-number] ,,,)
 
-(defn add-one ,,,)
+  (defn add-one ,,,)
 
-(defn plus ,,,)
+  (defn plus ,,,))
 
 
 ;;; Section 2.2 Hierarchical Data Structures and 'Closure' property
@@ -90,7 +92,7 @@
    coefficient-seq
    ))
 
-(horner-eval 2 '(1 3 0 5 0 1))
+#_(horner-eval 2 '(1 3 0 5 0 1))
 ;; => 79
 
 
@@ -103,7 +105,7 @@
   (if (nil? (first seqs))
     ()
     (cons ,,,)))
-(accumulate-n
+#_(accumulate-n
  +
  0
  [[1 2 3]
