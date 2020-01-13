@@ -3,6 +3,19 @@
   (:require [clojure.test :refer [deftest is testing]]))
 
 
+;;; Unrelated
+;; this is an interesting alternative by using `reduce` to define `map`
+;; see https://purelyfunctional.tv/issues/purelyfunctional-tv-newsletter-359-tip-reduce-as-universal-recursion-over-a-list/
+(defn rmap [f coll]
+  (reduce
+   (fn [x y]
+     (conj x (f y)))
+   []
+   coll))
+(rmap inc [1 2 3])
+;; => [2 3 4]
+
+;;; Quiz
 (defn duplicate-letter? [s]
   (let [letter-freqs (frequencies s)]
     (->> letter-freqs
