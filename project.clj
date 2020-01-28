@@ -153,7 +153,7 @@
                  ;; https://github.com/zane/vega.repl
                  ;;  the simplest possible way to go from Clojure data and a Vega or Vega-Lite spec to a rendered visualization
                  ;; built from custom ~/workspace/clojure/vega.repl/project.clj
-                 [vega.repl/vega.repl "0.1.0-SNAPSHOT"]
+                 ;; [vega.repl/vega.repl "0.1.0-SNAPSHOT"]
 
                  ;; to demo spec-based configuration checking -> see config.clj
                  [cprop "0.1.14"]
@@ -164,7 +164,7 @@
                  ;; Note: this is also in ~/.lein/profiles.clj !!!
                  ;; clindex is a cool tool for indexing project dependencies: https://github.com/jpmonettas/clindex
                  ;; check also clograms: https://github.com/jpmonettas/clograms
-                 [clindex "0.2.4-SNAPSHOT"]
+                 [clindex "0.4.3"]
                  ;; custom tools.namespace version required for clindex
                  ;; -> see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/clojure/cV6rvgR9Pfs/Z_kOOAwwBAAJ
                  [jpmonettas/tools.namespace "0.3.2"]
