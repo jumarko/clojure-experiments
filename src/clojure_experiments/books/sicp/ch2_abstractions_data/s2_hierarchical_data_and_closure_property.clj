@@ -1,6 +1,6 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.s2-hierarchical-data-and-closure-property
   "This deals with exampels from the section 2.2 - pages 97 - 141?
-  TODO: maybe separate the Picture Language exercise?"
+  See also s2_picture_language.clj for the Picture Language exercises."
   (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :refer [square]]
             [clojure-experiments.books.sicp.ch1-abstractions-procedures.s2-procedures-and-processes :refer [prime?]]
             ))
