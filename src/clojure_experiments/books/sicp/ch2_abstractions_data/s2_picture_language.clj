@@ -66,8 +66,37 @@
 ;; E.g. flipped-pairs and square-limit each arrange four copies of apinter's image in square pattern;
 ;; they differ only in how they orient the copies.
 ;; => We can abstract this pattern with the square-of-four procedure
-(defn square-of-for [tl tr bl br]
+(defn square-of-four [tl tr bl br]
   (fn sof [painter]
     (let [top (beside (tl painter) (tr painter))
           bottom (beside (bl painter) (br painter))]
     (below bottom top))))
+
+;; now we can define flipped-pairs in terms of `square-of-four`
+(defn flipped-pairs [painter]
+  (square-of-four painter (flip-vert painter)
+                  painter (flip-vert painter)))
+;; or even easier!!
+(def flipped-pairs identity flip-vert identity flip-vert)
+
+;; and now redefine `square-limit` using `square-of-four`:
+(defn square-limit [painter n]
+  (let [combine4 (square-of-four flip-horiz identity
+                                 rotate180 flip-vert)]
+    (combine4 (cornert-split painter n)))
+  )
+
+
+;;; Ex. 2.45 general `split` procedure (p. 134)
+;;; `right-split` and `up-split` can be expressed as instances of `split`:
+;;; TODO: define the `split` procedure
+(defn split [orig-placer split-placer]
+  (fn split-n [painter n]
+    (if (zero? n)
+      painter 
+      (let [smaller (split-n painter (dec n))]
+        (orig-placer painter
+           (below smaller smaller))))))
+
+(def right-split (split beside below))
+(def up-split (split below beside))

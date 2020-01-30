@@ -115,4 +115,30 @@
 ;; => (22 26 30)
 
 
+;;; Picture language (p. 132)
+;;; How would you define procedure `flipped-pairs` in terms of `square-of-four`?
 
+;; this "traditional" definition:
+(defn flipped-pairs [painter]
+  (let [painter2 (beside painter (flip-vert painter))]
+    (below painter2 painter2)))
+
+;; this is `square-of-four
+(defn square-of-four [tl tr bl br]
+  (fn sof [painter]
+    (let [top (beside (tl painter) (tr painter))
+          bottom (beside (bl painter) (br painter))]
+    (below bottom top))))
+
+;; now the new definition???
+
+
+
+;;; Ex. 2.45 general `split` procedure (p. 134)
+;;; `right-split` and `up-split` can be expressed as instances of `split`:
+;;; TODO: define the `split` procedure
+(defn split [orig-placer split-placer]
+  ,,,)
+
+(def right-split (split beside below))
+(def up-split (split below beside))
