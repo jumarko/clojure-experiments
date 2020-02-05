@@ -197,6 +197,17 @@ one-through-four
 (take 10 (my-map (partial * 3) (range 100000)))
 ;; => (0 3 6 9 12 15 18 21 24 27)
 
+;; this is an interesting alternative by using `reduce` to define `map`
+;; see https://purelyfunctional.tv/issues/purelyfunctional-tv-newsletter-359-tip-reduce-as-universal-recursion-over-a-list/
+(defn rmap [f coll]
+  (reduce
+   (fn [x y]
+     (conj x (f y)))
+   []
+   coll))
+(rmap inc [1 2 3])
+;; => [2 3 4]
+
 
 ;;; Ex. 2.21 (p. 106)
 (defn square-list [l]
@@ -944,6 +955,44 @@ one-through-four
 
 
 ;;; Ex. 2.41 (p. 124)
-;;; Find all tripls i,j,k <= given n: (i + j + k) = given s
+;;; Find all triples i,j,k <= n: (i + j + k) = s
+;;; => Really easy in Clojure!
 (defn triples [n s]
-  )
+  (let [range-n (range 1 (inc n))]
+    (for [i range-n
+          j range-n
+          k range-n
+          :when (= s (+ i j k))]
+      [i j k])))
+(triples 3 4)
+;; => ([1 1 2] [1 2 1] [2 1 1])
+(triples 3 5)
+;; => ([1 1 3] [1 2 2] [1 3 1] [2 1 2] [2 2 1] [3 1 1])
+(triples 5 15)
+;; => ([5 5 5])
+(triples 5 16)
+;; => ()
+
+
+;;; Ex. 2.42 Eight Queens puzzle (p. 124)
+(def empty-board  nil)
+;; TODO!
+(defn safe? [k positions]
+  true)
+
+(defn- adjoin-position [new-row k rest-of-queens]
+  (conj rest-of-queens new-row))
+
+(defn queens [board-size]
+  (letfn [(queen-cols [k]
+            (if (zero? k)
+              (list empty-board)
+              (->> (queen-cols (dec k))
+                   (flatmap (fn [rest-of-queens]
+                              (map (fn [new-row]
+                                     (adjoin-position new-row k rest-of-queens))
+                                   (enumerate-interval 1 board-size))))
+                   (filter (partial safe? k)))))]
+    (queen-cols board-size)))
+
+(queens 3)
