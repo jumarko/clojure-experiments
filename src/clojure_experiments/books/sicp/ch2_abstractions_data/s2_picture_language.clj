@@ -1,6 +1,8 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.s2-picture-language
   "Subsection of Chapter 2.2 - Picture language.
-  See the book p. 126 - 140.")
+  See the book p. 126 - 140."
+  (:require [clojure-experiments.books.sicp.ch2-abstractions-data.s1-intro :as s1]
+            [clojure.spec.alpha :as s]))
 
 
 ;;; First define basic combinations
@@ -127,8 +129,8 @@
 (defn frame-coord-map [frame]
   (fn [a-vector]
     (add-vect (origin-frame frame)
-              (add-vect (scale-vect (xcor-vect a-vector) (edge1-frame))
-                        (scale-vect (ycor-vect a-vector) (edge1-frame))))))
+              (add-vect (scale-vect (xcor-vect a-vector) (edge1-frame frame))
+                        (scale-vect (ycor-vect a-vector) (edge1-frame frame))))))
 
 ;; Ex. 2.46 (p. 136)
 ;; Implement two-dimensional vector v running from the origin to a pint
@@ -189,12 +191,92 @@
 (defn edge2-frame [f]
   (nth f 3))
 
-;; 2nd constructor
+;; 2nd possible constructor
 (defn make-frame [origin edge1 edge2]
   (cons origin (cons edge1 edge2)))
 (defn origin-frame [f]
   (first f))
 (defn edge1-frame [f]
-  (first (second f)))
+  (second f))
 (defn edge2-frame [f]
-  (second (second f)))
+  (nnext f))
+
+#_(edge2-frame (make-frame
+  (make-vect 5 5)
+  (make-vect 2 9)
+  (make-vect 10 9)))
+
+
+;;; Painters (p. 136)
+;;; Painter is a procedure that given a fame as arg, draws a particular image
+;;; shifted and scaled to fit the frame.
+
+;; DRAWING EXPERIMENTS - INCOMPLETE and NOT WORKING PROPERLY!
+;; suppose we have primitive procedure `draw-line` which draws a line on the screen
+;; between two specified points;
+;; then we can create painters for line drawings
+;; (here we also copy start-segment and end-segment from Chapter2, Section 1.)
+
+;; <this was copied from clojure.inspector/inspect>
+(import (javax.swing JPanel JFrame))
+(defn swing-graphics
+  "Calls given function with the Graphics object of a fresh JPanel visible in  JFrame."
+  ([f]
+   (swing-graphics f 400 400))
+  ([f width heigth]
+   (doto (JFrame. "Picture Language")
+     (.add
+      (proxy [JPanel] []
+        (paintComponent [graphics]
+          (proxy-super paintComponent graphics)
+          (f graphics))))
+     (.setSize width heigth)
+     (.setVisible true))))
+
+(defn draw-line [graphics start end]
+  (.drawLine graphics
+             (xcor-vect start) (ycor-vect start)
+             (xcor-vect end) (ycor-vect end)))
+
+#_(swing-graphics
+   (fn [g]
+     (draw-line g
+                (make-vect 0 0)
+                (make-vect 50 100)
+                )
+     ))
+
+(defn- draw-frame [g frame]
+  (let [start (origin-frame frame)
+        [x1 y1] ((juxt xcor-vect ycor-vect) start)
+        end (origin-frame frame)
+        [x2 y2] ((juxt xcor-vect ycor-vect) end)]
+    (.drawRect g x1 y1 x2 y2)))
+
+(defn segments->painter [segment-list]
+  (fn [frame]
+    (swing-graphics
+     (fn [g]
+       ;; draw frame borders to make it more intuitive
+       (draw-frame g frame)
+       (run!
+        (fn [segment]
+          (draw-line g
+                     ((frame-coord-map frame) (s1/start-segment segment))
+                     ((frame-coord-map frame) (s1/end-segment segment))))
+        segment-list))
+     1000
+     1000
+     )))
+
+;; main challenge is translation between (0,1) coordinates to pixels
+#_((segments->painter
+  [(s1/make-segment (s1/make-point 0 0) (s1/make-point 0.3 0.5))
+   #_(s1/make-segment (s1/make-point 100 400) (s1/make-point 200 50))
+   #_(s1/make-segment (s1/make-point 10 80) (s1/make-point 200 220))
+   
+   ])
+ (make-frame
+  (make-vect 50 50)
+  (make-vect 200 90)
+  (make-vect 10 90)))
