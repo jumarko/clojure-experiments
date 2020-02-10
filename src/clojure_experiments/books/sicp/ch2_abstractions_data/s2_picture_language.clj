@@ -113,16 +113,16 @@
 ;;;    Origin(Frame) + x * Edge1(Frame) + y * Edge2(Frame)
 
 ;; to start with we only need "constructor" and "selectors"
-(defn make-frame)
-(defn origin-frame)
-(defn edge1-frame)
-(defn edge2-frame)
+(declare make-frame)
+(declare origin-frame)
+(declare edge1-frame)
+(declare edge2-frame)
 
 ;; for frame-coord-map we also need vector operations
-(defn add-vect)
-(defn scale-vect)
-(defn xcor-vect)
-(defn ycor-vect)
+(declare add-vect)
+(declare scale-vect)
+(declare xcor-vect)
+(declare ycor-vect)
 
 (defn frame-coord-map [frame]
   (fn [a-vector]
