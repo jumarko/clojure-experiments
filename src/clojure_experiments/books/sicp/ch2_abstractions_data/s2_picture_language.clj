@@ -425,3 +425,6 @@
 (defn below2 [painter-bottom painter-top]
   (rotate270
    (beside (rotate90 painter-top) (rotate90 painter-bottom))))
+
+
+;;; Ex. 2.52 skipped

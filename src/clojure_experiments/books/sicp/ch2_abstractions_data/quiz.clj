@@ -132,6 +132,7 @@
 
 ;; now the new definition???
 
+;; Ex. 2.52 (p. 141)
 
 
 ;;; Ex. 2.45 general `split` procedure (p. 134)
