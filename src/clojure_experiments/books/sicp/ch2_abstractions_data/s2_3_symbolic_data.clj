@@ -66,3 +66,150 @@
 
 (equal? () ())
 ;; => true
+
+
+;;; Ex. 2.55 (p. 145)
+;;; Explain why this expression prints quote
+(first ''abracadabra)
+;; => quote
+
+'abracadabra
+;; => abracadabra
+
+''abracadabra
+;; => (quote abracadabra)
+
+;; Note:
+''''abracadabra
+;; => (quote (quote (quote abracadabra)))
+
+
+;;; 2.3.2 Symbolic differentation
+
+;; Wishful thinking - let's start by pretending we already have following procedures
+;; for checking whether something is sum, product, constant, or a variable;
+;; for extracting parts of an expression;
+;; for constructing epxressions from parts:
+(defn variable? [e])
+(defn same-variable? [v1 v2])
+
+(defn sum? [e])
+(defn addend [e])
+(defn augend [e])
+(defn make-sum [a1 a2])
+
+(defn product? [e])
+(defn multiplier [e])
+(defn multiplicand [e])
+(defn make-product [m1 m2])
+
+;; just by using those and the primitive predicate `number?` we can express differentation rules
+;; using the following procedure
+(defn deriv [expr var]
+  (cond
+    (number? expr)
+    0
+
+    (variable? expr)
+    (if (same-variable? expr var) 1 0)
+
+    (sum? expr)
+    (make-sum (deriv (addend expr) var)
+              (deriv (augend expr) var))
+
+    (product? expr)
+    (make-sum (make-product (multiplier expr)
+                            (deriv (multiplicand expr) var))
+              (make-product (multiplicand expr)
+                            (deriv (multiplier expr) var)))
+
+    :else
+    (throw (ex-info "Unknown expression"
+                    {:expr expr
+                     :var var}))))
+
+
+;; Now we shall define our data representation with prefix notation and lists
+(defn variable? [e]
+  (symbol? e))
+(defn same-variable? [v1 v2]
+  ;; providing that variables are symbols (which is required by `variable?`) the `=` does the proper job
+  (and (variable? v1) (variable? v2) (= v1 v2)))
+
+(defn sum? [e]
+  (and (list? e) (= '+ (first e))))
+(defn addend [e]
+  (second e))
+(defn augend [e]
+  (nth e 2))
+(defn make-sum [a1 a2]
+  (list '+ a1 a2))
+
+(defn product? [e]
+  (and (list? e) (= '* (first e))))
+(defn multiplier [e]
+  (second e))
+(defn multiplicand [e]
+  (nth e 2))
+(defn make-product [m1 m2]
+  (list '* m1 m2))
+
+
+;; Now try it!
+(deriv '(+ x 3) 'x)
+;; => (+ 1 0)
+
+(deriv '(* x y) 'x)
+;; => (+ (* x 0) (* y 1))
+
+(deriv '(* (* x y) (+ x 3)) 'x)
+;; => (+ (* (* x y) (+ 1 0)) (* (+ x 3) (+ (* x 0) (* y 1))))
+
+
+;; So far answers are correct but "unsimplified"
+;; E.g. (+ (* x 0) (* y 1)) is just y
+
+;; To simplify, we only need to change `make-sum` and `make-product` to detect when numbers are used
+;; and simplify if possible
+(defn make-sum [a1 a2]
+  (cond
+    (and (number? a1) (zero? a1))
+    a2
+
+    (and (number? a2) (zero? a2))
+    a1
+
+    (and (number? a1) (number? a2))
+    (+ a1 a2)
+
+    :else
+    (list '+ a1 a2)))
+
+(defn make-product [m1 m2]
+  (cond
+    (or (and (number? m1) (zero? m1))
+        (and (number? m2) (zero? m2)))
+    0
+
+    (= m1 1)
+    m2
+
+    (= m2 1)
+    m1
+
+    (and (number? m1) (number? m2))
+    (* m1 m2)
+
+    :else
+    (list '* m1 m2)))
+
+;; Now check if simplification works
+(deriv '(+ x 3) 'x)
+;; => 1
+
+(deriv '(* x y) 'x)
+;; => y
+
+(deriv '(* (* x y) (+ x 3)) 'x)
+;; => (+ (* x y) (* (+ x 3) y))
+
