@@ -23,11 +23,11 @@
                        ;;; ------------------------
 
                        ;; `lein eastwood` https://github.com/jonase/eastwood - one of the most active
-                       [jonase/eastwood "0.3.6"]
+                       [jonase/eastwood "0.3.8"]
                        ;; `lein kibit`
-                       [lein-kibit "0.1.7"]
+                       [lein-kibit "0.1.8"]
                        ;; `lein nvd check` https://github.com/rm-hull/lein-nvd
-                       [lein-nvd "1.2.0"]
+                       [lein-nvd "1.3.1"]
 
                        ;; I DON'T USE THIS (it's noisy)
                        ;; `lein yagni` https://github.com/venantius/yagni - helps to find unused code in your app and libs
@@ -60,7 +60,7 @@
 
                        ;; ALTHOUGH I DON'T USE THIS IT SEEMS PRETTY USEFUL
                        ;; pretty print for inspecting leiningen profiles -> lein pprint
-                       [lein-pprint "1.1.2"]
+                       [lein-pprint "1.3.2"]
 
                        ;; I DON'T USE THIS
                        ;; visualization of leiningen dependencies
@@ -131,7 +131,7 @@
                        ;; [clojure-emacs/alembic "0.3.3"]
 
                        ;; for benchmarks: https://github.com/hugoduncan/criterium
-                       [criterium "0.4.4"]
+                       [criterium "0.4.5"]
                        ;; use `tufte` for profiling: see https://github.com/ptaoussanis/tufte#how-does-tufte-compare-to-hugoduncancriterium
                        ;; I DON'T USE THIS
                        ;; [com.taoensso/tufte "2.0.1"]
@@ -186,18 +186,18 @@
                        ;; it as a dependency
                        ;; would like to remove clojure-future-spec but cannot :()
                        ;; [philoskim/debux "0.5.6" :exclusions [clojure-future-spec]]
-                       [philoskim/debux "0.5.6"]
+                       [philoskim/debux "0.6.3"]
 
                        ;; expound for human-readable clojure spec errors: https://github.com/bhb/expound
                        ;; highly recommended by many people
-                       [expound "0.7.2"]
+                       [expound "0.8.4"]
                        ;; also orchestra for checking :ret and :fn specs
                        ;; following version contains a small fix to show input args when :ret spec fails
-                       [orchestra "2018.12.06-2"]
+                       [orchestra "2019.02.06-1"]
 
                        ;; https://github.com/clojure-goes-fast/clj-java-decompiler
                        ;; 0.3.0-SNAPSHOT fixes the issue with JDK 11: https://github.com/clojure-goes-fast/clj-java-decompiler/pull/4
-                       [com.clojure-goes-fast/clj-java-decompiler "0.3.0-SNAPSHOT"]
+                       [com.clojure-goes-fast/clj-java-decompiler "0.3.0"]
 
                        ;; I DON'T USE THIS
                        ;; zprint - cool pretty printer (e.g. configurable width)
