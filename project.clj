@@ -31,7 +31,7 @@
                  [inspector-jay "0.3"]
                  [org.clojure/tools.reader "1.1.1"]
                  [net.cgrand/sjacket "0.1.1"]
-                 [jonase/eastwood "0.2.5"]
+                 [jonase/eastwood "0.3.8"]
                  [ns-graph "0.1.2"]
                  [com.climate/claypoole "1.1.4"]
                  [etaoin "0.1.9"]
