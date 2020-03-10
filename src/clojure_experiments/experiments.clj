@@ -696,6 +696,18 @@ d-m
 ;;=> false
 
 
+;; this doesn't give you what you think!
+(def one 1)
+(case 1
+  one :one
+  :not-one)
+;; => :not-one
+
+(case 'one
+  one :one
+  :not-one)
+;; => :one
+
 
 ;;; bronsa
 ;; use `replace`
