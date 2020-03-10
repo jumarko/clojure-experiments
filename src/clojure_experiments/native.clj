@@ -5,19 +5,25 @@
 ;;; https://nakkaya.com/2009/11/16/java-native-access-from-clojure/
 ;;; See https://github.com/java-native-access/jna
 ;;; notice that you need to add `net.java.dev.java/jna` library on classpath
+;;;
+;;; Here's some info about "flushing": https://stackoverflow.com/questions/28158116/call-libc-function-from-jna?rq=1
+;;; and loading global variables in general (such as `stdout`)
 (comment
   "Dangerous area - native code handling!!!"
 
   (gen-interface
    :name jna.CLibrary
    :extends [com.sun.jna.Library]
-   :methods [[printf [String] void]])
+   :methods [[printf [String] void]
+             [fflush [com.sun.jna.Pointer] int]])
 
   ;; create an instance
   (def glibc (com.sun.jna.Native/loadLibrary "c" jna.CLibrary))
 
   ;; and call!
+  ;; Note that this doesn't show in REPL output since that seems to only work for `System/out`
   (.printf glibc "Hello, World.. \n")
+  (.fflush glibc System/out)
   (System/getProperty "java.library.path")
 
   ;; using `getFunction` we don't need to specify every used native function beforehand
