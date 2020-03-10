@@ -23,3 +23,11 @@
 (macroexpand-1 '(defn foo [a b] (+ a b)))
 
 (defn foo [a b] (+ a b))
+
+;; hiredman - analogy between :const and macro templates
+(def ^:const foo 1)
+(defn bar [] (+ foo 10))
+;; is similar to
+(def foo 1)
+(defmacro foo* [] (list 'quote foo))
+(defn bar [] (+ (foo*) 10))
