@@ -4,6 +4,64 @@
             [clojure.java.io :as io]
             [net.cgrand.xforms :as x]))
 
+;;; My own experiments
+;;; - Check this to learn about arities of reducing functions: https://clojure.org/reference/transducers#_creating_transducers 
+;;;   Note that transduce (or any transduction) does not require arity-0 support of the bottom reducing fn unless you use it in a context without an init value.
+;;;   (https://gist.github.com/ptaoussanis/e537bd8ffdc943bbbce7#gistcomment-1293960)
+;;; - Early termination is also useful (especially `cat` implemenation): https://clojure.org/reference/transducers#_early_termination
+;;; - And stateful transducers (`dedupe`): https://clojure.org/reference/transducers#_transducers_with_reduction_state
+(defn filterer
+  "Returns a transducer."
+  [pred]
+  (fn filterer-xf [rf]
+    (fn filterer-rf
+      ;; this is called when the no input is empty?
+      ([] (rf))
+      ;; this is "completion" step - used to produce a final value and/or flush state
+      ([result] (rf result))
+      ;; start reduction step - called for each input "element" once
+      ([result input]
+       (if (pred input)
+         (rf result input)
+         result)))))
+
+(defn mapper
+  "Returns a transducer when no collection is provided."
+  {:added "1.0"
+   :static true}
+  [f]
+  (fn mapper-xf [rf]
+    (fn mapper-rf
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+       (rf result (f input)))
+      ([result input & inputs]
+       (rf result (apply f input inputs))))))
+
+
+(let [f inc
+      output-reducing-function conj
+      to-output []
+      from-input [1 2 3]
+      ;; this is the body of `map f`
+      ;; here the `rf` is a reducing function:
+      ;; - either another transducer (like `filter`) which will be applied after this one (`map`)
+      ;;   OR output-reducing function (`conj` or similar)
+      map-rf ((fn [rf]
+                (fn
+                  ([] (rf))
+                  ([result] (rf result))
+                  ([result input]
+                   (rf result (f input)))
+                  ([result input & inputs]
+                   (rf result (apply f input inputs)))))
+              output-reducing-function)]
+  (reduce map-rf
+          to-output
+          from-input))
+;; => [2 3 4]
+
 ;;; Tim Baldridge - Transducers - Episode 1 - Introduction to Transducers
 ;;; https://www.youtube.com/watch?v=WkHdqg_DBBs
 (def data (vec (range 11)))
