@@ -213,3 +213,71 @@
 (deriv '(* (* x y) (+ x 3)) 'x)
 ;; => (+ (* x y) (* (+ x 3) y))
 
+
+;; Ex. 2.56 (p. 150)
+;; Extend the basic differentiator by implementing this differentiation rule:
+;; - d(u^n) / dx = n*u^(n-1) * (du/dx)
+;; define procedures:
+;; - exponentiation?, exponent, base, make-exponentiation
+;; update `deriv` to use the new rule
+;; use `**` as a symbol for exponentiation
+
+(defn exponentiation? [e]
+  (and (list? e) (= '** (first e))))
+
+(def base second)
+(defn exponent [expr] (nth expr 2))
+(defn make-exponentiation [b e]
+  (cond
+    (and (number? e) (zero? e))
+    1
+
+    (and (number? e) (= 1 e))
+    b
+    ;; (or (and (number? m1) (zero? m1))
+    ;;     (and (number? m2) (zero? m2)))
+    ;; 0
+
+    ;; (= m1 1)
+    ;; m2
+
+    ;; (= m2 1)
+    ;; m1
+
+
+    :else
+    (list '** b e)))
+
+(defn deriv [expr var]
+  (cond
+    (number? expr)
+    0
+
+    (variable? expr)
+    (if (same-variable? expr var) 1 0)
+
+    (sum? expr)
+    (make-sum (deriv (addend expr) var)
+              (deriv (augend expr) var))
+
+    (product? expr)
+    (make-sum (make-product (multiplier expr)
+                            (deriv (multiplicand expr) var))
+              (make-product (multiplicand expr)
+                            (deriv (multiplier expr) var)))
+
+    (exponentiation? expr)
+    (make-product (make-product (exponent expr)
+                   (make-exponentiation (base expr)
+                                        (make-sum (exponent expr)
+                                                  -1)))
+                  (deriv (base expr)
+                         var))
+
+    :else
+    (throw (ex-info "Unknown expression"
+                    {:expr expr
+                     :var var}))))
+
+(assert (= (deriv '(** x 3) 'x)
+           '(* 3 (** x 2))))
