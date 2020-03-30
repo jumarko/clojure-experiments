@@ -215,6 +215,8 @@
 
 
 ;; Ex. 2.56 (p. 150)
+;; Solution: http://community.schemewiki.org/?sicp-ex-2.56
+;; 
 ;; Extend the basic differentiator by implementing this differentiation rule:
 ;; - d(u^n) / dx = n*u^(n-1) * (du/dx)
 ;; define procedures:
@@ -281,3 +283,42 @@
 
 (assert (= (deriv '(** x 3) 'x)
            '(* 3 (** x 2))))
+
+
+;; Ex. 2.57 (p. 151)
+;; Expand the differentiation program to handle sums and products of arbitrary numbers of two or more terms.
+;; Try to do this by changing only the representation for sums and products.
+;; e.g. the last example in the book (p. 150) could be expressed as:
+(deriv '(* x y (+ x 3)) 'x)
+;; instead of
+(deriv '(* (* x y) (+ x 3)) 'x)
+;; => (+ (* x y) (* (+ x 3) y))
+
+(deriv '(* x y (+ x 3)) 'x)
+;; Currently returns: y
+;; updated version returns:
+;; => (+ (* x y) (* y (+ x 3)))
+
+
+(defn- second-operand [make-fn e]
+  (let [snd (nth e 2)]
+    (if (< 3 (count e))
+      (make-fn snd (second-operand make-fn (rest e)))
+      snd)))
+
+(defn augend [e]
+  (second-operand make-sum e))
+
+(defn multiplicand [e]
+  (second-operand make-product e))
+
+;; try again
+(assert (= (deriv '(* x y (+ x 3)) 'x)
+           '(+ (* x y) (* y (+ x 3)))))
+
+
+
+;; Ex. 2.58 (P. 151)
+;; Infix notation
+;; => SKIPPED.
+
