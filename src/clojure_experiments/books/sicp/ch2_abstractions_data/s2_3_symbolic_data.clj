@@ -322,3 +322,77 @@
 ;; Infix notation
 ;; => SKIPPED.
 
+
+;;; 2.3.3 Representing sets (p. 151 - 161)
+;;; We'll represent sets as unordered lists, ordered lists, and binary trees.
+;;; Informally, a set is simply a collection of distinct objects.
+;;; To employ "data abstraction", we define "set" by *specifying the operations that are to be used on sets".
+- `union-set`, `intersection-set`, `element-of-set?`, `adjoin-set`.
+
+;; Note: If it was me, then I would call `x` `e` and make it second argument.
+(defn union-set [s1 s2])
+
+(defn intersection-set [s1 s2])
+
+(defn element-of-set? [x s])
+
+(defn adjoin-set [x s])
+
+
+;; Sets as unordered lists (p. 152 - 153) 
+
+(defn element-of-set? [x s]
+  (cond
+    (empty? s) false
+    (= x (first s)) true
+    :else (element-of-set? x (rest s))))
+
+(element-of-set? 3 '(1 3 5))
+;; => true
+(element-of-set? 4 '(1 3 5))
+;; => false
+
+(defn adjoin-set [x s]
+  (if (element-of-set? x s)
+    s
+    (cons x s)))
+(adjoin-set 3 '(1 3 5))
+;; => (1 3 5)
+(adjoin-set 4 '(1 3 5))
+;; => (4 1 3 5)
+
+(defn intersection-set
+  [s1 s2]
+  (cond
+    (or (empty? s1) (empty? s2))
+    ()
+
+    (element-of-set? (first s1) s2)
+    (cons (first s1) (intersection-set (rest s1) s2))
+
+    :else
+    (intersection-set (rest s1) s2)))
+(intersection-set '(1 3 5) '(2 4 6))
+;; => ()
+(intersection-set '(1 3 5) '(1 4 5 6))
+;; => (1 5)
+
+;; Ex. 2.59 implement `union-set` using the "unordered list" representation
+(defn union-set [s1 s2]
+  (cond
+    (empty? s1)
+    s2
+
+    (element-of-set? (first s1) s2)
+    (union-set (rest s1) s2)
+
+    :else (cons (first s1) (union-set (rest s1) s2))))
+
+(union-set '(1 3 5) '(2 4 6))
+;; => (1 3 5 2 4 6)
+(union-set '(1 3 5) '(1 4 5 6))
+;; => (3 1 4 5 6)
+(union-set '(1 3 5) '())
+;; => (1 3 5)
+
+
