@@ -396,3 +396,43 @@
 ;; => (1 3 5)
 
 
+
+;; Ex. 2.60 (p. 153)
+;; Design set procedures for list-based representation where elements can be repeated;
+;; e.g. set #{1 2 3} could be represented as (2 3 2 1 3 2 2)
+;; What's the efficiency of such representation and possible applications?
+;;=> could be useful when we take care great deal about performance of `adjoin-set`,
+;;   and perhaps `union-set`?
+;; See https://wizardbook.wordpress.com/2010/12/07/exercise-2-60/
+
+;; a) Unchanged:
+(def element-of-set?2 element-of-set?)
+
+;; b) adjoin is simpler because we can always just add a new element without worry
+;; => it's much more efficient (constant instead of linear time)
+(defn adjoin-set2 [x s]
+  (cons x s))
+(adjoin-set2 3 '(1 3 5))
+;; => (3 1 3 5)
+(adjoin-set2 4 '(1 3 5))
+;; => (4 1 3 5)
+
+;; c) intersection is likely remain the same
+(def intersection-set2 intersection-set)
+(intersection-set '(1 3 1 5 3) '(2 4 2 6))
+;; => ()
+(intersection-set '(1 3 1 5 3) '(1 4 1 5 4 6))
+;; => (1 1 5)
+
+;; union is simpler since I can just concatenate them
+;; => but not asymptotic complexity change but may be a real difference in performance
+(defn union-set [s1 s2]
+  (concat s1 s2))
+
+(union-set '(1 3 1 5 3) '(2 4 2 6))
+;; => (1 3 1 5 3 2 4 2 6)
+(union-set '(1 3 1 5 3) '(1 4 5 6))
+;; => (1 3 1 5 3 1 4 5 6)
+(union-set '(1 3 5) '())
+
+
