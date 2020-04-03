@@ -436,3 +436,84 @@
 (union-set '(1 3 5) '())
 
 
+
+;;; Sets - ordered list representation (p. 153)
+;;; To potentially speed things up, we'll always represent set of numbers in defined order (lower to greater)
+;;; e.g. (1 3 5 6 10)
+
+;; How to change this?
+;; This is in fact Ex. 2.61
+;; Show that it takes on average half the steps as before (=> we don't need to check if it's element or not)
+;; https://wizardbook.wordpress.com/2010/12/07/exercise-2-61/
+(defn adjoin-set [x s]
+  (cond
+    (empty? s) '(x)
+    (= x (first s)) s
+    (< x (first s)) (cons x s)
+    :else (cons (first s) (adjoin-set x (rest s)))))
+(adjoin-set 3 '(1 3 5))
+;; => (1 3 5)
+(adjoin-set 4 '(1 3 5))
+;; => (1 3 4 5)
+;; Note that it was unordered before:
+;;  (4 1 3 5)
+
+
+;; This can save some cycles when doing `element-of-set?`
+;; we can save a factor of 2 on average (only traversing half of the elements)
+(defn element-of-set? [x s]
+  (cond
+    (empty? s) false
+    (= x (first s)) true
+    (< x (first s)) false
+    :else (element-of-set? x (rest s))))
+
+(element-of-set? 3 '(1 3 5))
+;; => true
+(element-of-set? 4 '(1 3 5))
+;; => false
+
+
+;; intersection is more interesting - we can quickly dismiss elements that are obviously not in the result
+(defn intersection-set
+  [s1 s2]
+  (if (or (empty? s1) (empty? s2))
+    ()
+    (let [x1 (first s1)
+          x2 (first s2)]
+      (cond
+        (= x1 x2) (cons x1
+                        (intersection-set (rest s1) (rest s2)))
+        (< x1 x2) (intersection-set (rest s1) s2)
+        (< x2 x1) (intersection-set s1 (rest s2))))))
+(intersection-set '(1 3 5) '(2 4 6))
+;; => ()
+(intersection-set '(1 3 5) '(1 4 5 6))
+;; => (1 5)
+
+;; Ex. 2.62 implement O(n) `union-set` using the "ordered list" representation
+;; https://wizardbook.wordpress.com/2010/12/07/exercise-2-62/
+(defn union-set [s1 s2]
+  (cond
+    (empty? s1) s2
+    (empty? s2) s1
+    :else
+    (let [x1 (first s1)
+          x2 (first s2)]
+      (cond
+        (= x1 x2) (cons x1
+                        (union-set (rest s1) (rest s2)))
+        (< x1 x2) (cons x1 (union-set (rest s1) s2))
+        (< x2 x1) (cons x2 (union-set s1 (rest s2)))))))
+
+(union-set '(1 3 5) '(2 4 6))
+;; => (1 2 3 4 5 6)
+(union-set '(1 3 5) '(1 4 5 6))
+;; => (1 3 4 5 6)
+(union-set '(1 3 5) '())
+;; => (1 3 5)
+(union-set '() '(1 3 5))
+;; => (1 3 5)
+(union-set '() '())
+;; => ()
+
