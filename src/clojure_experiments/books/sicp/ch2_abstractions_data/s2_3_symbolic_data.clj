@@ -517,3 +517,46 @@
 (union-set '() '())
 ;; => ()
 
+
+;;; Sets as binary trees (p. 155 - 161)
+;;; We can still make our representation more efficient by representing a set as a tree;
+;;; by making so we can make element-of-set? and adjoin-set to be O(log N)
+;;; while keeping union-set and intersection-set O(N).
+;;; We assume a _balanced_ binary tree in which all the elements to the left
+;;; are smaller than all the  elements to the right.
+
+;; We represent trees as lists by using following 4 functions.
+;; Note: tree contains "nodes" and each node contains "entry", left branch and right branch.
+
+(defn entry [[e _l _r]] e)
+(defn left-branch [[_e l _r]] l)
+(defn right-branch [[_e _l r]] r)
+(defn empty-set [] [])
+(defn make-tree [e left right]
+  ;; basic invariant check
+  (assert (< (or (entry left) (dec e))
+             e
+             (or (entry right) (inc e)))
+          (format "Elements in the left branch must be < entry and entry < elements in the right branch: entry=%s, left=%s, right=%s" e left right))
+  (list e left right))
+
+;; Now we implement element-of-set? using those primitives:
+(defn element-of-set? [x s]
+  (let [e (entry s)]
+    (cond
+      (empty? s) false
+      (= x e) true
+      (< x e) (element-of-set? x (left-branch s))
+      (> x e) (element-of-set? x (right-branch s)))))
+
+(def my-set (make-tree  3
+                        (make-tree 1 nil nil)
+                        (make-tree 5 nil nil)))
+(element-of-set? 3 my-set)
+;; => true
+(element-of-set? 4 my-set)
+;; => false
+(element-of-set? 3 (empty-set))
+;; => false
+
+
