@@ -1,9 +1,8 @@
 (ns clojure-experiments.concurrency
   "Namespace related to concurrency and parallelism features of Clojure and related libraries."
-  (:require [com.climate.claypoole :as cp]
-            [criterium.core :as c]
+  (:require [clojure.java.io :as io]
+            [cheshire.core :as json]
             [taoensso.timbre :as log]))
-
 
 ;;; How to install UncaughtExceptionHandler for futures?
 (Thread/setDefaultUncaughtExceptionHandler
@@ -22,7 +21,13 @@
             (throw e#)))))
 
 #_(logging-future (Thread/sleep 20) (/ 1 0))
+(let [start (System/nanoTime)] 
+  (type (/ (double (- (System/nanoTime) start)) 
+           1000000.0)))
 
+(let [start (System/nanoTime)]
+  (type (/ (- (System/nanoTime) start)
+           1000000.0)))
 
 ;;; Now we get some extra goodies by preserving also the client stacktrace
 ;;; See https://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
@@ -143,4 +148,64 @@
         (timeout-failed-fn))
       task-result)))
 
+
+
+;;; Use locking to prevent concurrent writers corrupt JSON data stored in a file
+;; It used to be like this:
+(defn- known-errors-from
+  [destination]
+  (if (.exists (io/as-file destination))
+    (json/parse-stream (io/reader destination) keyword)
+    []))
+
+(defn- persist-to-file
+  [{:keys [path-fn] :as _context}
+   category
+   {:keys [description] :as details}]
+  (try
+    (let [destination (path-fn "errors.json")
+          known-errors (known-errors-from destination)
+          updated-errors (conj known-errors {:category category :error (:error details)})]
+      (json/generate-stream updated-errors (io/writer destination))
+      updated-errors)
+    (catch Throwable t
+      (log/error t "Failed to persist the reported error: " description))))
+
+;; Then it was changed to this:
+(let [lk (Object.)]
+  (defn- known-errors-from 
+    "Read known errors from file - call only with lock taken!"
+    [destination]
+    (if (.exists (io/as-file destination))
+      (with-open [r (io/reader destination)]
+        (doall (json/parse-stream r keyword)))
+      []))
+  
+  (defn- write-errors
+    "Write errors to file - call only with lock taken"
+    [errors destination]
+    (with-open [w (io/writer destination)]
+      (json/generate-stream errors w)))
+  
+  (defn- with-lock-persist-to-file
+    "Persisting errors to file must be thread safe.
+     Use a local lock and make sure everything is:
+     - realized before taking the lock,
+     - persisted when releasing the lock"
+    [path-fn log-entry]
+    (let [destination (path-fn "error.json")]
+      (locking lk
+        (let [known-errors (known-errors-from destination)
+              updated-errors (conj known-errors log-entry)]
+          (write-errors updated-errors destination)
+          updated-errors)))))
+
+(defn persist-to-file
+  [{:keys [path-fn] :as _context}
+   category
+   {:keys [description] :as details}]
+  (try
+    (with-lock-persist-to-file path-fn {:category category :error (:error details)})
+    (catch Throwable t
+      (log/error t "Failed to persist the reported error: " description))))
 
