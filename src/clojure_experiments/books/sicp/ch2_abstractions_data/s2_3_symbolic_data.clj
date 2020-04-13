@@ -559,4 +559,110 @@
 (element-of-set? 3 (empty-set))
 ;; => false
 
+;; adjoin an element
+(defn adjoin-set [x s]
+  (cond
+    (empty? s) (make-tree x () ())
+
+    (= x (entry s)) s
+
+    (< x (entry s)) (make-tree (entry s)
+                               (adjoin-set x (left-branch s))
+                               (right-branch s))
+    (> x (entry s)) (make-tree (entry s)
+                               (left-branch s)
+                               (adjoin-set x (right-branch s)))))
+;; adjoin existing element => no effect
+(adjoin-set 1 my-set)
+;; => (3 (1 nil nil) (5 nil nil))
+;; adjoin new element
+
+(adjoin-set 0 my-set)
+;; => (3 (1 (0 () ()) nil) (5 nil nil))
+
+;; adjoin new element - greater than root entry
+(adjoin-set 4 my-set)
+;; => (3 (1 nil nil) (5 (4 () ()) nil))
+
+
+;; Ex. 2.63 (p. 158)
+;; Compare two given procedures for converting a binary tree to a list:
+;; - do they produce the same lists all the time?
+;; - is their O(n) complexity same for converting a _balanced_ tree?
+;; What lists do they produce for trees in Figure 2.16?
+
+;; my example
+(def my-set-2 (->> my-set
+                   (adjoin-set 0)
+                   (adjoin-set 10)
+                   (adjoin-set 4)
+                   (adjoin-set -2)))
+;; Figure 2.16 trees
+(def tree216-1 (->> ()
+                    (adjoin-set 7)
+                    (adjoin-set 3)
+                    (adjoin-set 9)
+                    (adjoin-set 1)
+                    (adjoin-set 5)
+                    (adjoin-set 11)))
+(def tree216-2 (->> ()
+                    (adjoin-set 3)
+                    (adjoin-set 1)
+                    (adjoin-set 7)
+                    (adjoin-set 5)
+                    (adjoin-set 9)
+                    (adjoin-set 11)))
+(def tree216-3 (->> ()
+                    (adjoin-set 5)
+                    (adjoin-set 3)
+                    (adjoin-set 1)
+                    (adjoin-set 9)
+                    (adjoin-set 7)
+                    (adjoin-set 11)))
+
+;; Notice this procedure calls itself on both left and right branches
+;; => O(N logN) complexity where N is number of nodes in the tree
+;;    (concat has O(N) complexity)
+(defn tree->list-1 [tree]
+  (if (empty? tree)
+    ()
+    (concat (tree->list-1 (left-branch tree))
+            (cons (entry tree)
+                  (tree->list-1 (right-branch tree))))))
+(tree->list-1 my-set)
+;; => (1 3 5)
+(tree->list-1 my-set-2)
+;; => (-2 0 1 3 4 5 10)
+
+(tree->list-1 tree216-1)
+;; => (1 3 5 7 9 11)
+(tree->list-1 tree216-2)
+;; => (1 3 5 7 9 11)
+(tree->list-1 tree216-3)
+;; => (1 3 5 7 9 11)
+
+;; Notice this procedure calls itself only on the right branch
+;; => O(N) complexity where N is number of nodes in the tree!!
+(defn tree->list-2 [tree]
+  (letfn [(copy-to-list [tree result-list]
+            (if (empty? tree)
+              result-list
+              (copy-to-list (left-branch tree)
+                            (cons (entry tree)
+                                  (copy-to-list (right-branch tree)
+                                                result-list)))))]
+    (copy-to-list tree ())))
+
+(tree->list-2 my-set)
+;; => (1 3 5)
+(tree->list-2 my-set-2)
+;; => (-2 0 1 3 4 5 10)
+
+(tree->list-2 tree216-1)
+;; => (1 3 5 7 9 11)
+(tree->list-2 tree216-2)
+;; => (1 3 5 7 9 11)
+(tree->list-2 tree216-3)
+;; => (1 3 5 7 9 11)
+
 
