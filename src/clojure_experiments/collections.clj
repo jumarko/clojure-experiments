@@ -115,6 +115,79 @@
 (index-by inc (partial + 3) [1 10 100])
 ;; => {2 4, 11 13, 101 103}
 
+;;; hiredman using clojure.set/index https://gist.github.com/hiredman/7d17d8d2b58c41ce95bf2db305b0f427
+;;; in response to:
+;;;    hindol In Clojure, what is the idiomatic way to build multiple indices over the same data?
+;;;    Suppose I have a set of records and I want to look them up using different keys.
+;;;    If the values change, they should immediately/eventually reflect across all keys.
+;;;    Kind of like a database.
+;;;    Currently, I am just mapping/filtering over the set of things at runtime.
+(require '[clojure.set :as set])
+
+(def info
+  [{:year 2017
+    :month 4
+    :data "x"}
+   {:year 2017
+    :month 4
+    :data "y"}
+   {:year 2017
+    :month 7
+    :data "z"}])
+
+(def db (reduce
+         (fn [db fact]
+           ;; notice `merge-with-into` and `set/index`
+           (merge-with into db
+                       (set/index [fact] [:entity])
+                       (set/index [fact] [:entity :attribute])
+                       (set/index [fact] [:entity :attribute :value])
+                       (set/index [fact] [:attribute])
+                       (set/index [fact] [:attribute :value])
+                       (set/index [fact] [:value])))
+         {}
+         (for [m info
+               :let [id (java.util.UUID/randomUUID)]
+               [k v] m]
+           {:entity id
+            :attribute k
+            :value v})))
+db
+;; partial inspection =>:
+;;    {{:attribute :month}
+;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
+;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}
+;;       {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}},
+
+;;     {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month}
+;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}},
+
+;;     {:value 7} #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}},
+
+;;     {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month}
+;;     #{{:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}},
+
+;;     {:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
+;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}},
+
+;;     {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53"}
+;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}
+;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :year, :value 2017}
+;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :data, :value "z"}},
+
+;;     {:attribute :data, :value "z"}
+;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :data, :value "z"}},
+
+;;     ...
+;;     {:value 4}
+;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
+;;       {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}}}
+
+(for [{:keys [entity attribute value]} (get db {:attribute :month :value 4})
+      {data :value} (get db {:entity entity :attribute :data})]
+  [entity data])
+;;=> ([#uuid "8ce5aaea-e633-4972-b8ef-3202680b2f6f" "y"] [#uuid "08d3e0ec-c08b-492e-b638-86fb2e932a93" "x"])
+
 
 ;;; https://juxt.pro/blog/posts/ontheflycollections-with-reducible.html
 ;;; Implementing IReduceInit; e.g. for reading zip file entries
