@@ -666,3 +666,39 @@
 ;; => (1 3 5 7 9 11)
 
 
+;; Ex. 2.64 (p. 159)
+;; 
+;; http://community.schemewiki.org/?sicp-ex-2.64
+;; https://wizardbook.wordpress.com/2010/12/07/exercise-2-64/
+;; 
+;; list->tree function converts an ordered list to a balanced binary tree
+;; It uses the helper function `partial-tree`.
+;; Explain how it works and draw the tree produced for the list '(1 3 5 7 9 11)
+
+;; a) My explanation of how it works
+;; Given desired number n indicating the number of elements in the tree,
+;; it splits it into two "halves" - left and right;
+;; for each half it calls itself recursively to get the left and right branch of the final tree.
+;; The root node is obtained as the first element that's not included in the left branch's tree.
+;; b) Order of growth: O(n)
+;; - at every recursion step it cuts down the number of elements processed by the subsequent recursive
+;; calls into half, but there are also two recursion calls => O(n)
+(defn- partial-tree
+  "Accepts a list of at least `n` elems and integer `n` and constructs
+  a balanced binary tree from the list.
+  Returns a pair [constructured-tree elements-not-in-tree]."
+  [elems n]
+  (if (zero? n)
+    (cons '() elems)
+    ;; notice how much simpler this is compared to the Scheme-based implementation
+    ;; (thanks for better let form and destructuring)
+    (let [left-size (quot (dec n) 2)
+          [left-tree [this-entry & non-left-elems-rst]] (partial-tree elems left-size)
+          right-size (- n (+ left-size 1))
+          [right-tree remaining-elems] (partial-tree non-left-elems-rst right-size)]
+      [(make-tree this-entry left-tree right-tree)
+       remaining-elems])))
+
+(defn list->tree [elements]
+  (first (partial-tree elements (count elements))))
+
