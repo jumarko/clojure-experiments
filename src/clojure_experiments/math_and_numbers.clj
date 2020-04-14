@@ -32,3 +32,23 @@
 ;; (Long/MAX_VALUE) = 9223372036854775807
 (long (/ Long/MAX_VALUE  2))
 ;; => 4611686018427387903
+
+
+;;; Integer division always rounds towards zero
+;;; while bit-shift-right rounds down!
+(quot 13 4)
+;; => 3
+(bit-shift-right 13 2)
+;; => 3
+(quot -13 4)
+;; => -3
+(bit-shift-right -13 2)
+;; => -4
+;; but we can fix it by "biasing" the value before shifting
+(bit-shift-right
+ (+ -13
+    (bit-shift-left 1 2)
+    -1)
+ 2)
+;; => -3
+   
