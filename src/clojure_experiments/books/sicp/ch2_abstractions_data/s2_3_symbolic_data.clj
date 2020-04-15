@@ -689,7 +689,7 @@
   Returns a pair [constructured-tree elements-not-in-tree]."
   [elems n]
   (if (zero? n)
-    (cons '() elems)
+    [() elems]
     ;; notice how much simpler this is compared to the Scheme-based implementation
     ;; (thanks for better let form and destructuring)
     (let [left-size (quot (dec n) 2)
@@ -702,3 +702,102 @@
 (defn list->tree [elements]
   (first (partial-tree elements (count elements))))
 
+(list->tree '(1 3 5 7 9 11))
+;;=>
+;; (5 (1
+;;      ()
+;;      (3 () ()))
+;;    (9
+;;       (7 () ())
+;;       (11 () ())))
+
+
+;; TODO:
+;; Ex. 2.65 (p. 160)
+;; Use the results of exercises 2.63 and 2.64 to give O(n) implementations
+;; of `union-set` and `intersection-set`.
+
+;; https://wizardbook.wordpress.com/2010/12/07/exercise-2-65/?unapproved=1657&moderation-hash=994fdf7556d04e34484c5928a38eac3e#comment-1657
+;; http://community.schemewiki.org/?sicp-ex-2.65
+
+;; test data:
+(def my-set (make-tree  3
+                        (make-tree 1 nil nil)
+                        (make-tree 5 nil nil)))
+(def my-set-2 (->> (make-tree  1 nil nil)
+                   (adjoin-set 0)
+                   (adjoin-set 10)
+                   (adjoin-set 4)
+                   (adjoin-set -2)))
+
+;; O(n) union-set
+;; reusing the implementation for ordered-list which is O(n)
+;;  and tree->list-2 which is O(n) too
+;; as a result we have 3*O(n) which is still O(n)
+(defn- union-set-ordered-lists [s1 s2]
+  (cond
+    (empty? s1) s2
+    (empty? s2) s1
+    :else
+    (let [x1 (first s1)
+          x2 (first s2)]
+      (cond
+        (= x1 x2) (cons x1
+                        (union-set-ordered-lists (rest s1) (rest s2)))
+        (< x1 x2) (cons x1 (union-set-ordered-lists (rest s1) s2))
+        (< x2 x1) (cons x2 (union-set-ordered-lists s1 (rest s2)))))))
+
+(defn union-set [s1 s2]
+  (let [s1-list (tree->list-2 s1)
+        s2-list (tree->list-2 s2)]
+    (list->tree (union-set-ordered-lists s1-list s2-list))))
+
+(union-set my-set my-set-2)
+;; =>
+;; (3
+;;   (0
+;;     (-2 () ())
+;;     (1 () ()))
+;;   (5
+;;     (4 () ())
+;;     (10 () ())))
+(assert (= [-2 0 1 3 4 5 10]
+           (tree->list-1 (union-set my-set my-set-2))))
+
+;; Similarly to union-set we reuse tree->list-2 which is O(n)
+;; and the implementation of intersection-set for ordered lists which is also O(n)
+;; we do 3 * O(n) operations => still O(n)
+(defn intersection-set-ordered-lists
+  [s1 s2]
+  (if (or (empty? s1) (empty? s2))
+    ()
+    (let [x1 (first s1)
+          x2 (first s2)]
+      (cond
+        (= x1 x2) (cons x1
+                        (intersection-set-ordered-lists (rest s1) (rest s2)))
+        (< x1 x2) (intersection-set-ordered-lists (rest s1) s2)
+        (< x2 x1) (intersection-set-ordered-lists s1 (rest s2))))))
+
+(defn intersection-set [s1 s2]
+  (let [s1-list (tree->list-2 s1)
+        s2-list (tree->list-2 s2)]
+    (list->tree (intersection-set-ordered-lists s1-list s2-list))))
+
+(intersection-set my-set my-set-2)
+;; => (1 () ())
+(assert (= [1]
+           (tree->list-1 (intersection-set my-set my-set-2))))
+
+;; you may have noticed that intersection-set and union-set are VERY similar
+;; => extract common pattern?
+(defn combine-sets-with-list-representation [ordered-lists-set-fn s1 s2]
+  (let [s1-list (tree->list-2 s1)
+        s2-list (tree->list-2 s2)]
+    (list->tree (ordered-lists-set-fn s1-list s2-list))))
+(def union-set (partial combine-sets-with-list-representation union-set-ordered-lists))
+(assert (= [-2 0 1 3 4 5 10]
+           (tree->list-1 (union-set my-set my-set-2))))
+(def intersection-set (partial combine-sets-with-list-representation intersection-set-ordered-lists))
+(assert (= [1]
+           (tree->list-1 (intersection-set my-set my-set-2))))
