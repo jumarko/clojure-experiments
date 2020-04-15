@@ -174,3 +174,49 @@
 ;; Infix notation
 ;; Originally SKIPPED.
 
+
+;; Ex. 2.65 (p. 160)
+;; Use the results of exercises 2.63 and 2.64 to give O(n) implementations
+;; of `union-set` and `intersection-set`.
+
+;; https://wizardbook.wordpress.com/2010/12/07/exercise-2-65/?unapproved=1657&moderation-hash=994fdf7556d04e34484c5928a38eac3e#comment-1657
+;; http://community.schemewiki.org/?sicp-ex-2.65
+
+;; helper functions
+(defn entry [[e _l _r]] e)
+(defn left-branch [[_e l _r]] l)
+(defn right-branch [[_e _l r]] r)
+(defn empty-set [] [])
+(defn make-tree [e left right]
+  ;; basic invariant check
+  (assert (< (or (entry left) (dec e))
+             e
+             (or (entry right) (inc e)))
+          (format "Elements in the left branch must be < entry and entry < elements in the right branch: entry=%s, left=%s, right=%s" e left right))
+  (list e left right))
+(defn adjoin-set [x s]
+  (cond
+    (empty? s) (make-tree x () ())
+
+    (= x (entry s)) s
+
+    (< x (entry s)) (make-tree (entry s)
+                               (adjoin-set x (left-branch s))
+                               (right-branch s))
+    (> x (entry s)) (make-tree (entry s)
+                               (left-branch s)
+                               (adjoin-set x (right-branch s)))))
+;; test data:
+(def my-set (make-tree  3
+                        (make-tree 1 nil nil)
+                        (make-tree 5 nil nil)))
+
+(def my-set-2 (->> (make-tree  1 nil nil)
+                   (adjoin-set 0)
+                   (adjoin-set 10)
+                   (adjoin-set 4)
+                   (adjoin-set -2)))
+
+;; TODO union-set
+
+;; TODO intersection-set

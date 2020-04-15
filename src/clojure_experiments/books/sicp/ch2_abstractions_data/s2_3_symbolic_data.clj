@@ -712,7 +712,6 @@
 ;;       (11 () ())))
 
 
-;; TODO:
 ;; Ex. 2.65 (p. 160)
 ;; Use the results of exercises 2.63 and 2.64 to give O(n) implementations
 ;; of `union-set` and `intersection-set`.
