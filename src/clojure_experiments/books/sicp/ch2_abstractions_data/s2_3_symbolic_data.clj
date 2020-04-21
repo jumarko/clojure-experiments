@@ -547,8 +547,7 @@
       (empty? s) false
       (= x e) true
       (< x e) (element-of-set? x (left-branch s))
-      (> x e) (element-of-set? x (right-branch s)))))
-
+      (> x e) (element-of-set? x (right-branch s))))) 
 (def my-set (make-tree  3
                         (make-tree 1 nil nil)
                         (make-tree 5 nil nil)))
@@ -800,3 +799,102 @@
 (def intersection-set (partial combine-sets-with-list-representation intersection-set-ordered-lists))
 (assert (= [1]
            (tree->list-1 (intersection-set my-set my-set-2))))
+
+;; Ex. 266 (p. 161) SKIPPED.
+;; Implement the `lookup` procedure (p. 160) for the case weher the set of records is structures as a binary tree, ordered by the numerical values of the keys
+
+
+;;; 2.3.4 Huffman encoding (p. 161 - 169)
+
+;; Representing Huffman trees (p. 164/5)
+;; Leaf 
+(defn make-leaf [symbol weight]
+  ;; I'd probably use `:leaf` in Clojure instead of the symbol 'leaf
+  (list 'leaf symbol weight))
+
+(defn leaf? [obj]
+  (= 'leaf (first obj)))
+
+;; Note destructing throws an exception if it's not a list/vector 
+(defn symbol-leaf [[_ s _]]
+  s)
+
+(defn weight-leaf [[_ _ w]]
+  w)
+
+;; Note: here I could use real clojure sets instead of plain lists
+;; but I'm following with the book...
+(defn left-branch [tree]
+  (first tree))
+
+(defn right-branch [tree]
+  (second tree))
+
+;; Notice that `symbols` and `weight` are "generic"
+;; -> they must do something slightly different when dealing with leaves vs trees.
+
+(defn symbols [tree]
+  (if leaf? tree
+      (list (symbol-leaf tree))))
+
+(defn weight [tree]
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (nth tree 3)))
+
+;; tree is (left branch, right branch, symbols, total weight)
+(defn make-code-tree [left right]
+  (list left
+        right
+        (concat (symbols left) (symbols right))
+        (+ (weight left) (weight right))))
+
+;; Now we have basic representation we can implement decoding
+(defn- choose-branch [bit tree]
+  (cond
+    (= \0 bit) (left-branch tree)
+    (= \1 bit) (right-branch tree)
+    :else (throw (ex-info "Unexpected bit" {:bit bit :tree tree}))))
+
+(defn decode [bits tree]
+  ;; this helper fn serves the purpose to capture the original complete tree
+  ;; to use it during decoding
+  (letfn [(decode-1 [bits current-branch]
+            (if (empty? bits)
+              ()
+              (let [next-branch (choose-branch (first bits) current-branch)]
+                (if (leaf? next-branch)
+                  (cons (symbol-leaf next-branch)
+                        (decode-1 (rest bits) tree))
+                  (decode-1 (rest bits) next-branch)))))]
+
+    (decode-1 bits tree)))
+
+;; taken from p. 162 (at the top) 
+(def message "100010100101101100011010100100000111001111")
+;; for tree, see figure 2.18 on p. 163
+(def hf-tree (make-code-tree
+              (make-leaf 'A 8)
+
+              ;; BCDEFGH branch
+              (make-code-tree
+
+               ;; BCD left branch
+               (make-code-tree
+                (make-leaf 'B 3)
+                (make-code-tree
+                 (make-leaf 'C 1)
+                 (make-leaf 'D 1)))
+
+               ;; EFGH right branch
+               (make-code-tree
+                (make-code-tree
+                 (make-leaf 'E 1)
+                 (make-leaf 'F 1))
+                (make-code-tree
+                 (make-leaf 'G 1)
+                 (make-leaf 'H 1))))))
+(clojure.pprint/pprint hf-tree)
+
+(decode message hf-tree)
+;; => (B A C A D A E A F A B B A A A G A H)

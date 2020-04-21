@@ -216,7 +216,95 @@
                    (adjoin-set 10)
                    (adjoin-set 4)
                    (adjoin-set -2)))
-
 ;; TODO union-set
 
 ;; TODO intersection-set
+
+
+;;; Huffman encoding - implement `decode` function!
+;; Functions for Representing Huffman trees (p. 164/5) provided here:
+
+(defn make-leaf [symbol weight]
+  ;; I'd probably use `:leaf` in Clojure instead of the symbol 'leaf
+  (list 'leaf symbol weight))
+
+(defn leaf? [obj]
+  (= 'leaf (first obj)))
+
+;; Note destructing throws an exception if it's not a list/vector 
+(defn symbol-leaf [[_ s _]]
+  s)
+
+(defn weight-leaf [[_ _ w]]
+  w)
+
+;; Note: here I could use real clojure sets instead of plain lists
+;; but I'm following with the book...
+(defn left-branch [tree]
+  (first tree))
+
+(defn right-branch [tree]
+  (second tree))
+
+;; Notice that `symbols` and `weight` are "generic"
+;; -> they must do something slightly different when dealing with leaves vs trees.
+
+(defn symbols [tree]
+  (if leaf? tree
+      (list (symbol-leaf tree))))
+
+(defn weight [tree]
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (nth tree 3)))
+
+;; tree is (left branch, right branch, symbols, total weight)
+(defn make-code-tree [left right]
+  (list left
+        right
+        (concat (symbols left) (symbols right))
+        (+ (weight left) (weight right))))
+
+;; Now we have basic representation we can implement decoding
+
+;; taken from p. 162 (at the top) 
+(def message "100010100101101100011010100100000111001111")
+;; for tree, see figure 2.18 on p. 163
+(def hf-tree (make-code-tree
+              (make-leaf 'A 8)
+
+              ;; BCDEFGH branch
+              (make-code-tree
+
+               ;; BCD left branch
+               (make-code-tree
+                (make-leaf 'B 3)
+                (make-code-tree
+                 (make-leaf 'C 1)
+                 (make-leaf 'D 1)))
+
+               ;; EFGH right branch
+               (make-code-tree
+                (make-code-tree
+                 (make-leaf 'E 1)
+                 (make-leaf 'F 1))
+                (make-code-tree
+                 (make-leaf 'G 1)
+                 (make-leaf 'H 1))))))
+(clojure.pprint/pprint hf-tree)
+
+;; TODO
+(defn decode [bits tree]
+
+  ;; this helper fn serves the purpose to capture the original complete tree
+  ;; to use it during decoding
+  (letfn [(decode-1 [bits current-branch]
+            ;; TODO
+            ,,,
+            )]
+
+    (decode-1 bits tree)))
+
+
+(assert (= '(B A C A D A E A F A B B A A A G A H)
+           (decode message hf-tree)))
