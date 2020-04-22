@@ -898,3 +898,57 @@
 
 (decode message hf-tree)
 ;; => (B A C A D A E A F A B B A A A G A H)
+
+
+;; adjoin set (p. 167)
+;; We're using ordered list representation - elements ordered by increasing weight
+;; - this is useful to make finding the smallest item in a set and merging of sets (leaves & subtrees)
+;;   more efficient
+;; - we assume elements are not duplicated!
+(defn adjoin-set [x s]
+  (cond
+    (empty? s) (list x)
+    (< (weight x) (weight (first s))) (cons x s)
+    :else (cons (first s) (adjoin-set x (rest s)))))
+(adjoin-set (make-leaf 'A 4) [(make-leaf 'C 5)
+                              (make-leaf 'B 7)
+                              (make-leaf 'F 10)])
+;; => ((leaf A 4) (leaf C 5) (leaf B 7) (leaf F 10))
+(adjoin-set (make-leaf 'A 4) [(make-leaf 'C 3)
+                              (make-leaf 'B 7)
+                              (make-leaf 'F 10)])
+;; => ((leaf C 3) (leaf A 4) (leaf B 7) (leaf F 10))
+(adjoin-set (make-leaf 'A 4) [(make-leaf 'C 1)
+                              (make-leaf 'B 2)
+                              (make-leaf 'F 3)])
+;; => ((leaf C 1) (leaf B 2) (leaf F 3) (leaf A 4))
+
+;; construct initial ordered set of eaves from a list of symbol-frequency pairs
+(defn make-leaf-set [[fst & rst :as pairs]]
+  (if (empty? pairs)
+    ()
+    (let [[symbol frequency] fst]
+      (adjoin-set (make-leaf symbol frequency)
+                  (make-leaf-set rst)))))
+(make-leaf-set [['A 4] ['B 2] ['C 1] ['D 1]])
+;; => ((leaf D 1) (leaf C 1) (leaf B 2) (leaf A 4))
+
+
+;; Ex. 2.67 - define encoding tree and a sample message (p. 161)
+;; Note I've already done it in my sample with `(decode message hf-tree)
+
+(def my-message "0110010101110")
+;; for tree, see figure 2.18 on p. 163
+(def my-hf-tree (make-code-tree
+                 (make-leaf 'A 4)
+                 (make-code-tree
+                  (make-leaf 'B 2)
+                  (make-code-tree
+                   (make-leaf 'D 1)
+                   (make-leaf 'C 1)))))
+
+(decode my-message my-hf-tree)
+;; => (A D A B B C A)
+
+
+;; Ex. 2.68
