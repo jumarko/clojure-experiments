@@ -985,6 +985,24 @@
       :else
       (throw (ex-info "Symbol isn't in the tree" {:symbol symbol
                                                   :tree tree})))))
+
+;; simpler recursive solution: https://wizardbook.wordpress.com/2010/12/07/exercise-2-68/
+(defn- encode-symbol [sym tree]
+  (cond
+    (leaf? tree)
+    nil
+
+    (symbol-in-tree? sym (left-branch tree))
+    (cons 0 (encode-symbol sym (left-branch tree)))
+
+    (symbol-in-tree? sym (right-branch tree))
+    (cons 1 (encode-symbol sym (right-branch tree)))
+
+    :else
+    (throw (ex-info "Symbol isn't in the tree" {:symbol sym
+                                                :tree tree}))))
+
+
 (defn encode [message tree]
   (if (empty? message)
     ()
