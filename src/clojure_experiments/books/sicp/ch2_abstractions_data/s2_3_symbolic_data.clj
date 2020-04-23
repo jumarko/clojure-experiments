@@ -834,8 +834,9 @@
 ;; -> they must do something slightly different when dealing with leaves vs trees.
 
 (defn symbols [tree]
-  (if leaf? tree
-      (list (symbol-leaf tree))))
+  (if (leaf? tree)
+      (list (symbol-leaf tree))
+      (nth tree 2)))
 
 (defn weight [tree]
   (if (leaf? tree)
@@ -950,5 +951,44 @@
 (decode my-message my-hf-tree)
 ;; => (A D A B B C A)
 
-
 ;; Ex. 2.68
+;; Given the encode procedure implement `encode-symbol`; it should raise error if the symbol
+;; isn't in the tree at all.
+;; * https://wizardbook.wordpress.com/2010/12/07/exercise-2-68/
+;; * http://community.schemewiki.org/?SICP-Solutions
+
+;; this naive implemtation is enough to start...
+(defn- symbol-in-tree? [symbol tree]
+  (loop [[fst & rst] (symbols tree)]
+    (cond
+      (nil? fst) false
+      (= symbol fst) true
+      :else (recur rst))))
+
+;; using interop it's much simpler (although still inefficient)
+(defn- symbol-in-tree? [symbol tree]
+  (.contains (symbols tree) symbol))
+
+(defn- encode-symbol [symbol tree]
+  (loop [encoded-symbol []
+         current-branch tree]
+    (cond
+      (leaf? current-branch)
+      encoded-symbol
+
+      (symbol-in-tree? symbol (left-branch current-branch))
+      (recur (conj encoded-symbol 0) (left-branch current-branch))
+
+      (symbol-in-tree? symbol (right-branch current-branch))
+      (recur (conj encoded-symbol 1) (right-branch current-branch))
+
+      :else
+      (throw (ex-info "Symbol isn't in the tree" {:symbol symbol
+                                                  :tree tree})))))
+(defn encode [message tree]
+  (if (empty? message)
+    ()
+    (concat (encode-symbol (first message) tree)
+            (encode (rest message) tree))))
+(assert (= my-message
+           (apply str (encode '(A D A B B C A) my-hf-tree))))
