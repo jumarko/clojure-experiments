@@ -1010,3 +1010,42 @@
             (encode (rest message) tree))))
 (assert (= my-message
            (apply str (encode '(A D A B B C A) my-hf-tree))))
+
+
+;; Ex. 2.69 (p. 168)
+;; Finish given `generate-huffman-tree` procedure
+;; by providing implementation of `successive-merge` (using `make-code-tree` under the hood)
+;; http://community.schemewiki.org/?sicp-ex-2.69
+; https://wizardbook.wordpress.com/2010/12/07/exercise-2-69/
+(defn- successive-merge [ordered-set]
+  (let [[left right & rst] ordered-set]
+    (if right
+      (successive-merge (adjoin-set (make-code-tree left right) rst))
+      left)))
+
+(defn generate-huffman-tree [pairs]
+  (successive-merge (make-leaf-set pairs)))
+
+;; testing data
+(def my-pairs [['A 4] ['B 2] ['C 1] ['D 1]])
+(def my-hf-tree (make-code-tree
+                 (make-leaf 'A 4)
+                 (make-code-tree
+                  (make-leaf 'B 2)
+                  (make-code-tree
+                   (make-leaf 'D 1)
+                   (make-leaf 'C 1)))))
+(make-leaf-set my-pairs)
+;; => ((leaf D 1) (leaf C 1) (leaf B 2) (leaf A 4))
+
+my-hf-tree
+;; => ((leaf A 4) ((leaf B 2) ((leaf D 1) (leaf C 1) (D C) 2) (B D C) 4) (A B D C) 8)
+
+(generate-huffman-tree my-pairs)
+;; => (((leaf A 4) ((leaf B 2) ((leaf D 1) (leaf C 1) (D C) 2) (B D C) 4) (A B D C) 8))
+
+(assert (= my-hf-tree
+           (generate-huffman-tree my-pairs)))
+
+(generate-huffman-tree ())
+;; => nil
