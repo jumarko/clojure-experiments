@@ -135,3 +135,12 @@
   )
 
 
+;; hiredman: `for` is a swiss army knife
+(def xml {:content ""})
+(for [maybe-x (tree-seq map? :content xml)
+      :when (= (:tag maybe-x) :x)
+      maybe-y (:content maybe-x)
+      :when (= (:tag maybe-y) :y)
+      ]
+  (do))
+
