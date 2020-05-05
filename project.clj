@@ -112,6 +112,9 @@
                  ;; statistics functions - e.g. TTest
                  [org.apache.commons/commons-math3 "3.6.1"]
 
+                 ;; https://github.com/generateme/fastmath
+                 [generateme/fastmath "1.5.2"]
+
                  ;; kixi.stats: https://github.com/mastodonC/kixi.stats
                  ;; see also lambdaisland: https://lambdaisland.com/episodes/clojure-data-science-kixi-stats
                  [kixi/stats "0.4.4"] 
@@ -177,7 +180,8 @@
   :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :java-source-paths ["src/java"]
-  :jvm-opts ["-Djdk.attach.allowAttachSelf=true"
+  :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+             "-Djdk.attach.allowAttachSelf=true"
              ;; just as an example of overriding default configuration values
              "-Dconf=my-config.edn"]
   :main ^:skip-aot clojure-experiments.core
