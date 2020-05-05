@@ -52,3 +52,19 @@
  2)
 ;; => -3
    
+
+;;; Floating point representation (IEEE 754)
+;;; Typical double precision is 52 bits for Mantisa (fraction) and 11 bits for Exponent
+;;; The representation is:  (-1)^s * M * 2^E
+
+;; Note: if we use 2^2^10 we get ##Inf
+;; => this corresponds to 11 bits used for exponents: -1022;1023 range can be represented by 11 bits
+(Math/pow 1.9999 (Math/pow 2 10))
+;; => 1.7079656282274296E308
+(Double/MAX_VALUE)
+;; => 1.7976931348623157E308
+(Double/MIN_VALUE)
+;; => 4.9E-324
+
+
+
