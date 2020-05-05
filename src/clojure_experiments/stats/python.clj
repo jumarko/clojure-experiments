@@ -46,6 +46,41 @@
 "Elapsed time: 133.522233 msecs"
 ;; with 10^8 elements it's surprisingly slow
 
+(require '[criterium.core :as crit])
+(crit/quick-bench (amap ^ints my-array
+                        idx
+                        ret
+                        (* (int 2) (aget ^ints my-array idx))))
+;; Evaluation count : 48 in 6 samples of 8 calls.
+;; Execution time mean : 14.022060 ms
+;; Execution time std-deviation : 476.098590 µs
+;; Execution time lower quantile : 13.728450 ms ( 2.5%)
+;; Execution time upper quantile : 14.807910 ms (97.5%)
+;; Overhead used : 8.025814 ns
+
+;; Found 1 outliers in 6 samples (16.6667 %)
+;; low-severe	 1 (16.6667 %)
+;; Variance from outliers : 13.8889 % Variance is moderately inflated by outliers
+
+(crit/quick-bench
+ (let [^ints my-array my-array]
+   (amap my-array
+         idx
+         ret
+         (* 2 (aget my-array idx))))
+ )
+;; Evaluation count : 54 in 6 samples of 9 calls.
+;; Execution time mean : 12.321377 ms
+;; Execution time std-deviation : 1.328449 ms
+;; Execution time lower quantile : 11.382550 ms ( 2.5%)
+;; Execution time upper quantile : 14.579994 ms (97.5%)
+;; Overhead used : 8.025814 ns
+
+;; Found 1 outliers in 6 samples (16.6667 %)
+;; low-severe	 1 (16.6667 %)
+;; Variance from outliers : 30.8442 % Variance is moderately inflated by outliers
+
+
 
 ;; Try fastmath
 (time
@@ -54,11 +89,3 @@
 ;; => unfortunately, not faster :(
 "Elapsed time: 285.1403 msecs"
 
-
-(comment
-  (def my-big-array (int-array (range 100000000)))
-  (time
-   (amap ^ints my-big-array
-         idx
-         ret
-         (* (int 2) (aget ^ints my-big-array idx)))))
