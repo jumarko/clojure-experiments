@@ -136,6 +136,24 @@
 ;;
   )
 
+;;; Measuring memory allocated by a single thread / method
+;; https://stackoverflow.com/questions/61539760/benchmarking-jvm-memory-consumption-similarly-to-how-it-is-done-by-the-os
+(defn allocated-bytes [f]
+  (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)
+        thread-id (.getId (Thread/currentThread))
+        start (.getThreadAllocatedBytes thread-mbean thread-id)]
+    (f)
+    (- (.getThreadAllocatedBytes thread-mbean thread-id)
+       start)))
+
+(allocated-bytes #())
+;; => 20336
+(allocated-bytes (fn []))
+;; => 20176
+;; notice that JOL shown 29480 bytes for vector of 1000 numbers so this looks close
+(allocated-bytes (fn [] (vec (range 1000000))))
+;; => 29436912
+
 
 ;;; TODO: add jvm-hiccup-meter: https://github.com/clojure-goes-fast/jvm-hiccup-meter
 
