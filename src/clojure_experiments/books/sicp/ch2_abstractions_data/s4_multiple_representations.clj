@@ -222,3 +222,101 @@
 ;; => 3.605551275463989
 (angle alysi)
 ;; => 0.982793723247329
+
+
+;;; 2.4.3 Data-Directed Programming and Additivity (p. 179 - 187)
+;;; The issue with previous solution is that Alyssa's and Ben's implementations can easilly coexist
+;;; in the same system (without having different names) and also that we need to modify the generic
+;;; procedures (real-part, imag-part, magnitude, angle) every time we add a new implementation
+;;;
+;;; In this section we try to use something different to overcome this limitations
+;;; => use a table of operations
+
+;; First assume we have the table of operations and two procedurs `get` and `put`:
+(def ^:private op-table (atom {}))
+
+(defn put-op [op typ item]
+  (swap! op-table assoc [op typ] item))
+
+(defn get-op [op typ]
+  (get @op-table [op typ]))
+
+;; Now install the two implementations
+(defn install-rectangular-package []
+  (letfn [;; internal procedures
+          (real-part [z] (first z))
+          (imag-part [z] (second z))
+          (magnitude [z] (Math/sqrt (+ (c/square (real-part z))
+                                       (c/square (imag-part z)))))
+          (angle [z] (Math/atan (/ (imag-part z)
+                                   (real-part z))))
+          (make-from-real-imag [real imag] [real imag])
+          (make-from-mag-ang [mag ang] [(* mag (Math/cos ang)) (* mag (Math/sin ang))])
+          ;; interface to the rest of the system
+          (tag [x] (attach-tag :rectangular x))]
+    (put-op :real-part [:rectangular] real-part)
+    (put-op :imag-part [:rectangular] imag-part)
+    (put-op :magnitude [:rectangular] magnitude)
+    (put-op :angle [:rectangular] angle)
+    (put-op :make-from-real-imag [:rectangular]
+            (fn [x y] (tag (make-from-real-imag x y))))
+    (put-op :make-from-mag-ang [:rectangular]
+            (fn [x y] (tag (make-from-mag-ang x y))))
+    :done))
+(install-rectangular-package)
+((get-op :make-from-real-imag [:rectangular]) 10 20)
+;; => [:rectangular [10 20]]
+
+(defn install-polar-package []
+  (letfn [;; internal procedures
+          (real-part [z] (* (magnitude-polar z) (Math/cos (angle-polar z))))
+          (imag-part [z] (* (magnitude-polar z) (Math/sin (angle-polar z))))
+          (magnitude [z] (first z))
+          (angle [z] (second z))
+          (make-from-real-imag [real imag] [(Math/sqrt (+ (c/square real) (c/square imag)))
+                                            (Math/atan (/ imag real))])
+          (make-from-mag-ang [mag ang] [mag ang])
+          ;; interface to the rest of the system
+          (tag [x] (attach-tag :polar x))]
+    (put-op :real-part [:polar] real-part)
+    (put-op :imag-part [:polar] imag-part)
+    (put-op :magnitude [:polar] magnitude)
+    (put-op :angle [:polar] angle)
+    (put-op :make-from-real-imag [:polar]
+            (fn [x y] (tag (make-from-real-imag x y))))
+    (put-op :make-from-mag-ang [:polar]
+            (fn [x y] (tag (make-from-mag-ang x y))))
+    :done))
+(install-polar-package)
+((get-op :make-from-real-imag [:rectangular]) 10 20)
+((get-op :make-from-real-imag [:polar]) 10 20)
+;; => [:polar [22.360679774997898 1.1071487177940904]]
+
+;; now we need to define the `apply-generic` procedure which uses the table
+;; and applies proper procedure to all the arguments
+(defn apply-generic [op & args]
+  (let [type-tags (map type-tag args)
+        proc (get-op op type-tags)]
+    (if proc
+      (apply proc (map contents args))
+      (throw (ex-info "No method for types" {:op op
+                                             :types type-tags})))))
+
+;; and we can define our generic selectors:
+(defn real-part [z] (apply-generic :real-part z))
+(defn imag-part [z] (apply-generic :imag-part z))
+(defn magnitude [z] (apply-generic :magnitude z))
+(defn angle [z] (apply-generic :angle z))
+
+;; and we can also define constructors for external users
+;; Notice we use the more suitable representation based on the actual constructor used.
+(defn make-from-real-imag [real imag]
+  ((get-op :make-from-real-imag [:rectangular])
+   real
+   imag))
+(defn make-from-mag-ang [mag ang]
+  ((get-op :make-from-mag-ang [:polar])
+   mag
+   ang))
+(real-part (make-from-real-imag 10 20))
+;; => 10
