@@ -1,6 +1,11 @@
 (ns clojure-experiments.books.sicp.ch2-abstractions-data.s4-multiple-representations
   "Examples from Chapter 2 - section 4: Multiple Representations for Abstract Data"
-  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :as c]))
+  (:require [clojure-experiments.books.sicp.ch1-abstractions-procedures.s1-elements :as c]
+            [clojure-experiments.books.sicp.ch2-abstractions-data.s3-symbolic-data
+             :refer [variable? same-variable? product? sum? exponentiation?
+                     make-sum make-product make-exponentiation
+                     augend addend multiplicand multiplier]
+             :as s3]))
 
 
 ;;; 2.4.1 Representation for Complex Numbers
@@ -320,3 +325,96 @@
    ang))
 (real-part (make-from-real-imag 10 20))
 ;; => 10
+
+
+;; Ex. 2.73 (p. 185)
+;; Consider this program  from s3_symbolic_data.clj:
+(defn deriv [expr var]
+  (cond
+    (number? expr) 0
+    (variable? expr) (if (same-variable? expr var) 1 0)
+    (sum? expr) (make-sum (deriv (addend expr) var)
+                          (deriv (augend expr) var))
+    (product? expr) (make-sum (make-product (multiplier expr)
+                                            (deriv (multiplicand expr) var))
+                              (make-product (multiplicand expr)
+                                            (deriv (multiplier expr) var)))
+    (exponentiation? expr) (make-product (make-product (exponent expr)
+                                                       (make-exponentiation (base expr)
+                                                                            (make-sum (exponent expr)
+                                                                                      -1)))
+                                         (deriv (base expr)
+                                                var))
+    :else (throw (ex-info "Unknown expression"
+                          {:expr expr
+                           :var var}))))
+(assert (= (deriv '(** x 3) 'x)
+           '(* 3 (** x 2))))
+
+;; a. explain the data-driven version:
+(defn- operator [expr] (first expr))
+(defn- operands [expr] (rest expr))
+;; here we removed rules for sum and product by putting operations into the table
+;; we don't do the same thing for number? and variable? for some reason: perhaps because they return constants?
+;; (but why would that be a problem?)
+(defn deriv [expr var]
+  (cond
+    (number? expr) 0
+    (variable? expr) (if (same-variable? expr var) 1 0)
+    ;; TODO: can we still throw an error if unknown expression is used?
+    :else (if-let [op (get-op :deriv (operator expr))]
+            (op (operands expr) var)
+            (throw (ex-info "Unknown expression"
+                            {:expr expr
+                             :var var})))))
+;; b. write procecures for sums and produtcts and install them into the table
+(defn deriv-sum [[x y] var]
+  (make-sum (deriv x var)
+            (deriv y var)))
+(put-op :deriv '+ deriv-sum)
+(assert (= (deriv '(+ x 2) 'x)
+           1))
+
+(defn deriv-product [[x y] var]
+  (make-sum (make-product x (deriv y var))
+            (make-product y (deriv x var))))
+(put-op :deriv '* deriv-product)
+ 
+(assert (= (deriv '(* 3 x) 'x)
+           3))
+
+;; c. additional rule for exponentiation
+(defn deriv-exponentation [[base exponent] var]
+  (make-product (make-product exponent
+                              (make-exponentiation base
+                                                   (make-sum exponent
+                                                             -1)))
+                (deriv base var)))
+(put-op :deriv '** deriv-exponentation)
+
+(assert (= (deriv '(** x 3) 'x)
+           '(* 3 (** x 2))))
+
+
+;; d. suppose we index dispatch table like so that deriv looks like this
+;; what other changes are necessary?
+(defn deriv [expr var]
+  (cond
+    (number? expr) 0
+    (variable? expr) (if (same-variable? expr var) 1 0)
+    ;; here's the change `(get-op (operator exp) :deriv)
+    :else (if-let [op (get-op (operator expr) :deriv)]
+            (op (operands expr) var)
+            (throw (ex-info "Unknown expression"
+                            {:expr expr
+                             :var var})))))
+;; THIS THE ONLY CHANGE NEEDED! we need to update dispatch table propertly
+(reset! op-table {})
+(put-op '+ :deriv deriv-sum)
+(put-op '* :deriv deriv-product)
+(put-op '** :deriv deriv-exponentation)
+
+(assert (= (deriv '(* 3 x) 'x)
+           3))
+(assert (= (deriv '(** x 3) 'x)
+           '(* 3 (** x 2))))

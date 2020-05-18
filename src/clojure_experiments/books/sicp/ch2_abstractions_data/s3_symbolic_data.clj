@@ -1,4 +1,4 @@
-(ns clojure-experiments.books.sicp.ch2-abstractions-data.s2-3-symbolic-data
+(ns clojure-experiments.books.sicp.ch2-abstractions-data.s3-symbolic-data
   "Starting on page. 142.")
 
 ;;; p. 144 - memq function which returns false or sublist beginning with the first occurence of `item`
