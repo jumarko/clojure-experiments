@@ -329,6 +329,7 @@
 
 ;; Ex. 2.73 (p. 185)
 ;; Consider this program  from s3_symbolic_data.clj:
+;; Check https://wizardbook.wordpress.com/2010/12/07/exercise-2-73/
 (defn deriv [expr var]
   (cond
     (number? expr) 0
@@ -339,17 +340,17 @@
                                             (deriv (multiplicand expr) var))
                               (make-product (multiplicand expr)
                                             (deriv (multiplier expr) var)))
-    (exponentiation? expr) (make-product (make-product (exponent expr)
-                                                       (make-exponentiation (base expr)
-                                                                            (make-sum (exponent expr)
-                                                                                      -1)))
-                                         (deriv (base expr)
-                                                var))
+    ;; (exponentiation? expr) (make-product (make-product (exponent expr)
+    ;;                                                    (make-exponentiation (base expr)
+    ;;                                                                         (make-sum (exponent expr)
+    ;;                                                                                   -1)))
+    ;;                                      (deriv (base expr)
+    ;;                                             var))
     :else (throw (ex-info "Unknown expression"
                           {:expr expr
                            :var var}))))
-(assert (= (deriv '(** x 3) 'x)
-           '(* 3 (** x 2))))
+;; (assert (= (deriv '(** x 3) 'x)
+;;            '(* 3 (** x 2))))
 
 ;; a. explain the data-driven version:
 (defn- operator [expr] (first expr))
@@ -357,6 +358,8 @@
 ;; here we removed rules for sum and product by putting operations into the table
 ;; we don't do the same thing for number? and variable? for some reason: perhaps because they return constants?
 ;; (but why would that be a problem?)
+;; UPDATE: https://wizardbook.wordpress.com/2010/12/07/exercise-2-73/
+;;   Number and variable expressions don’t use operators or operands so the same generic dispatch mechanism can’t be used.
 (defn deriv [expr var]
   (cond
     (number? expr) 0
@@ -418,3 +421,130 @@
            3))
 (assert (= (deriv '(** x 3) 'x)
            '(* 3 (** x 2))))
+
+
+;;; 2.74 Insatiable Enterprise (p. 185)
+;;; See https://wizardbook.wordpress.com/2010/12/08/exercise-2-74/
+
+;; low-level abstraction - functions that need to be implemented
+;; each department must "install" its own version with appropriate type tag
+
+(defn get-record
+  "Extracts information about given employee from the personnel file.
+  Different divisions can have different formats for their personnel files."
+  [personnel-file employee-name]
+  (let [op (get-op :get-record (type-tag personnel-file))]
+    (if op
+      (op (contents personnel-file) employee-name)
+      (throw (ex-info "Unknown file type." {:personnel-file personnel-file
+                                            :type-tag (type-tag personnel-file)})))))
+
+(defn get-salary
+  "Extracts salary for given employee.
+  Different divisions can have different formats of employee-record."
+  [employee-record]
+  ;; TODO: could also require custom `salary` selector be implemented by each deparment?
+  (let [op (get-op :get-salary (type-tag employee-record))]
+    (if op
+      (op (contents employee-record))
+      (throw (ex-info "Unknown employee record type."
+                      {:employee-record employee-record
+                       :type-tag (type-tag employee-record)})))))
+
+;; this shouldn't need to be polymorphic since it just uses `get-record` internally
+(defn find-employee-record-generic
+  "Finds given employee record across all personnel files
+  (spanning pontetially many divisions => different file formats)."
+  [get-record-fn personnel-files employee-name]
+  (->> personnel-files
+       (map (fn [personnel-file] (get-record-fn personnel-file employee-name)))
+       (some identity)))
+(def find-employee-record (partial find-employee-record-generic get-record))
+
+
+;; testing - sets implementations copied from src/clojure_experiments/books/sicp/ch2_abstractions_data/s3_symbolic_data.clj
+;; Sets as unordered lists (p. 152 - 153) 
+;; (defn element-of-set? [x s]
+;;   (cond
+;;     (empty? s) false
+;;     (= x (first s)) true
+;;     :else (element-of-set? x (rest s))))
+
+;; (element-of-set? 3 '(1 3 5))
+;; ;; => true
+;; (element-of-set? 4 '(1 3 5))
+;; ;; => false
+
+;; (defn adjoin-set [x s]
+;;   (if (element-of-set? x s)
+;;     s
+;;     (cons x s)))
+
+;; example implementation which assumes a Clojure hash map
+(defn- make-clojure-set [a-map]
+  (attach-tag :clojure a-map))
+
+(defn- install-clojure-set []
+  (put-op :get-record :clojure get)
+  (put-op :get-salary :clojure #(get % :salary)))
+(install-clojure-set)
+
+;; here we see how annoying is to work with extra constructor layer
+(def clojure-personnel-file
+  (make-clojure-set {"Sabina Gruber" (make-clojure-set {:salary 1000000000 :first-name "Sabina" :last-name "Gruber"})
+                     "Juraj Martinka" (make-clojure-set {:salary 1000 :first-name "Juraj" :last-name "Martinka"})
+                     "John Doe" (make-clojure-set {:salary 1000000 :first-name "John" :last-name "Doe"})}))
+
+(find-employee-record [clojure-personnel-file] "Juraj Martinka")
+;; => [:clojure {:salary 1000, :first-name "Juraj", :last-name "Martinka"}]
+(get-record clojure-personnel-file "Juraj Martinka")
+;; => [:clojure {:salary 1000, :first-name "Juraj", :last-name "Martinka"}]
+(get-salary (get-record clojure-personnel-file "John Doe"))
+;; => 1000000
+
+;; now a better approach would be to use clojure multimethods or protocols
+(defmulti get-record-m :division)
+(defmethod get-record-m :clojure [personnel-file employee-name]
+  (get personnel-file employee-name))
+(defmulti get-salary-m :division)
+(defmethod get-salary-m :clojure [employee-record]
+  (:salary employee-record))
+
+(def find-employee-record-m (partial find-employee-record-generic get-record-m))
+
+(def clojure-m {:division :clojure
+                "Sabina Gruber" {:division :clojure
+                                 :salary 1000000000 :first-name "Sabina" :last-name "Gruber"}
+                "Juraj Martinka" {:division :clojure
+                                  :salary 1000 :first-name "Juraj" :last-name "Martinka"}
+                "John Doe" {:division :clojure
+                            :salary 1000000 :first-name "John" :last-name "Doe"}})
+
+(find-employee-record-m [clojure-m] "Juraj Martinka")
+;; => {:division :clojure, :salary 1000, :first-name "Juraj", :last-name "Martinka"}
+(get-record-m clojure-m "Sabina Gruber")
+;; => {:division :clojure, :salary 1000000000, :first-name "Sabina", :last-name "Gruber"}
+(get-salary-m (get-record-m clojure-m "John Doe"))
+;; => 1000000
+
+(defprotocol Insatiable
+  (get-record-p [personnel-file employee-name])
+  (get-salary-p [employee-record]))
+(extend-protocol Insatiable
+    clojure.lang.APersistentMap
+  (get-record-p [personnel-file employee-name]
+    (get personnel-file employee-name))
+  (get-salary-p [employee-record]
+    (:salary employee-record)))
+(def find-employee-record-p (partial find-employee-record-generic get-record-p))
+
+(def clojure-p {"Sabina Gruber" {:salary 1000000000 :first-name "Sabina" :last-name "Gruber"}
+                "Juraj Martinka" {:salary 1000 :first-name "Juraj" :last-name "Martinka"}
+                "John Doe" {:salary 1000000 :first-name "John" :last-name "Doe"}})
+(find-employee-record-p [clojure-p] "Juraj Martinka")
+;; => {:salary 1000, :first-name "Juraj", :last-name "Martinka"}
+(get-record-p clojure-p "Sabina Gruber")
+;; => {:salary 1000000000, :first-name "Sabina", :last-name "Gruber"}
+(get-salary-p (get-record-p clojure-p "John Doe"))
+;; => 1000000
+
