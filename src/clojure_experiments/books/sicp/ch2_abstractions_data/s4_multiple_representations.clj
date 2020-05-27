@@ -527,20 +527,24 @@
 (get-salary-m (get-record-m clojure-m "John Doe"))
 ;; => 1000000
 
+;; or use protocol
 (defprotocol Insatiable
   (get-record-p [personnel-file employee-name])
   (get-salary-p [employee-record]))
+
 (extend-protocol Insatiable
     clojure.lang.APersistentMap
   (get-record-p [personnel-file employee-name]
     (get personnel-file employee-name))
   (get-salary-p [employee-record]
     (:salary employee-record)))
+
 (def find-employee-record-p (partial find-employee-record-generic get-record-p))
 
 (def clojure-p {"Sabina Gruber" {:salary 1000000000 :first-name "Sabina" :last-name "Gruber"}
                 "Juraj Martinka" {:salary 1000 :first-name "Juraj" :last-name "Martinka"}
                 "John Doe" {:salary 1000000 :first-name "John" :last-name "Doe"}})
+
 (find-employee-record-p [clojure-p] "Juraj Martinka")
 ;; => {:salary 1000, :first-name "Juraj", :last-name "Martinka"}
 (get-record-p clojure-p "Sabina Gruber")
