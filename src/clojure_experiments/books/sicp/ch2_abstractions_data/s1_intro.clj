@@ -31,10 +31,9 @@
 ;;;---------------------
 ;;; now implement basic operations on rational numbers
 (defn add-rat [d1 d2]
-  (/ (+ (* (numer d1) (denom d2))
-      (* (numer d2) (denom d1))
-      )
-     (* (denom d1) (denom d2))))
+  (make-rat (+ (* (numer d1) (denom d2))
+               (* (numer d2) (denom d1)))
+            (* (denom d1) (denom d2))))
 
 ;; Now, how can I implement a test?
 ;; => first implementation try with maps
@@ -49,10 +48,9 @@
       1/4 1 8 1 8)))
 
 (defn sub-rat [d1 d2]
-  (/ (- (* (numer d1) (denom d2))
-        (* (numer d2) (denom d1))
-        )
-     (* (denom d1) (denom d2))))
+  (make-rat (- (* (numer d1) (denom d2))
+               (* (numer d2) (denom d1)))
+            (* (denom d1) (denom d2))))
 (deftest test-sub
   (testing "simple subtraction"
     (test-rat sub-rat
@@ -60,8 +58,8 @@
       -1/8 1 8 2 8)))
 
 (defn mult-rat [d1 d2]
-  (/ (* (numer d1) (numer d2))
-     (* (denom d1) (denom d2))) )
+  (make-rat (* (numer d1) (numer d2))
+            (* (denom d1) (denom d2))))
 (deftest test-mult
   (testing "simple multiplication"
     (test-rat mult-rat
@@ -70,8 +68,8 @@
               -15/4 -3 2 5 2)))
 
 (defn div-rat [d1 d2]
-  (/ (* (numer d1) (denom d2))
-     (* (numer d2) (denom d1))))
+  (make-rat (* (numer d1) (denom d2))
+            (* (numer d2) (denom d1))))
 (deftest test-div
   (testing "simple division"
     (test-rat div-rat
