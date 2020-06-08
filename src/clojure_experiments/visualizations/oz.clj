@@ -38,6 +38,31 @@
                  :type "quantitative"}}
   :mark "bar"})
 
+;;; histogram
+;;; https://vega.github.io/vega-lite/tutorials/explore.html
+;;; https://vega.github.io/vega-lite/docs/bin.html
+(defn histogram [values
+                 field
+                 {:keys [step scale width height title x-title y-title]
+                  :or {step 50
+                       ;; see Scale: https://vega.github.io/vega-lite/docs/scale.html
+                       scale "linear" ; pow, sqrt, symlog, log, time, utc
+                       width 1000
+                       height 500}}]
+  {:title (or title "")
+   :data {#_#_:url "/Users/jumar/Work/Empear-Codescene/CLOUD/slow-analyses/batch-job-delays/batch-jobs-delays_2020-06-05_past30hours.csv"
+          :values values}
+   :mark "bar"
+   :encoding {:x (cond-> {:field field
+                          :type "quantitative"
+                          :bin {:step step}}
+                   x-title (assoc-in [:axis :title] x-title))
+              :y (cond-> {:aggregate "count"
+                          :type "quantitative"
+                          :scale {:type scale}}
+                   y-title (assoc-in [:axis :title] y-title))}
+   :width width
+   :height height})
 
 ;;;; Examples from here: https://github.com/metasoarous/oz
 ;;;; 
@@ -81,7 +106,7 @@
 
 
 ;;; let's combine them together:
-(def viz
+#_(def viz
   [:div
    [:h1 "Look ye and behold"]
    [:p "A couple of small charts"]
