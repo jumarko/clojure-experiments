@@ -43,10 +43,8 @@
   (mm/measure (vec (csv-data->maps csv-ds)))
   ;; => "31.8 MB"
 
-  ;; This doesn't work :(
   (require '[tech.ml.dataset :as ds])
   (def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
   (mm/measure ds)
-  ;;=> "5.7 MB"
-  ;;
+  ;; => "5.1 MB"  ;;
   )

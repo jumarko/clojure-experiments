@@ -3,6 +3,8 @@
 
   See https://github.com/metasoarous/oz.
   Check http://ozviz.io/ for sharing visualizations
+  https://www.youtube.com/watch?v=9uaHRWj04D4 (Vega Lite: A Grammar of Interactive Graphics - Wongsuphasawat, Moritz, and Satyanarayan)
+
 
   Look also at polis: https://github.com/pol-is/polisMath"
   (:require
@@ -41,6 +43,7 @@
 ;;; histogram
 ;;; https://vega.github.io/vega-lite/tutorials/explore.html
 ;;; https://vega.github.io/vega-lite/docs/bin.html
+;;; Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 (defn histogram [values
                  field
                  {:keys [step scale width height title x-title y-title]

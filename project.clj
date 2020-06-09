@@ -24,7 +24,13 @@
                  ;; Does this conflict with oz because of aleph/sente conflict?
                  ;;   Syntax error (FileNotFoundException) compiling at (server.clj:1:1).
                  ;;   Could not locate taoensso/sente/server_adapters/aleph__init.class, taoensso/sente/server_adapters/aleph.clj or taoensso/sente/server_adapters/aleph.cljc on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.
-                 ;; [hswick/jutsu "0.1.1"]
+                 ;; jutsu is no longer maintained! https://github.com/hswick/jutsu
+                 ;; [hswick/jutsu "0.1.3"]
+                 ;; https://github.com/findmyway/plotly-clj
+                 ;; not sure how to use this:
+                 ;; [plotly-clj "0.1.1"]
+                 ;; libpython-clj allows me to use plotly in Clojure tools
+                 ;; [clj-python/libpython-clj "1.44"]
                  [clojure-complete "0.2.4"]
                  [com.rpl/specter "1.1.0"]
                  [quil "2.8.0"]
@@ -107,7 +113,8 @@
                  ;; It has to be installed in the local repository first
                  ;; - download it here: http://rebl.cognitect.com/download.html
                  ;; - mvn install:install-file -Dfile=/Users/jumar/tools/clojure/rebl/REBL-0.9.109/REBL-0.9.109.jar -DgroupId=com.cognitect -DartifactId=rebl -Dversion=0.9.109 -Dpackaging=jar -DgeneratePom=true
-                 [com.cognitect/rebl "0.9.109"]
+                 ;; I DON'T USE THIS!
+                 ;; [com.cognitect/rebl "0.9.109"]
 
                  ;; statistics functions - e.g. TTest
                  [org.apache.commons/commons-math3 "3.6.1"]
@@ -172,7 +179,21 @@
                  ;; -> see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/clojure/cV6rvgR9Pfs/Z_kOOAwwBAAJ
                  [jpmonettas/tools.namespace "0.3.2"]
 
+                 ;; cognitect's aws-api: https://github.com/cognitect-labs/aws-api
+                 ;; => search on mvnrepository.com http://mvnrepository.com/search?q=com.cognitect.aws&ref=opensearch
+                 [com.cognitect.aws/api "0.8.456"] 
+                 [com.cognitect.aws/endpoints "1.1.11.789"] 
+                 ;; logs: https://mvnrepository.com/artifact/com.cognitect.aws/logs
+                 [com.cognitect.aws/logs "798.2.672.0"]
 
+                 ;; tech.ml.dataset requires higher smile-* libs versions than fastmath
+                 [techascent/tech.ml.dataset "2.0-beta-57"]
+                 [com.github.haifengl/smile-core "2.4.0"]
+                 [com.github.haifengl/smile-netlib "2.4.0"]
+                 [com.github.haifengl/smile-io "2.4.0"]
+                 [com.github.haifengl/smile-math "2.4.0"]
+                 [com.github.haifengl/smile-graph "2.4.0"]
+                 [com.github.haifengl/smile-data "2.4.0"]
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
