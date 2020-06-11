@@ -53,6 +53,61 @@
 #_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
 
+;;; pmap related experiments
+;;; `map-throttled` it's similar to `pmap` but runs in the same thread
+;;; and never consumes more than given `max-n` elements
+
+;; `rechunk` here: https://clojuredocs.org/clojure.core/chunk#example-5c9cebc3e4b0ca44402ef6ec
+;; - interesting but not usable for me
+;; TODO: check throttler: http://brunov.org/clojure/2014/05/14/throttler/
+(defn re-chunk [n xs]
+  (lazy-seq
+   (when-let [s (seq (take n xs))]
+     (let [cb (chunk-buffer n)]
+       (doseq [x s] (chunk-append cb x))
+       (chunk-cons (chunk cb) (re-chunk n (drop n xs)))))))
+
+;; "unchunk" any chunked seqs
+;; (Joy of Clojure 15.3.1)
+(defn unchunk [s]
+  (lazy-seq
+   (when-let [[x] (seq s)]
+     (cons x (unchunk (rest s))))))
+
+(defn map-throttled
+  "Like `pmap` but always uses only a single (caller's) thread.
+  Uses `re-chunk` to never calls `f` more then `max-n` times ahead of the consumer of the return value.
+
+  Useful for cases like an rate limited asynchronous HTTP API (e.g. StartQuery AWS CloudWatch Insights API)."
+  [max-n f coll]
+  (let [unchunked-lazy-seq (unchunk coll)
+        rets (map f unchunked-lazy-seq)
+        step (fn step [[x & xs :as vs] fs]
+               (lazy-seq
+                (if-let [s (seq fs)]
+                  (cons x (step xs (rest s)))
+                  vs)))]
+    (step rets (drop max-n rets))))
+
+(comment
+  
+  ;; this should print only the first element
+  ;; but it prints all the first 32 elements 
+  (first (pmap (fn [i] (println i) i) (range 40)))
+  ;; if I use iterate, it works as expected
+  (first (pmap (fn [i] (println i) i) (take 40 (iterate inc 0))))
+  ;; this prints numbers 0..10 (max 5 elements after the current one)
+  (nth  (map-throttled 5
+                       (fn [i] (println i) i)
+                       (iterate inc 0))
+        5)
+
+  ;;
+  )
+
+
+
+
 ;;; bindings
 ;;; See
 ;;; - https://stackoverflow.com/questions/20139463/clojure-binding-vs-with-redefs

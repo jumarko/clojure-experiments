@@ -17,7 +17,7 @@
                  [net.java.dev.jna/jna "4.4.0"]
                  [org.flatland/useful "0.11.5"]
                  [org.apache.poi/poi-ooxml "3.17"]
-                 [org.clojure/core.async "0.4.474"]
+                 [org.clojure/core.async "1.2.603"]
                  [funcool/cats "2.1.0"]
                  [buddy/buddy-hashers "1.3.0"]
                  [org.julienxx/clj-slack "0.5.5"]
@@ -185,6 +185,9 @@
                  [com.cognitect.aws/endpoints "1.1.11.789"] 
                  ;; logs: https://mvnrepository.com/artifact/com.cognitect.aws/logs
                  [com.cognitect.aws/logs "798.2.672.0"]
+                 ;; core.cache and core.memoize deps explicitly stated to not conflict with other libs
+                 [org.clojure/core.cache "1.0.207"]
+                 [org.clojure/core.memoize "1.0.236"]
 
                  ;; tech.ml.dataset requires higher smile-* libs versions than fastmath
                  [techascent/tech.ml.dataset "2.0-beta-57"]

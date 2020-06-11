@@ -44,17 +44,17 @@
 ;;; https://vega.github.io/vega-lite/tutorials/explore.html
 ;;; https://vega.github.io/vega-lite/docs/bin.html
 ;;; Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
+;;; - also https://vega.github.io/vega-lite/docs/bar.html#stack
 (defn histogram [values
                  field
-                 {:keys [step scale width height title x-title y-title]
+                 {:keys [step scale width height title x-title y-title color]
                   :or {step 50
                        ;; see Scale: https://vega.github.io/vega-lite/docs/scale.html
                        scale "linear" ; pow, sqrt, symlog, log, time, utc
                        width 1000
                        height 500}}]
   {:title (or title "")
-   :data {#_#_:url "/Users/jumar/Work/Empear-Codescene/CLOUD/slow-analyses/batch-job-delays/batch-jobs-delays_2020-06-05_past30hours.csv"
-          :values values}
+   :data {:values values}
    :mark "bar"
    :encoding {:x (cond-> {:field field
                           :type "quantitative"
@@ -63,7 +63,8 @@
               :y (cond-> {:aggregate "count"
                           :type "quantitative"
                           :scale {:type scale}}
-                   y-title (assoc-in [:axis :title] y-title))}
+                   y-title (assoc-in [:axis :title] y-title))
+              :color color}
    :width width
    :height height})
 
