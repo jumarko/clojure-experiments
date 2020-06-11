@@ -47,4 +47,11 @@
   (def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
   (mm/measure ds)
   ;; => "5.1 MB"  ;;
+
+  ;; dataset is logically a sequence of columens when treated like a sequence:
+  (first ds)
+;; => #tech.ml.dataset.column<string>[5001]
+;;    key
+;;    [AD, AE, AF, AF_BAL, AF_BAM, AF_BDG, AF_BDS, AF_BGL, AF_DAY, AF_FRA, AF_FYB, AF_GHA, AF_GHO, AF_HEL, AF_HER, AF_JOW, AF_KAB, AF_KAN, AF_KAP, AF_KDZ, ...]
+  ;;
   )

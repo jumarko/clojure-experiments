@@ -7,6 +7,7 @@
   - https://github.com/cognitect-labs/REBL-distro/wiki/Hotkeys
   - http://rebl.cognitect.com/download.html
   "
+  ;; UPDATE: no longer added as dependency
   (:require [cognitect.rebl :as rebl]))
 
 ;; Let's add tab to inspect values in REBL ui
