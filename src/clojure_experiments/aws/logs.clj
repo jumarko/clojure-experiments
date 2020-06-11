@@ -1,7 +1,11 @@
 (ns clojure-experiments.aws.logs
   "Utility functions to load data from cloudwatch insights logs.
   Be mindful about concurrency limits - if you reach the limit you'll get an error:
-      \"LimitExceededException\", :message \"Account maximum query concurrency limit of [10] reached..."
+      \"LimitExceededException\", :message \"Account maximum query concurrency limit of [10] reached...
+
+  Resources:
+  - Cloudwatch Insights query syntax: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
+  - aws-api: https://github.com/cognitect-labsuaws-api"
   (:require [clojure-experiments.concurrency :refer [map-throttled]]
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]
@@ -25,6 +29,9 @@
    (date-time y m d 0 0 0))
   ([y m d h mi s]
    (java.time.ZonedDateTime/of y m d h mi s 0 java.time.ZoneOffset/UTC)))
+
+(defn now []
+  (java.time.ZonedDateTime/now java.time.ZoneOffset/UTC))
 
 
 ;; handle API failures: https://github.com/cognitect-labsuaws-api#responses-success-failure
@@ -59,13 +66,7 @@
   (->> query-results
        (mapv
         #(zipmap (mapv :field %)
-                 (mapv :value %)))
-       ;; records without job_id are incomplete and cannot be used
-       ;; - should work for both queries
-       (filterv (fn [{:strs [job_id status] :as _row}]
-                  (and job_id
-                      (not (#{":running" "submitted"}
-                            status)))))))
+                 (mapv :value %)))))
 
 (defn get-query-results [query-id]
   (println "DEBUG: get-query-results: " query-id)
@@ -76,71 +77,113 @@
       :incomplete
       (results->map results))))
 
-(defn poll-results [query-id]
-  (let [max-polling-time 10000
-        polling-start (System/currentTimeMillis)]
-    (loop []
-      (println "Getting results for query: " query-id)
-      (let [results (get-query-results query-id)
-            elapsed-time (- (System/currentTimeMillis) polling-start)]
-        (cond
-          (> elapsed-time  max-polling-time)
-          ;; can be either :incomplete or real results
-          results
+(defn get-finished-query-results
+  "This is a specialized version of `get-query-results` which assumes that the job 'status' field
+  is present in the query results.
+  Only results with status 'Scheduled' or 'Running' are included."
+  [query-id]
+  (let [results (get-query-results query-id)]
+    (if (= :incomplete results)
+      :incomplete
+      (filterv (fn [{:strs [job_id status] :as _row}]
+                 (and job_id
+                      (not (#{":running" "submitted"}
+                            status))))
+               results))))
 
-          (= results :incomplete)
-          (do (Thread/sleep 1000)
-              (recur))
+(defn poll-results
+  ([query-id]
+   (poll-results query-id false))
+  ([query-id remove-incomplete-jobs?]
+   (let [max-polling-time 10000
+         polling-start (System/currentTimeMillis)]
+     (loop []
+       (println "Getting results for query: " query-id)
+       (let [results (if remove-incomplete-jobs?
+                       (get-finished-query-results query-id)
+                       (get-query-results query-id))
+             elapsed-time (- (System/currentTimeMillis) polling-start)]
+         (cond
+           (> elapsed-time  max-polling-time)
+           ;; can be either :incomplete or real results
+           results
 
-          :else results)))))
+           (= results :incomplete)
+           (do (Thread/sleep 1000)
+               (recur))
+
+           :else results))))))
+
+(defn- truncate-to-midnight [date-time]
+  (.truncatedTo date-time java.time.temporal.ChronoUnit/DAYS))
 
 (defn from-to
   "Returns pairs (2-element vectors) of all 1-day periods from given 'from' day to given 'to' day.
+  If `to` 
   The input dates will be truncated to a day precision (via LocalDate).)"
-  [from-day to-day]
-  (let [period (java.time.Period/between (.toLocalDate from-day) (.toLocalDate to-day))
-        days-between (.getDays period)]
-    (map
-     (fn [plus-days]
-       [(.plusDays from-day plus-days)
-        (.plusDays from-day (inc plus-days))])
-     (range days-between))))
+  ([from]
+   (from-to from (now)))
+  ([from to]
+   (let [between
+         ;; start with given date and do 1-day increments
+         (as-> (iterate (fn [zdt] (truncate-to-midnight (.plusDays zdt 1)))
+                        from) $
+           (take-while (fn [zdt] (<= (.compareTo zdt to)
+                                     0))
+                       $)
+              ;; add the `to` datetime if needed (if it's not aligned to the midnight)
+           (vec $)
+           (cond-> $ (not= to (truncate-to-midnight to))
+                   (conj to))
+           (dedupe $))]
+     ;; convert the simple sequence of datetimes into proper pairs/intervals
+     (map vec (partition 2 1 between)))))
+
+;; 
+#_(from-to (date-time 2020 6 1))
 (from-to (date-time 2020 6 1) (date-time 2020 6 5))
-;; => [[#object[java.time.ZonedDateTime 0x6cf1446b "2020-06-01T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x2e4773ec "2020-06-02T00:00Z"]]
-;;     [#object[java.time.ZonedDateTime 0x51bf09e4 "2020-06-02T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x62b6da26 "2020-06-03T00:00Z"]]
-;;     [#object[java.time.ZonedDateTime 0xd40c52f "2020-06-03T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x2ff3106a "2020-06-04T00:00Z"]]
-;;     [#object[java.time.ZonedDateTime 0x242ab838 "2020-06-04T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x2b5f8c0d "2020-06-05T00:00Z"]]]
+;; => ([#object[java.time.ZonedDateTime 0x7291b6e0 "2020-06-01T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0x7cc8e5b2 "2020-06-02T00:00Z"]]
+;;     [#object[java.time.ZonedDateTime 0x7cc8e5b2 "2020-06-02T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0x457176a9 "2020-06-03T00:00Z"]]
+;;     [#object[java.time.ZonedDateTime 0x457176a9 "2020-06-03T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0xdfd5d2b "2020-06-04T00:00Z"]]
+;;     [#object[java.time.ZonedDateTime 0xdfd5d2b "2020-06-04T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0x55342fb3 "2020-06-05T00:00Z"]])
 
-;; even if you specify time beyond mindnight you still only get the whole days:
+;; when you specify time beyond mindnight you get the whole days + 1 partial 'day' interval:
 (from-to (date-time 2020 6 1) (date-time 2020 6 3 8 0 0))
-;; => [[#object[java.time.ZonedDateTime 0x5eff54d6 "2020-06-01T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x6b4f6547 "2020-06-02T00:00Z"]]
-;;     [#object[java.time.ZonedDateTime 0x3f68325 "2020-06-02T00:00Z"]
-;;      #object[java.time.ZonedDateTime 0x7ec7e55b "2020-06-03T00:00Z"]]]
+;; => ([#object[java.time.ZonedDateTime 0x77e28d46 "2020-06-01T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0x3a3d8d4b "2020-06-02T00:00Z"]]
+;;     [#object[java.time.ZonedDateTime 0x3a3d8d4b "2020-06-02T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0x526239d7 "2020-06-03T00:00Z"]]
+;;     [#object[java.time.ZonedDateTime 0x526239d7 "2020-06-03T00:00Z"]
+;;      #object[java.time.ZonedDateTime 0xc825da3 "2020-06-03T08:00Z"]])
 
-(defn get-all-data [delay-query duration-query from-day to-day]
+(defn get-all-data
+  [delay-query duration-query git-clone-query from-to-intervals]
   (let [started-queries (map-throttled
-                         (dec (quot max-concurrent-queries 2)) ;; two different queries per day and decrement to have some space
+                         (dec (quot max-concurrent-queries 3)) ;; three different queries per day and decrement to have some space
                          (fn [[start-time end-time]]
                            (let [delay-query-id (start-query delay-query {:start-time start-time
                                                                           :end-time end-time})
                                  duration-query-id (start-query duration-query {:start-time start-time
-                                                                                :end-time end-time})]
+                                                                                :end-time end-time})
+                                 clone-query-id (start-query git-clone-query {:start-time start-time
+                                                                              :end-time end-time})]
                              {:start-time start-time
                               :end-time end-time
                               :delay-id delay-query-id
-                              :duration-id duration-query-id}))
-                         (from-to from-day to-day))]
+                              :duration-id duration-query-id
+                              :clone-id clone-query-id}))
+                         from-to-intervals)]
     (mapv
-     (fn [{:keys [delay-id duration-id start-time end-time]}]
+     (fn [{:keys [delay-id duration-id clone-id start-time end-time]}]
        {:start-time start-time
         :end-time end-time
-        :delays (poll-results delay-id)
-        :durations (poll-results duration-id)})
+        :delays (poll-results delay-id true)
+        :durations (poll-results duration-id true)
+        :clones (poll-results clone-id)})
      started-queries)))
 
 (def jobs-delay-query "fields @timestamp, @message
@@ -151,7 +194,7 @@
         (started_at - submitted_at)/1000 as delay_seconds
         by job_id, job_type, batch_job_id
 | sort delay_seconds desc
-| limit 1000")
+| limit 10000")
 
 (def delta-jobs-durations-query "fields @timestamp, @message
 | filter @message like /batch-job-id=/
@@ -162,9 +205,18 @@
         latest(@timestamp) as finished_at, 
         (finished_at - submitted_at)/1000 as duration_seconds
         by job_id, job_type, batch_job_id
-| sort duration_seconds desc")
+| sort duration_seconds desc
+| limit 10000 ")
 
-(def my-log-group "codescene-web-prod-application")
+(def git-clones-query "fields @timestamp, @message
+| filter @message like /(Cloning|Successfully cloned)/
+| parse /^.*(Cloning|Successfully cloned) (?<repo_url>\\S+) to \\/var\\/codescene\\/repos\\/(?<job_id>\\d+)\\/[^\\/]+\\/repos\\/(?<repo_name>\\S+).*$/
+| stats earliest(@timestamp) as clone_start, 
+        latest(@timestamp) as clone_finished, 
+        (clone_finished - clone_start)/1000 as duration_seconds
+        by job_id, repo_name
+| sort duration_seconds desc
+| limit 10000")
 
 ;; TODO: could be useful to use Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 ;; 
@@ -183,39 +235,60 @@
                            (when chart-title {:title chart-title})
                            opts))))
 
+;; E.g. distinguishing multiple job types (delta, full analysis, x-ray, project delete)
+;; via color: https://vega.github.io/vega-lite/docs/bar.html#stack
+(defn- color [field-name]
+  {:color {:field field-name :type "nominal"}})
+
 (comment
 
-  (def delays-query-id (start-query {:group-name my-log-group :query jobs-delay-query}
+  ;; delays
+  (def delays-query-id (start-query {:group-name "codescene-web-prod-application" :query jobs-delay-query}
                                     {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
-  (def delays (get-query-results delays-query-id))
+  (Thread/sleep 5000)
+  (def delays (get-finished-query-results delays-query-id))
   (oz/view! (hist delays "delay_seconds"))
 
-  ;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
+  ;; delta durations
+  (def delta-query-id (start-query {:group-name "codescene-web-prod-application" :query delta-jobs-durations-query}
+                                    {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
+  (Thread/sleep 5000)
+  (def deltas (get-finished-query-results delta-query-id))
+  (oz/view! (hist deltas "duration_seconds"))
 
-  (def my-from  (date-time 2020 6 1))
-  (def my-to (date-time 2020 6 11))
-  (def multiple-days-data (get-all-data {:group-name my-log-group :query jobs-delay-query}
-                                        {:group-name my-log-group :query delta-jobs-durations-query}
-                                        my-from my-to))
+  ;; git clones durations
+  (def clones-query-id (start-query {:group-name "/aws/batch/job" :query git-clones-query}
+                                    {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
+  (Thread/sleep 5000)
+  (def clones (get-query-results clones-query-id))
+  (oz/view! (hist clones "duration_seconds" (color "repo_name")))
+
+
+  ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
+
+  (def multiple-days-data (get-all-data {:group-name "codescene-web-prod-application" :query jobs-delay-query}
+                                        {:group-name "codescene-web-prod-application" :query delta-jobs-durations-query}
+                                        {:group-name "/aws/batch/job" :query git-clones-query}
+                                        (from-to (truncate-to-midnight (.minusDays (now)
+                                                                                   3)))))
 
   ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
   ;; (facet row, vconcat, layer, repeat row)
   (def multiple-days-data-histograms
     [:div
      ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-     (for [{:keys [start-time end-time delays durations]} multiple-days-data]
+     (for [{:keys [start-time end-time delays durations clones]} multiple-days-data]
        [:div
         [:p [:b (format "%s -- %s" start-time end-time)]]
         [:div {:style {:display "flex" :flex-direction "col"}}
-         [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds"
-                           ;; distinguishing multiple job types (delta, full analysis, x-ray, project delete)
-                           ;; via color: https://vega.github.io/vega-lite/docs/bar.html#stack
-                           {:color {:field "job_type" :type "nominal"}})]
-         [:vega-lite (hist "Delta jobs total durations in seconds" durations "duration_seconds")]]
+         [:vega-lite (hist "Delta jobs total durations in seconds" durations "duration_seconds")]
+         [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
+         ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
+         [:vega-lite (hist "Git clones durations" clones "duration_seconds" (color "repo_name"))]]
         [:hr]])])
 
   (oz/view! multiple-days-data-histograms)
-
+  
   ;;
   )
 
