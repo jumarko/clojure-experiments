@@ -186,37 +186,43 @@
         :clones (poll-results clone-id)})
      started-queries)))
 
-(def jobs-delay-query "fields @timestamp, @message
-| filter @message like /batch-job-id=/
-| parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=:?(?<job_status>(submitted|running)).*batch-job-id=(?<batch_job_id>\\S+).*$/
-| stats earliest(@timestamp) as submitted_at, 
+(def jobs-delay-query
+  {:group-name "codescene-web-prod-application"
+   :query "fields @timestamp, @message
+  | filter @message like /batch-job-id=/
+  | parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=:?(?<job_status>(submitted|running)).*batch-job-id=(?<batch_job_id>\\S+).*$/
+  | stats earliest(@timestamp) as submitted_at, 
         latest(@timestamp) as started_at, 
         (started_at - submitted_at)/1000 as delay_seconds
         by job_id, job_type, batch_job_id
-| sort delay_seconds desc
-| limit 10000")
+  | sort delay_seconds desc
+  | limit 10000"})
 
-(def delta-jobs-durations-query "fields @timestamp, @message
-| filter @message like /batch-job-id=/
-| parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=(?<job_status>\\S+).*batch-job-id=(?<batch_job_id>\\S+).*$/
-| filter job_type = ':run-delta-analysis'
-| stats latest(job_status) as status,
+(def delta-jobs-durations-query
+  {:group-name "codescene-web-prod-application"
+   :query "fields @timestamp, @message
+  | filter @message like /batch-job-id=/
+  | parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=(?<job_status>\\S+).*batch-job-id=(?<batch_job_id>\\S+).*$/
+  | filter job_type = ':run-delta-analysis'
+  | stats latest(job_status) as status,
         earliest(@timestamp) as submitted_at, 
         latest(@timestamp) as finished_at, 
         (finished_at - submitted_at)/1000 as duration_seconds
         by job_id, job_type, batch_job_id
-| sort duration_seconds desc
-| limit 10000 ")
+  | sort duration_seconds desc
+  | limit 10000 "})
 
-(def git-clones-query "fields @timestamp, @message
-| filter @message like /(Cloning|Successfully cloned)/
-| parse /^.*(Cloning|Successfully cloned) (?<repo_url>\\S+) to \\/var\\/codescene\\/repos\\/(?<job_id>\\d+)\\/[^\\/]+\\/repos\\/(?<repo_name>\\S+).*$/
-| stats earliest(@timestamp) as clone_start, 
+(def git-clones-query
+  {:group-name "/aws/batch/job"
+   :query "fields @timestamp, @message
+  | filter @message like /(Cloning|Successfully cloned)/
+  | parse /^.*(Cloning|Successfully cloned) (?<repo_url>\\S+) to \\/var\\/codescene\\/repos\\/(?<job_id>\\d+)\\/[^\\/]+\\/repos\\/(?<repo_name>\\S+).*$/
+  | stats earliest(@timestamp) as clone_start, 
         latest(@timestamp) as clone_finished, 
         (clone_finished - clone_start)/1000 as duration_seconds
         by job_id, repo_name
-| sort duration_seconds desc
-| limit 10000")
+  | sort duration_seconds desc
+  | limit 10000"})
 
 ;; TODO: could be useful to use Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 ;; 
@@ -243,21 +249,21 @@
 (comment
 
   ;; delays
-  (def delays-query-id (start-query {:group-name "codescene-web-prod-application" :query jobs-delay-query}
+  (def delays-query-id (start-query jobs-delay-query
                                     {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
   (Thread/sleep 5000)
   (def delays (get-finished-query-results delays-query-id))
   (oz/view! (hist delays "delay_seconds"))
 
   ;; delta durations
-  (def delta-query-id (start-query {:group-name "codescene-web-prod-application" :query delta-jobs-durations-query}
-                                    {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
+  (def delta-query-id (start-query delta-jobs-durations-query
+                                   {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
   (Thread/sleep 5000)
   (def deltas (get-finished-query-results delta-query-id))
   (oz/view! (hist deltas "duration_seconds"))
 
   ;; git clones durations
-  (def clones-query-id (start-query {:group-name "/aws/batch/job" :query git-clones-query}
+  (def clones-query-id (start-query git-clones-query
                                     {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
   (Thread/sleep 5000)
   (def clones (get-query-results clones-query-id))
@@ -266,29 +272,32 @@
 
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
 
-  (def multiple-days-data (get-all-data {:group-name "codescene-web-prod-application" :query jobs-delay-query}
-                                        {:group-name "codescene-web-prod-application" :query delta-jobs-durations-query}
-                                        {:group-name "/aws/batch/job" :query git-clones-query}
-                                        (from-to (truncate-to-midnight (.minusDays (now)
-                                                                                   3)))))
 
-  ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
-  ;; (facet row, vconcat, layer, repeat row)
-  (def multiple-days-data-histograms
-    [:div
-     ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-     (for [{:keys [start-time end-time delays durations clones]} multiple-days-data]
+  (time
+   (do
+     (def multiple-days-data (get-all-data jobs-delay-query
+                                           delta-jobs-durations-query
+                                           git-clones-query
+                                           (from-to (truncate-to-midnight (.minusDays (now)
+                                                                                      3)))))
+
+     ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
+     ;; (facet row, vconcat, layer, repeat row)
+     (def multiple-days-data-histograms
        [:div
-        [:p [:b (format "%s -- %s" start-time end-time)]]
-        [:div {:style {:display "flex" :flex-direction "col"}}
-         [:vega-lite (hist "Delta jobs total durations in seconds" durations "duration_seconds")]
-         [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
-         ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
-         [:vega-lite (hist "Git clones durations" clones "duration_seconds" (color "repo_name"))]]
-        [:hr]])])
+        ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
+        (for [{:keys [start-time end-time delays durations clones]} multiple-days-data]
+          [:div
+           [:p [:b (format "%s -- %s" start-time end-time)]]
+           [:div {:style {:display "flex" :flex-direction "col"}}
+            [:vega-lite (hist "Delta jobs total durations in seconds" durations "duration_seconds")]
+            [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
+            ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
+            [:vega-lite (hist "Git clones durations" clones "duration_seconds" (color "repo_name"))]]
+           [:hr]])])
 
-  (oz/view! multiple-days-data-histograms)
-  
+     (oz/view! multiple-days-data-histograms)))
+
   ;;
   )
 
