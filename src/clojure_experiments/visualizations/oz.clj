@@ -56,15 +56,16 @@
   {:title (or title "")
    :data {:values values}
    :mark "bar"
-   :encoding {:x (cond-> {:field field
-                          :type "quantitative"
-                          :bin {:step step}}
-                   x-title (assoc-in [:axis :title] x-title))
-              :y (cond-> {:aggregate "count"
-                          :type "quantitative"
-                          :scale {:type scale}}
-                   y-title (assoc-in [:axis :title] y-title))
-              :color color}
+   :encoding (cond->
+              {:x (cond-> {:field field
+                           :type "quantitative"
+                           :bin {:step step}}
+                    x-title (assoc-in [:axis :title] x-title))
+               :y (cond-> {:aggregate "count"
+                           :type "quantitative"
+                           :scale {:type scale}}
+                    y-title (assoc-in [:axis :title] y-title))}
+               color (assoc :color color))
    :width width
    :height height})
 
