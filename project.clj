@@ -190,7 +190,7 @@
                  [org.clojure/core.memoize "1.0.236"]
 
                  ;; tech.ml.dataset requires higher smile-* libs versions than fastmath
-                 [techascent/tech.ml.dataset "2.0-beta-57"]
+                 [techascent/tech.ml.dataset "2.0"]
                  [com.github.haifengl/smile-core "2.4.0"]
                  [com.github.haifengl/smile-netlib "2.4.0"]
                  [com.github.haifengl/smile-io "2.4.0"]
