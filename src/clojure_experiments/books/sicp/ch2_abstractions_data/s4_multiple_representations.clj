@@ -30,7 +30,7 @@
    (+ (real-part z1) (real-part z2))
    (+ (imag-part z1) (imag-part z2))))
 
-(defn sucomplex [z1 z2]
+(defn sub-complex [z1 z2]
   (make-from-real-imag
    (- (real-part z1) (real-part z2))
    (- (imag-part z1) (imag-part z2))))
