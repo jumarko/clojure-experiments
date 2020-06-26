@@ -35,7 +35,7 @@
                  [com.rpl/specter "1.1.0"]
                  [quil "2.8.0"]
                  [inspector-jay "0.3"]
-                 [org.clojure/tools.reader "1.1.1"]
+                 [org.clojure/tools.reader "1.3.2"]
                  [net.cgrand/sjacket "0.1.1"]
                  [jonase/eastwood "0.3.8"]
                  [ns-graph "0.1.2"]
@@ -146,6 +146,12 @@
                  ;; simple profiling
                  [com.taoensso/tufte "2.0.1"]
 
+                 ;; timbre alpha version to fix dependency conflict?
+                 ;; https://github.com/ptaoussanis/timbre/issues/263
+                 [com.taoensso/timbre "4.11.0-alpha1"]
+                 ;; use also new encore version - perhaps to avoid conflicts?
+                 [com.taoensso/encore "2.122.0"]
+
 ;;; logging with clojure.tools.logging and log4j2
 ;;; http://brownsofa.org/blog/2015/06/14/clojure-in-production-logging/
 ;;; https://github.com/clojure/tools.logging
@@ -158,7 +164,8 @@
                  ;; also this slf4j bridge
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
                  ;; https://github.com/RickMoynihan/lein-tools-deps
-                 [lein-tools-deps "0.4.5"]
+                 ;; Do I need this stuff?
+                 ;; [lein-tools-deps "0.4.5"]
 
                  ;; https://github.com/zane/vega.repl
                  ;;  the simplest possible way to go from Clojure data and a Vega or Vega-Lite spec to a rendered visualization
@@ -200,8 +207,9 @@
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
-  :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
-  :lein-tools-deps/config {:config-files [:install :user :project]}
+  ;; Do I need this stuff?
+  ;; :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
+  ;; :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :java-source-paths ["src/java"]
   :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
