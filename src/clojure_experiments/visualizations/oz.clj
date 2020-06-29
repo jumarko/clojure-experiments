@@ -69,6 +69,19 @@
    :width width
    :height height})
 
+(defn boxplot
+  "https://vega.github.io/vega-lite/docs/boxplot.html."
+  ([values field]
+   (boxplot values field nil))
+  ([values field mark-options]
+   {:data {:values values}
+    :mark
+    (merge
+     {:type "boxplot"}
+     mark-options)
+    :encoding {:x {:field field
+                   :type "quantitative"}}}))
+
 ;;;; Examples from here: https://github.com/metasoarous/oz
 ;;;; 
 
