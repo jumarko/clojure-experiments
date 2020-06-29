@@ -32,6 +32,8 @@
   [expr]
   (.get (ns-resolve *ns* expr)))
 
+(declare reval)
+
 (defn eval-vector
   "Recursively evaluates vector's content."
   [expr]
@@ -60,16 +62,59 @@
   (if test
     (body-fn)))
 
-(my-when (> 1 0) #(println "Hello"))
-(my-when (< 1 0) #(println "Hello"))
+(comment
+  
+  (my-when (> 1 0) #(println "Hello"))
+  (my-when (< 1 0) #(println "Hello")))
 
 (defmacro my-when-2 [test & body]
   `(if ~test
      (do ~@body)))
 
-(my-when-2 (> 1 0) (println "Hello"))
-(my-when-2 (> 1 0) (println "Hello") (println "another thing") (println "finally"))
+(comment
+  (my-when-2 (> 1 0) (println "Hello"))
+  (my-when-2 (> 1 0) (println "Hello") (println "another thing") (println "finally")))
 
-(def counter (ref 0 ))
-(dosync
- (commute counter (fn [x] (println "Hello") (inc x))))
+(comment
+  (def counter (ref 0 ))
+  (dosync
+   (commute counter (fn [x] (println "Hello") (inc x)))))
+
+
+;;; Get the source code for any function passed in as a parameter
+
+(defn var-source
+  "This is almost an exact copy of `clojure.repl/source-fn` but
+  accepting var instead of symbol in current ns (*ns*)."
+  [v]
+  (when-let [filepath (:file (meta v))]
+    (when-let [strm (.getResourceAsStream (clojure.lang.RT/baseLoader) filepath)]
+      (with-open [rdr (java.io.LineNumberReader. (java.io.InputStreamReader. strm))]
+        (dotimes [_ (dec (:line (meta v)))] (.readLine rdr))
+        (let [text (StringBuilder.)
+              pbr (proxy [java.io.PushbackReader] [rdr]
+                    (read [] (let [i (proxy-super read)]
+                               (.append text (char i))
+                               i)))
+              read-opts (if (.endsWith ^String filepath "cljc") {:read-cond :allow} {})]
+          (if (= :unknown *read-eval*)
+            (throw (IllegalStateException. "Unable to read source while *read-eval* is :unknown."))
+            (read read-opts (java.io.PushbackReader. pbr)))
+          (str text))))))
+
+(defn fn-source
+  "Returns source of given function (object)."
+  [f]
+  (let [[ns-name sym-name]
+        (-> (str f)
+            (clojure.repl/demunge)
+            (clojure.string/replace #"@.*$" "")
+            (clojure.string/split #"/"))
+        ns (the-ns (symbol ns-name))
+        fn-var (ns-resolve ns (symbol sym-name))]
+    (var-source fn-var)))
+
+(comment
+  (fn-source tap>)
+;; => "(defn tap>\n  \"sends x to any taps. Will not block. Returns true if there was room in the queue,\n  false if not (dropped).\"\n  {:added \"1.10\"}\n  [x]\n  (force tap-loop)\n  (.offer tapq (if (nil? x) ::tap-nil x)))"
+  )
