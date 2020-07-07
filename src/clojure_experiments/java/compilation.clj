@@ -9,5 +9,10 @@
 (comment
 
   ;; except the first run, this usually takes ~300 ms
+  (require '[clj-async-profiler.core :as prof])
+  (prof/start)
+  ;; YOUR CODE HERE
   (time (compile-java "src/java/net/curiousprogrammer/javaexperiments/JavaCompiler.java"))
+  (prof/stop {:width 2400})
+
   )
