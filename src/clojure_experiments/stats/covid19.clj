@@ -116,21 +116,6 @@
 
 ;;; Plotting: https://github.com/MitchTalmadge/ASCII-Data
 
-;; simple line graph is overwhelming - harder to see trends
-(comment
-
-  (println (.plot (ASCIIGraph/fromSeries (double-array czech-deaths))))
-
-  ;; this is way to big...
-  (println (.plot (ASCIIGraph/fromSeries (double-array czech-confirmed))))
-
-  (println (.plot (ASCIIGraph/fromSeries (double-array czech-recovered))))
-
-  ;;
-  )
-
-  
-
 ;; the line is pretty steep so let's use logarithmic scale to examine trends
 ;; - no need to use anything fancy like Neanderthal at this point:
 (defn log ^double [^double x]
@@ -145,6 +130,20 @@
   (println (.plot (ASCIIGraph/fromSeries (double-array (map log data))))))
 
 
+;; simple line graph is overwhelming - harder to see trends
+(comment
+
+  (print-plot czech-deaths)
+  ;; this is way to big...
+  (print-plot czech-confirmed)
+  (print-plot czech-recovered)
+
+  (print-plot slovak-deaths)
+  ;;
+  )
+
+
+;; log plots
 (comment
   (print-log-plot czech-deaths)
   (print-log-plot czech-confirmed)
