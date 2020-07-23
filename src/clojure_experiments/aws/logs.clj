@@ -11,7 +11,8 @@
             [cognitect.aws.credentials :as credentials]
             [clojure-experiments.visualizations.oz :as my-oz]
             [oz.core :as oz]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s])
+  (:import (org.apache.commons.lang3 StringUtils)))
 
 (def logs (aws/client {:api :logs
                        :credentials-provider (credentials/profile-credentials-provider "empear-dev")}))
@@ -161,28 +162,33 @@
 ;;      #object[java.time.ZonedDateTime 0xc825da3 "2020-06-03T08:00Z"]])
 
 (defn get-all-data
-  [delay-query duration-query git-clone-query from-to-intervals]
+  [delay-query delta-duration-query other-durations-query git-clone-query from-to-intervals]
   (let [started-queries (map-throttled
-                         (dec (quot max-concurrent-queries 3)) ;; three different queries per day and decrement to have some space
+                         (quot max-concurrent-queries 4)
                          (fn [[start-time end-time]]
                            (let [delay-query-id (start-query delay-query {:start-time start-time
                                                                           :end-time end-time})
-                                 duration-query-id (start-query duration-query {:start-time start-time
-                                                                                :end-time end-time})
+                                 delta-duration-query-id (start-query delta-duration-query {:start-time start-time
+                                                                                      :end-time end-time})
+                                 other-durations-query-id (start-query other-durations-query
+                                                                       {:start-time start-time
+                                                                        :end-time end-time})
                                  clone-query-id (start-query git-clone-query {:start-time start-time
                                                                               :end-time end-time})]
                              {:start-time start-time
                               :end-time end-time
                               :delay-id delay-query-id
-                              :duration-id duration-query-id
+                              :delta-duration-id delta-duration-query-id
+                              :other-durations-id other-durations-query-id
                               :clone-id clone-query-id}))
                          from-to-intervals)]
     (mapv
-     (fn [{:keys [delay-id duration-id clone-id start-time end-time]}]
+     (fn [{:keys [delay-id delta-duration-id other-durations-id clone-id start-time end-time]}]
        {:start-time start-time
         :end-time end-time
         :delays (poll-results delay-id true)
-        :durations (poll-results duration-id true)
+        :delta-durations (poll-results delta-duration-id true)
+        :other-durations (poll-results other-durations-id true)
         :clones (poll-results clone-id)})
      started-queries)))
 
@@ -212,6 +218,20 @@
   | sort duration_seconds desc
   | limit 10000 "})
 
+(def other-jobs-durations-query
+  {:group-name "codescene-web-prod-application"
+   :query "fields @timestamp, @message
+| filter @message like /batch-job-id=/
+| parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=(?<job_status>\\S+).*batch-job-id=(?<batch_job_id>\\S+).*$/
+| filter job_type != ':run-delta-analysis'
+| stats latest(job_status) as status,
+        earliest(@timestamp) as submitted_at, 
+        latest(@timestamp) as finished_at, 
+        (finished_at - submitted_at)/1000 as duration_seconds
+        by job_id, job_type, batch_job_id
+| sort duration_seconds desc"})
+
+
 (def git-clones-query
   {:group-name "/aws/batch/job"
    :query "fields @timestamp, @message
@@ -224,8 +244,7 @@
   | sort duration_seconds desc
   | limit 10000"})
 
-;; TODO: could be useful to use Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
-;; 
+;; could be useful to use Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 (defn hist
   ([data field-name]
    (hist nil data field-name))
@@ -273,33 +292,111 @@
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
 
 
-  (time
-   (do
-     (def multiple-days-data (get-all-data jobs-delay-query
-                                           delta-jobs-durations-query
-                                           git-clones-query
-                                           (from-to (truncate-to-midnight (.minusDays (now)
-                                                                                      3)))))
+  (do
+    (time (def multiple-days-data (get-all-data jobs-delay-query
+                                                delta-jobs-durations-query
+                                                other-jobs-durations-query
+                                                git-clones-query
+                                                (from-to (truncate-to-midnight (.minusDays (now)
+                                                                                           3))))))
 
-     ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
-     ;; (facet row, vconcat, layer, repeat row)
-     (def multiple-days-data-histograms
-       [:div
-        ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-        (for [{:keys [start-time end-time delays durations clones]} multiple-days-data]
-          [:div
-           [:p [:b (format "%s -- %s" start-time end-time)]]
-           [:div {:style {:display "flex" :flex-direction "col"}}
-            [:vega-lite (hist "Delta jobs total durations in seconds" durations "duration_seconds")]
-            [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
-            ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
-            [:vega-lite (hist "Git clones durations" clones "duration_seconds" (color "repo_name"))]]
-           [:hr]])])
+    ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
+    ;; (facet row, vconcat, layer, repeat row)
+    (do 
+      (def multiple-days-data-histograms
+        [:div
+         ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
+         (for [{:keys [start-time end-time delays delta-durations other-durations clones]} multiple-days-data]
+           [:div
+            [:p [:b (format "%s -- %s" start-time end-time)]]
+            [:div {:style {:display "flex" :flex-direction "col"}}
+             [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
+             [:vega-lite (hist "Other jobs total durations in seconds" other-durations "duration_seconds")]
+             [:vega-lite (hist "Delta jobs total durations in seconds" delta-durations "duration_seconds")]
+             ;; boxplot is confusing => don't show it
+             #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
+                                          {:extent 10.0})]
+             ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
+             [:vega-lite (hist "Git clones durations" clones "duration_seconds" #_(color "repo_name"))]]
+            [:hr]])])
 
-     (oz/view! multiple-days-data-histograms)))
+      (oz/view! multiple-days-data-histograms)))
+
+  ;; examine long durations
+  (defn- to-date [epoch-millis-str]
+    (java.util.Date. (Long/parseLong epoch-millis-str)))
+
+  (->> multiple-days-data
+       (mapcat :delta_durations)
+       (filter (fn [{:strs [duration_seconds] :as dd}]
+                 (< 1500 (Double/parseDouble duration_seconds))))
+       (mapv (fn [job]
+               (-> job
+                   (update "submitted_at" to-date)
+                   (update "finished_at" to-date))
+               )))
+;; => [{"job_id" "38689",
+;;      "job_type" ":run-delta-analysis",
+;;      "batch_job_id" "e471ba88-94e0-4b82-a7ac-0e896f360307",
+;;      "status" ":success",
+;;      "submitted_at" #inst "2020-06-25T15:09:10.000-00:00",
+;;      "finished_at" #inst "2020-06-25T15:36:56.000-00:00",
+;;      "duration_seconds" "1666"}]
+
+
+  (->> multiple-days-data
+       (mapcat :clones)
+       (filter (fn [{:strs [duration_seconds] :as dd}]
+                 (< 300 (Double/parseDouble duration_seconds))))
+       (mapv (fn [job]
+               (-> job
+                   (update "clone_start" to-date)
+                   (update "clone_finished" to-date))
+               )))
+
+
 
   ;;
   )
 
+(comment
 
-  
+  (def commits-query
+    {:group-name "/aws/batch/job"
+     :query "fields @timestamp, @message
+  | filter @message like /:commits \\[.+:repo \"/
+  | parse /:commits (?<commits>\\[[^\\]]+\\]).* :repo \"(?<repository>[^\"]+)/
+  | display @timestamp, repository, commits
+  | limit 10000"})
+  (def commits-query-id (start-query
+                         commits-query
+                         {:start-time (date-time 2020 7 1) :end-time (date-time 2020 7 14)}))
+  (def commits-results (get-query-results commits-query-id))
+
+  (def sorted-commits-results
+    (->> commits-results
+         (map (fn [row] (-> (let [with-commits (-> row
+                                                   (update  "commits"
+                                                            ;; one weird occurence in log data didn't have "commits" and "repository" key (not sure why)
+                                                            (fnil read-string "[]"))
+                                                   (dissoc "@ptr"))]
+                              (into (sorted-map) (assoc with-commits "commits-count" (count (get with-commits "commits"))))))))
+         (sort-by (fn [row] (- (count (get row "commits")))))))
+
+  (defn- repo-name [commits-data]
+    (StringUtils/substringAfterLast (get commits-data "repository")
+                                    "/"))
+
+  (mapv (juxt repo-name #(% "commits-count"))
+        sorted-commits-results)
+
+
+  (def commits-by-repository (group-by repo-name
+                                       sorted-commits-results))
+
+  (oz/view! (hist "Commits per delta analysis" sorted-commits-results "commits-count")))
+
+
+
+
+
