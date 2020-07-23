@@ -412,7 +412,7 @@
                             {:expr expr
                              :var var})))))
 ;; THIS THE ONLY CHANGE NEEDED! we need to update dispatch table propertly
-(reset! op-table {})
+#_(reset! op-table {})
 (put-op '+ :deriv deriv-sum)
 (put-op '* :deriv deriv-product)
 (put-op '** :deriv deriv-exponentation)

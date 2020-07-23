@@ -86,8 +86,6 @@
     (put-op 'div '(complex complex)
             (fn [z1 z2] (tag (s4/div-complex z1 z2))))
     (put-op 'make-from-real-imag 'complex
-            (fn [z1 z2] (tag (s4/make-from-real-imag z1 z2))))
-    (put-op 'make-from-mag-ang 'complex
             (fn [z1 z2] (tag (s4/make-from-mag-ang z1 z2))))))
 
 (install-complex-numbers)
@@ -97,7 +95,8 @@
   ((get-op 'make-from-real-imag 'complex) x y))
 (defn make-complex-from-mag-ang [r a]
   ((get-op 'make-complex-from-mag-ang 'complex) r a))
-(add
+;; TODO: this throws NPE for some reason
+#_(add
  (add (make-complex-from-real-imag 1 2) (make-complex-from-real-imag 2 3))
  (add (make-complex-from-real-imag 4 5) (make-complex-from-real-imag 5 6)))
 ;; => [complex [:rectangular [12 16]]]
@@ -138,3 +137,38 @@
 ;; and try again
 (s4/magnitude (make-complex-from-real-imag 1 2))
 ;; => 2.23606797749979
+
+
+;;; Ex. 2.78
+;;; Taking advantage of the language's type system (Scheme / Clojure):
+;;; - modify definition of `type-tag`, `contents` and `attach-tag`
+;;;   to represent numbers as simple Clojure numbers rather than as pairs whoch first element is 
+;;; maybe later, not that interesting right now
+
+
+
+;;; 2.5.2 Combining Data of Different Types (p. 193)
+
+;; here we modify `apply-generic` to deal with "coercions"
+
+(def coercion-table (atom {}))
+(defn get-coercion [t]
+  (get @coercion-table t))
+(defn put-coercion [t f]
+  (swap! coercion-table assoc t f))
+
+(defn apply-generic-coerce [op & args]
+  (let [[t1 t2 :as type-tags] (map s4/type-tag args)
+        throw-error (fn no-method-error [] (ex-info "No method for types" {:op op :types type-tags}))
+        proc (get-op op type-tags)]
+    (if proc
+      (apply proc (map s4/contents args))
+      (if (= 2 (count args))
+        (let [[a1 a2] args
+              t1->t2 (get-coercion t1 t2)
+              t2->t1 (get-coercion t2 t1)]
+          (cond
+            t1->t2 (apply-generic-coerce op (t1->t2 a1) a2)
+            t2->t1 (apply-generic-coerce op (t2->t1 a1) a2)
+            :else (throw-error)))
+        (throw-error)))))
