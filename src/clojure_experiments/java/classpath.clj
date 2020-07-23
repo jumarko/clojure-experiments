@@ -1,5 +1,6 @@
 (ns clojure-experiments.java.classpath
-  (:import (nonapi.io.github.classgraph.classpath ClasspathFinder)
+  (:import (io.github.classgraph ClassGraph)
+           (nonapi.io.github.classgraph.classpath ClasspathFinder)
            (nonapi.io.github.classgraph.scanspec ScanSpec)
            (nonapi.io.github.classgraph.utils LogNode)))
 
@@ -8,11 +9,15 @@
 (comment
 
   (def cp-finder (ClasspathFinder. (ScanSpec.) nil))
+
   (def cp-entries
     (->> cp-finder
          (.getClasspathOrder)
          (.getClasspathEntryUniqueResolvedPaths)
          (into #{})))
+
+  (ClassGraph.)
+
 
   ;; 
   )
