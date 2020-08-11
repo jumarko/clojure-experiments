@@ -191,7 +191,7 @@
         :delays (poll-results delay-id true)
         :delta-durations (poll-results delta-duration-id true)
         :other-durations (poll-results other-durations-id true)
-        :clones-durations (poll-results clone-id)})
+        :clone-durations (poll-results clone-id)})
      started-queries)))
 
 (def jobs-delay-query
@@ -287,7 +287,8 @@
   "Similar to `describe-durations` but produces statistics for each day separately
   as a vector as defined by `stat/describe-as-vector`."
   [many-days-data data-key]
-  (let [with-stats (mapv (fn [day-data]
+  (let [stats-key (keyword (str (name data-key) "-stats")) ; e.g. :delta-durations-stats
+        with-stats (mapv (fn [day-data]
                            (let [with-durations-as-doubles
                                  (-> day-data
                                      (update data-key
@@ -295,11 +296,11 @@
                                                (mapv (fn [{:strs [duration_seconds]}] (Double/parseDouble duration_seconds)) durations)))
                                      (update :start-time str))]
                              (assoc with-durations-as-doubles
-                                    :delta-durations-stats
+                                    stats-key
                                     (stat/describe-as-vector stat/describe-as-ints
                                                              (get with-durations-as-doubles data-key)))))
                          many-days-data)]
-    (mapv #(select-keys % [:start-time :delta-durations-stats])
+    (mapv #(select-keys % [:start-time stats-key])
           with-stats)))
 
 
@@ -344,7 +345,7 @@
       (def multiple-days-data-histograms
         [:div
          ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-         (for [{:keys [start-time end-time delays delta-durations other-durations clones-durations]} multiple-days-data]
+         (for [{:keys [start-time end-time delays delta-durations other-durations clone-durations]} multiple-days-data]
            [:div
             [:p [:b (format "%s -- %s" start-time end-time)]]
             [:div {:style {:display "flex" :flex-direction "col"}}
@@ -355,25 +356,14 @@
              #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
                                           {:extent 10.0})]
              ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
-             [:vega-lite (hist "Git clones durations" clones-durations "duration_seconds" #_(color "repo_name"))]]
+             [:vega-lite (hist "Git clones durations" clone-durations "duration_seconds" #_(color "repo_name"))]]
             [:hr]])])
 
       (oz/view! multiple-days-data-histograms)))
 
-  ;; descriptive statistics for all delta durations
-  (describe-durations multiple-days-data :delta-durations)
-;; => {:min 0.0,
-;;     :perc95 838.0,
-;;     :mean 252.65207193119656,
-;;     :standard-deviation 276.87045855225443,
-;;     :median 122.0,
-;;     :max 2572.0,
-;;     :perc25 103.0,
-;;     :perc75 266.25,
-;;     :sum 646284.0}  
+  ;;; descriptive statistics for all delta durations
+  ;;; TODO: it would be useful to remove weekends
 
-
-  ;; descriptive statistics for delta durations per day
   (describe-durations-per-day multiple-days-data :delta-durations)
 ;; => [{:start-time "2020-07-28T00:00Z", :delta-durations-stats [78 102 121 219 639 958 209 181 44061]}
 ;;     {:start-time "2020-07-29T00:00Z", :delta-durations-stats [77 103 120 194 697 1059 213 202 43187]}
@@ -389,7 +379,22 @@
 ;;     {:start-time "2020-08-08T00:00Z", :delta-durations-stats [103 111 122 131 576 576 164 138 3134]}
 ;;     {:start-time "2020-08-09T00:00Z", :delta-durations-stats [100 103 118 469 549 549 244 186 4151]}
 ;;     {:start-time "2020-08-10T00:00Z", :delta-durations-stats [0 102 119 334 975 1564 266 291 69631]}
-;;     {:start-time "2020-08-11T00:00Z", :delta-durations-stats [83 97 123 136 476 476 144 93 2451]}]
+
+  (describe-durations-per-day multiple-days-data :clone-durations)
+;; => [{:start-time "2020-07-28T00:00Z", :clone-durations-stats [1 3 13 24 381 790 52 133 18307]}
+;;     {:start-time "2020-07-29T00:00Z", :clone-durations-stats [1 4 15 24 420 974 55 140 18902]}
+;;     {:start-time "2020-07-30T00:00Z", :clone-durations-stats [1 3 16 24 517 1153 72 179 29090]}
+;;     {:start-time "2020-07-31T00:00Z", :clone-durations-stats [1 3 14 24 415 776 61 139 20225]}
+;;     {:start-time "2020-08-01T00:00Z", :clone-durations-stats [1 1 2 9 40 422 18 63 3212]}
+;;     {:start-time "2020-08-02T00:00Z", :clone-durations-stats [0 2 3 7 173 449 24 79 4285]}
+;;     {:start-time "2020-08-03T00:00Z", :clone-durations-stats [0 4 12 23 69 1557 35 119 13409]}
+;;     {:start-time "2020-08-04T00:00Z", :clone-durations-stats [1 4 18 25 508 1377 92 205 33646]}
+;;     {:start-time "2020-08-05T00:00Z", :clone-durations-stats [1 4 18 26 611 1165 95 222 34922]}
+;;     {:start-time "2020-08-06T00:00Z", :clone-durations-stats [1 5 18 24 493 1625 73 193 34197]}
+;;     {:start-time "2020-08-07T00:00Z", :clone-durations-stats [1 3 18 28 733 1784 100 253 38210]}
+;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [1 2 3 10 29 442 15 52 2262]}
+;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [0 2 2 6 75 355 19 65 3573]}
+;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 6 19 395 557 1158 157 237 74718]}
 
   ;; examine long durations
   (->> multiple-days-data
