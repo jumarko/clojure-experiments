@@ -199,8 +199,8 @@
    :query "fields @timestamp, @message
   | filter @message like /batch-job-id=/
   | parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=:?(?<job_status>(submitted|running)).*batch-job-id=(?<batch_job_id>\\S+).*$/
-  | stats earliest(@timestamp) as submitted_at, 
-        latest(@timestamp) as started_at, 
+  | stats earliest(@timestamp) as submitted_at,
+        latest(@timestamp) as started_at,
         (started_at - submitted_at)/1000 as delay_seconds
         by job_id, job_type, batch_job_id
   | sort delay_seconds desc
@@ -213,8 +213,8 @@
   | parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=(?<job_status>\\S+).*batch-job-id=(?<batch_job_id>\\S+).*$/
   | filter job_type = ':run-delta-analysis'
   | stats latest(job_status) as status,
-        earliest(@timestamp) as submitted_at, 
-        latest(@timestamp) as finished_at, 
+        earliest(@timestamp) as submitted_at,
+        latest(@timestamp) as finished_at,
         (finished_at - submitted_at)/1000 as duration_seconds
         by job_id, job_type, batch_job_id
   | sort duration_seconds desc
@@ -227,8 +227,8 @@
 | parse /^.*job-id=(?<job_id>\\d+) job-type=(?<job_type>\\S+) job-status=(?<job_status>\\S+).*batch-job-id=(?<batch_job_id>\\S+).*$/
 | filter job_type != ':run-delta-analysis'
 | stats latest(job_status) as status,
-        earliest(@timestamp) as submitted_at, 
-        latest(@timestamp) as finished_at, 
+        earliest(@timestamp) as submitted_at,
+        latest(@timestamp) as finished_at,
         (finished_at - submitted_at)/1000 as duration_seconds
         by job_id, job_type, batch_job_id
 | sort duration_seconds desc"})
@@ -238,11 +238,11 @@
   {:group-name "/aws/batch/job"
    :query "fields @timestamp, @message
   | filter (@message like /(Cloning|Successfully cloned)/ and @logStream like /codescene-prod/)
-  | parse /^.*(Cloning|Successfully cloned) (?<repo_url>\\S+) to \\/var\\/codescene\\/repos\\/(?<job_id>\\d+)\\/[^\\/]+\\/repos\\/(?<repo_name>\\S+).*$/
-  | stats earliest(@timestamp) as clone_start, 
-        latest(@timestamp) as clone_finished, 
+  | parse /^.*\\(:(?<job_type>[^ ]+) #(?<job_id>\\d+)\\) - (Cloning|Successfully cloned) (?<repo_url>\\S+) to (?<dir>\\S+)$/
+  | stats earliest(@timestamp) as clone_start,
+        latest(@timestamp) as clone_finished,
         (clone_finished - clone_start)/1000 as duration_seconds
-        by job_id, repo_name
+        by job_type, job_id, repo_name
   | sort duration_seconds desc
   | limit 10000"})
 
@@ -276,32 +276,44 @@
   The `data-key` is used to select appropriate record within a single day data;
   it should be :delta-durations, :clone-durations, or :other-durations.
   The value associated with the data-key is supposed to contain the 'duration_seconds' key."
-  [many-days-data data-key]
-  (let [durations-seconds (->> many-days-data
-                               (mapcat data-key)
-                               (mapv (fn [{:strs [duration_seconds]}]
-                                       (Double/parseDouble duration_seconds))))]
-    (stat/describe durations-seconds)))
+  ([many-days-data data-key]
+   (describe-durations many-days-data data-key "duration_seconds"))
+  ([many-days-data data-key duration-key]
+   (let [durations-seconds (->> many-days-data
+                                (mapcat data-key)
+                                (mapv (fn [job-data]
+                                        (Double/parseDouble (get job-data duration-key)))))]
+     (stat/describe durations-seconds))))
 
 (defn describe-durations-per-day
   "Similar to `describe-durations` but produces statistics for each day separately
   as a vector as defined by `stat/describe-as-vector`."
-  [many-days-data data-key]
-  (let [stats-key (keyword (str (name data-key) "-stats")) ; e.g. :delta-durations-stats
-        with-stats (mapv (fn [day-data]
-                           (let [with-durations-as-doubles
-                                 (-> day-data
-                                     (update data-key
-                                             (fn [durations]
-                                               (mapv (fn [{:strs [duration_seconds]}] (Double/parseDouble duration_seconds)) durations)))
-                                     (update :start-time str))]
-                             (assoc with-durations-as-doubles
-                                    stats-key
-                                    (stat/describe-as-vector stat/describe-as-ints
-                                                             (get with-durations-as-doubles data-key)))))
-                         many-days-data)]
-    (mapv #(select-keys % [:start-time stats-key])
-          with-stats)))
+  ([many-days-data data-key]
+   (describe-durations-per-day many-days-data data-key "duration_seconds"))
+  ([many-days-data data-key duration-key]
+   (let [stats-key (keyword (str (name data-key) "-stats")) ; e.g. :delta-durations-stats
+         with-stats (mapv (fn [day-data]
+                            (let [with-durations-as-doubles
+                                  (-> day-data
+                                      (update data-key
+                                              (fn [durations]
+                                                (mapv (fn [job-data] (Double/parseDouble (get job-data duration-key)))
+                                                      durations)))
+                                      (update :start-time str))]
+                              (assoc with-durations-as-doubles
+                                     stats-key
+                                     (stat/describe-as-vector stat/describe-as-ints
+                                                              (get with-durations-as-doubles data-key)))))
+                          many-days-data)]
+     (mapv #(select-keys % [:start-time stats-key])
+           with-stats))))
+
+(defn filter-job-type [job-type many-days-data]
+  (mapv (fn [day-data]
+          (update day-data :clone-durations
+                  (partial filterv (fn [{:strs [job_type] :as _daily-clones}]
+                                     (= job-type job_type)))))
+        many-days-data))
 
 
 (comment
@@ -364,6 +376,17 @@
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
 
+  ;; first check batch job delays
+  (describe-durations-per-day multiple-days-data :delays "delay_seconds")
+;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606]}
+;;     {:start-time "2020-08-09T00:00Z", :delays-stats [6 12 27 36 318 1586 72 188 6963]}
+;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611]}
+;;     {:start-time "2020-08-11T00:00Z", :delays-stats [4 10 14 35 186 487 45 71 9475]}]
+
+  ;; then :delta-durations
+  (describe-durations multiple-days-data :delta-durations)
+;; => {:min 0.0, :perc95 837.6999999999998, :mean 252.4925839188132, :standard-deviation 276.7040042324224, :median 121.5, :max 2572.0, :perc25 103.0, :perc75 266.25, :sum 646886.0}
+
   (describe-durations-per-day multiple-days-data :delta-durations)
 ;; => [{:start-time "2020-07-28T00:00Z", :delta-durations-stats [78 102 121 219 639 958 209 181 44061]}
 ;;     {:start-time "2020-07-29T00:00Z", :delta-durations-stats [77 103 120 194 697 1059 213 202 43187]}
@@ -380,6 +403,11 @@
 ;;     {:start-time "2020-08-09T00:00Z", :delta-durations-stats [100 103 118 469 549 549 244 186 4151]}
 ;;     {:start-time "2020-08-10T00:00Z", :delta-durations-stats [0 102 119 334 975 1564 266 291 69631]}
 
+  ;; git clone durations are more interesting - this if for ALL analyses
+
+  (describe-durations multiple-days-data :clone-durations)
+;; => {:min 0.0, :perc95 492.03024999999997, :mean 79.47033029801325, :standard-deviation 189.37814098852846, :median 19.066000000000003, :max 1784.198, :perc25 6.24275, :perc75 27.712, :sum 288000.47699999984}
+
   (describe-durations-per-day multiple-days-data :clone-durations)
 ;; => [{:start-time "2020-07-28T00:00Z", :clone-durations-stats [1 3 13 24 381 790 52 133 18307]}
 ;;     {:start-time "2020-07-29T00:00Z", :clone-durations-stats [1 4 15 24 420 974 55 140 18902]}
@@ -389,12 +417,53 @@
 ;;     {:start-time "2020-08-02T00:00Z", :clone-durations-stats [0 2 3 7 173 449 24 79 4285]}
 ;;     {:start-time "2020-08-03T00:00Z", :clone-durations-stats [0 4 12 23 69 1557 35 119 13409]}
 ;;     {:start-time "2020-08-04T00:00Z", :clone-durations-stats [1 4 18 25 508 1377 92 205 33646]}
-;;     {:start-time "2020-08-05T00:00Z", :clone-durations-stats [1 4 18 26 611 1165 95 222 34922]}
+
 ;;     {:start-time "2020-08-06T00:00Z", :clone-durations-stats [1 5 18 24 493 1625 73 193 34197]}
 ;;     {:start-time "2020-08-07T00:00Z", :clone-durations-stats [1 3 18 28 733 1784 100 253 38210]}
 ;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [1 2 3 10 29 442 15 52 2262]}
 ;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [0 2 2 6 75 355 19 65 3573]}
 ;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 6 19 395 557 1158 157 237 74718]}
+
+  ;; git clone durations - ONLY delta analyses
+  ;; - WARNING: git clone bottleneck is moved to "git fetch" when using the "optimized git clone"
+  (describe-durations (filter-job-type "run-delta-analysis" multiple-days-data)
+                      :clone-durations)
+  ;; => {:min 0.0, :perc95 554.597, :mean 101.97272610222394, :standard-deviation 212.08479813014006, :median 21.111, :max 1784.198, :perc25 14.757, :perc75 30.792, :sum 261356.0969999999}
+
+  (-> (filter-job-type "run-delta-analysis" multiple-days-data)
+      (describe-durations-per-day :clone-durations))
+;; => [{:start-time "2020-07-28T00:00Z", :clone-durations-stats [2 13 20 29 540 741 77 158 16303]}
+;;     {:start-time "2020-07-29T00:00Z", :clone-durations-stats [2 14 20 27 517 974 84 172 17010]}
+;;     {:start-time "2020-07-30T00:00Z", :clone-durations-stats [1 14 21 28 569 1153 107 215 27613]}
+;;     {:start-time "2020-07-31T00:00Z", :clone-durations-stats [2 13 20 32 470 776 89 163 18963]}
+;;     {:start-time "2020-08-01T00:00Z", :clone-durations-stats [2 11 15 26 402 422 71 132 1917]}
+;;     {:start-time "2020-08-02T00:00Z", :clone-durations-stats [19 20 23 395 449 449 147 184 2662]}
+;;     {:start-time "2020-08-03T00:00Z", :clone-durations-stats [2 12 20 26 368 733 45 112 10670]}
+;;     {:start-time "2020-08-04T00:00Z", :clone-durations-stats [2 18 22 39 583 1377 129 232 30521]}
+;;     {:start-time "2020-08-05T00:00Z", :clone-durations-stats [3 18 22 35 739 1165 130 248 31998]}
+;;     {:start-time "2020-08-06T00:00Z", :clone-durations-stats [2 13 20 27 573 1625 95 218 32977]}
+;;     {:start-time "2020-08-07T00:00Z", :clone-durations-stats [1 18 22 48 970 1784 144 297 36857]}
+;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [18 20 22 29 442 442 60 113 1158]}
+;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [0 19 22 333 355 355 126 156 2272]}
+;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 14 20 33 612 1158 114 222 29819]}
+
+  ;; compare to full analyses
+  (-> (filter-job-type "run-analysis" multiple-days-data)
+      (describe-durations-per-day :clone-durations))
+;; => [{:start-time "2020-07-28T00:00Z", :clone-durations-stats [1 2 4 15 73 804 25 92 1957]}
+;;     {:start-time "2020-07-29T00:00Z", :clone-durations-stats [1 2 6 25 65 457 22 56 1723]}
+;;     {:start-time "2020-07-30T00:00Z", :clone-durations-stats [1 2 3 10 78 346 17 45 1333]}
+;;     {:start-time "2020-07-31T00:00Z", :clone-durations-stats [1 2 3 11 71 530 19 69 1266]}
+;;     {:start-time "2020-08-01T00:00Z", :clone-durations-stats [1 2 3 12 68 386 18 50 1280]}
+;;     {:start-time "2020-08-02T00:00Z", :clone-durations-stats [0 2 4 11 163 380 22 58 1622]}
+;;     {:start-time "2020-08-03T00:00Z", :clone-durations-stats [0 2 5 17 75 1568 35 179 2721]}
+;;     {:start-time "2020-08-04T00:00Z", :clone-durations-stats [1 2 5 14 157 1036 41 154 2735]}
+;;     {:start-time "2020-08-05T00:00Z", :clone-durations-stats [1 2 4 13 184 1105 45 177 2926]}
+;;     {:start-time "2020-08-06T00:00Z", :clone-durations-stats [1 2 3 8 70 472 18 62 1224]}
+;;     {:start-time "2020-08-07T00:00Z", :clone-durations-stats [1 1 3 8 72 603 20 77 1345]}
+;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [1 2 3 11 64 321 15 43 1080]}
+;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [1 2 3 11 98 329 18 46 1294]}
+;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 2 4 14 127 920 37 139 2583]}
 
   ;; examine long durations
   (->> multiple-days-data
