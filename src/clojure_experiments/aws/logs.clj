@@ -191,7 +191,7 @@
         :delays (poll-results delay-id true)
         :delta-durations (poll-results delta-duration-id true)
         :other-durations (poll-results other-durations-id true)
-        :clones (poll-results clone-id)})
+        :clones-durations (poll-results clone-id)})
      started-queries)))
 
 (def jobs-delay-query
@@ -270,6 +270,39 @@
 (defn- to-date [epoch-millis-str]
   (java.util.Date. (Long/parseLong epoch-millis-str)))
 
+;; descriptive statistics for all delta durations
+(defn- describe-durations
+  "Computes descriptive statistics for all the durations in given data (assumed to be partitioned by day).
+  The `data-key` is used to select appropriate record within a single day data;
+  it should be :delta-durations, :clone-durations, or :other-durations.
+  The value associated with the data-key is supposed to contain the 'duration_seconds' key."
+  [many-days-data data-key]
+  (let [durations-seconds (->> many-days-data
+                               (mapcat data-key)
+                               (mapv (fn [{:strs [duration_seconds]}]
+                                       (Double/parseDouble duration_seconds))))]
+    (stat/describe durations-seconds)))
+
+(defn describe-durations-per-day
+  "Similar to `describe-durations` but produces statistics for each day separately
+  as a vector as defined by `stat/describe-as-vector`."
+  [many-days-data data-key]
+  (let [with-stats (mapv (fn [day-data]
+                           (let [with-durations-as-doubles
+                                 (-> day-data
+                                     (update data-key
+                                             (fn [durations]
+                                               (mapv (fn [{:strs [duration_seconds]}] (Double/parseDouble duration_seconds)) durations)))
+                                     (update :start-time str))]
+                             (assoc with-durations-as-doubles
+                                    :delta-durations-stats
+                                    (stat/describe-as-vector stat/describe-as-ints
+                                                             (get with-durations-as-doubles data-key)))))
+                         many-days-data)]
+    (mapv #(select-keys % [:start-time :delta-durations-stats])
+          with-stats)))
+
+
 (comment
 
   ;; delays
@@ -311,7 +344,7 @@
       (def multiple-days-data-histograms
         [:div
          ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-         (for [{:keys [start-time end-time delays delta-durations other-durations clones]} multiple-days-data]
+         (for [{:keys [start-time end-time delays delta-durations other-durations clones-durations]} multiple-days-data]
            [:div
             [:p [:b (format "%s -- %s" start-time end-time)]]
             [:div {:style {:display "flex" :flex-direction "col"}}
@@ -322,45 +355,31 @@
              #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
                                           {:extent 10.0})]
              ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
-             [:vega-lite (hist "Git clones durations" clones "duration_seconds" #_(color "repo_name"))]]
+             [:vega-lite (hist "Git clones durations" clones-durations "duration_seconds" #_(color "repo_name"))]]
             [:hr]])])
 
       (oz/view! multiple-days-data-histograms)))
 
   ;; descriptive statistics for all delta durations
-  (let [durations-seconds (->> multiple-days-data
-                               (mapcat :delta-durations)
-                               (mapv (fn [{:strs [duration_seconds]}]
-                                       (Double/parseDouble duration_seconds))))]
-    (stat/describe durations-seconds))
+  (describe-durations multiple-days-data :delta-durations)
 ;; => {:min 0.0,
-;;     :perc99 1372.1500000000024,
-;;     :perc95 860.75,
-;;     :mean 252.76114649681574,
-;;     :standard-deviation 274.44589011424137,
-;;     :median 119.0,
-;;     :max 1564.0,
+;;     :perc95 838.0,
+;;     :mean 252.65207193119656,
+;;     :standard-deviation 276.87045855225443,
+;;     :median 122.0,
+;;     :max 2572.0,
 ;;     :perc25 103.0,
-;;     :perc75 287.5,
-;;     :sum 79367.0}
+;;     :perc75 266.25,
+;;     :sum 646284.0}  
 
 
   ;; descriptive statistics for delta durations per day
-  (let [with-stats (mapv (fn [day-data]
-                           (let [with-durations-as-doubles
-                                 (-> day-data
-                                     (update :delta-durations
-                                             (fn [durations]
-                                               (mapv (fn [{:strs [duration_seconds]}] (Double/parseDouble duration_seconds)) durations)))
-                                     (update :start-time str))]
-                             (assoc with-durations-as-doubles
-                                    :delta-durations-stats
-                                    (stat/describe-as-vector stat/describe-as-ints
-                                                             (:delta-durations with-durations-as-doubles)))))
-                         multiple-days-data)]
-    (mapv #(select-keys % [:start-time :delta-durations-stats])
-          with-stats))
-;; => [{:start-time "2020-08-01T00:00Z", :delta-durations-stats [90 103 115 185 751 811 198 185 5347]}
+  (describe-durations-per-day multiple-days-data :delta-durations)
+;; => [{:start-time "2020-07-28T00:00Z", :delta-durations-stats [78 102 121 219 639 958 209 181 44061]}
+;;     {:start-time "2020-07-29T00:00Z", :delta-durations-stats [77 103 120 194 697 1059 213 202 43187]}
+;;     {:start-time "2020-07-30T00:00Z", :delta-durations-stats [80 102 114 223 837 1539 237 257 61242]}
+;;     {:start-time "2020-07-31T00:00Z", :delta-durations-stats [78 101 120 217 679 1023 213 203 45564]}
+;;     {:start-time "2020-08-01T00:00Z", :delta-durations-stats [90 103 115 185 751 811 198 185 5347]}
 ;;     {:start-time "2020-08-02T00:00Z", :delta-durations-stats [98 103 119 489 1967 1967 321 446 5783]}
 ;;     {:start-time "2020-08-03T00:00Z", :delta-durations-stats [77 103 121 203 605 956 193 164 44890]}
 ;;     {:start-time "2020-08-04T00:00Z", :delta-durations-stats [84 104 141 419 1016 1619 294 305 69453]}
