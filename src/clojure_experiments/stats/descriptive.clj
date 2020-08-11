@@ -1,7 +1,8 @@
 (ns clojure-experiments.stats.descriptive
   "Little helpers for computing descriptive statistics (min, max, median, mean, percentiles, ...)"
-  (:import (org.apache.commons.math3.stat.descriptive DescriptiveStatistics))
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [medley.core :as m])
+  (:import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics))
 
 (s/fdef describe
   :args (s/cat :data (s/every double?))
@@ -23,11 +24,15 @@
                :perc99 (perc-fn 99))
         (select-keys [:min :perc25 :median :perc75 :perc95 :perc99 :max :mean :standard-deviation :sum]))))
 
+(defn describe-as-ints [data]
+  (m/map-vals int (describe data)))
+
 (defn describe-as-vector
   "Same as `describe` but returns a simple vector of statistics values preserving order
   for an easy comparison between multiple sets of statistics."
-  [data]
-  (->> data
-       describe
-       (juxt :min :perc25 :median :perc75 :perc95 :perc99 :max :mean :standard-deviation :sum)))
+  ([data]
+   (describe-as-vector describe data))
+  ([describe-fn data]
+   (->> (describe-fn data)
+        ((juxt :min :perc25 :median :perc75 :perc95 :perc99 :max :mean :standard-deviation :sum)))))
 
