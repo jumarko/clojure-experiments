@@ -235,7 +235,7 @@
 (def git-clones-query
   {:group-name "/aws/batch/job"
    :query "fields @timestamp, @message
-  | filter @message like /(Cloning|Successfully cloned)/
+  | filter (@message like /(Cloning|Successfully cloned)/ and @logStream like /codescene-prod/)
   | parse /^.*(Cloning|Successfully cloned) (?<repo_url>\\S+) to \\/var\\/codescene\\/repos\\/(?<job_id>\\d+)\\/[^\\/]+\\/repos\\/(?<repo_name>\\S+).*$/
   | stats earliest(@timestamp) as clone_start, 
         latest(@timestamp) as clone_finished, 
@@ -264,6 +264,9 @@
 ;; via color: https://vega.github.io/vega-lite/docs/bar.html#stack
 (defn- color [field-name]
   {:color {:field field-name :type "nominal"}})
+
+(defn- to-date [epoch-millis-str]
+  (java.util.Date. (Long/parseLong epoch-millis-str)))
 
 (comment
 
@@ -323,9 +326,6 @@
       (oz/view! multiple-days-data-histograms)))
 
   ;; examine long durations
-  (defn- to-date [epoch-millis-str]
-    (java.util.Date. (Long/parseLong epoch-millis-str)))
-
   (->> multiple-days-data
        (mapcat :delta_durations)
        (filter (fn [{:strs [duration_seconds] :as dd}]
@@ -364,7 +364,7 @@
   (def commits-query
     {:group-name "/aws/batch/job"
      :query "fields @timestamp, @message
-  | filter @message like /:commits \\[.+:repo \"/
+  | filter (@message like /:commits \\[.+:repo \"/ and @logStream like /codescene-prod/)
   | parse /:commits (?<commits>\\[[^\\]]+\\]).* :repo \"(?<repository>[^\"]+)/
   | display @timestamp, repository, commits
   | limit 10000"})
@@ -386,7 +386,6 @@
   (defn- repo-name [commits-data]
     (StringUtils/substringAfterLast (get commits-data "repository")
                                     "/"))
-
   (mapv (juxt repo-name #(% "commits-count"))
         sorted-commits-results)
 
