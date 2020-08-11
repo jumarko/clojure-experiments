@@ -7,11 +7,13 @@
   - Cloudwatch Insights query syntax: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
   - aws-api: https://github.com/cognitect-labsuaws-api"
   (:require [clojure-experiments.concurrency :refer [map-throttled]]
+            [clojure.set :as set]
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]
             [clojure-experiments.visualizations.oz :as my-oz]
             [oz.core :as oz]
-            [clojure.spec.alpha :as s])
+            [clojure.spec.alpha :as s]
+            [clojure-experiments.stats.descriptive :as stat])
   (:import (org.apache.commons.lang3 StringUtils)))
 
 (def logs (aws/client {:api :logs
@@ -325,9 +327,54 @@
 
       (oz/view! multiple-days-data-histograms)))
 
+  ;; descriptive statistics for all delta durations
+  (let [durations-seconds (->> multiple-days-data
+                               (mapcat :delta-durations)
+                               (mapv (fn [{:strs [duration_seconds]}]
+                                       (Double/parseDouble duration_seconds))))]
+    (stat/describe durations-seconds))
+;; => {:min 0.0,
+;;     :perc99 1372.1500000000024,
+;;     :perc95 860.75,
+;;     :mean 252.76114649681574,
+;;     :standard-deviation 274.44589011424137,
+;;     :median 119.0,
+;;     :max 1564.0,
+;;     :perc25 103.0,
+;;     :perc75 287.5,
+;;     :sum 79367.0}
+
+
+  ;; descriptive statistics for delta durations per day
+  (let [with-stats (mapv (fn [day-data]
+                           (let [with-durations-as-doubles
+                                 (-> day-data
+                                     (update :delta-durations
+                                             (fn [durations]
+                                               (mapv (fn [{:strs [duration_seconds]}] (Double/parseDouble duration_seconds)) durations)))
+                                     (update :start-time str))]
+                             (assoc with-durations-as-doubles
+                                    :delta-durations-stats
+                                    (stat/describe-as-vector stat/describe-as-ints
+                                                             (:delta-durations with-durations-as-doubles)))))
+                         multiple-days-data)]
+    (mapv #(select-keys % [:start-time :delta-durations-stats])
+          with-stats))
+;; => [{:start-time "2020-08-01T00:00Z", :delta-durations-stats [90 103 115 185 751 811 198 185 5347]}
+;;     {:start-time "2020-08-02T00:00Z", :delta-durations-stats [98 103 119 489 1967 1967 321 446 5783]}
+;;     {:start-time "2020-08-03T00:00Z", :delta-durations-stats [77 103 121 203 605 956 193 164 44890]}
+;;     {:start-time "2020-08-04T00:00Z", :delta-durations-stats [84 104 141 419 1016 1619 294 305 69453]}
+;;     {:start-time "2020-08-05T00:00Z", :delta-durations-stats [85 105 143 525 1184 2087 354 385 87260]}
+;;     {:start-time "2020-08-06T00:00Z", :delta-durations-stats [76 102 115 233 716 2075 239 276 83183]}
+;;     {:start-time "2020-08-07T00:00Z", :delta-durations-stats [82 106 131 398 1114 2572 301 346 76947]}
+;;     {:start-time "2020-08-08T00:00Z", :delta-durations-stats [103 111 122 131 576 576 164 138 3134]}
+;;     {:start-time "2020-08-09T00:00Z", :delta-durations-stats [100 103 118 469 549 549 244 186 4151]}
+;;     {:start-time "2020-08-10T00:00Z", :delta-durations-stats [0 102 119 334 975 1564 266 291 69631]}
+;;     {:start-time "2020-08-11T00:00Z", :delta-durations-stats [83 97 123 136 476 476 144 93 2451]}]
+
   ;; examine long durations
   (->> multiple-days-data
-       (mapcat :delta_durations)
+       (mapcat :delta-durations)
        (filter (fn [{:strs [duration_seconds] :as dd}]
                  (< 1500 (Double/parseDouble duration_seconds))))
        (mapv (fn [job]
