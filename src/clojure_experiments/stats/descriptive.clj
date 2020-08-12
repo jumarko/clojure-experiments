@@ -4,9 +4,11 @@
             [medley.core :as m])
   (:import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics))
 
+(def selected-keys [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum :count])
+
 (s/fdef describe
   :args (s/cat :data (s/every double?))
-  :ret (s/keys :req-un [::min ::perc25 ::median ::perc75 ::perc95 ::max ::mean ::standard-deviation ::sum]))
+  :ret (s/keys :req-un [::min ::perc25 ::median ::perc75 ::perc95 ::max ::mean ::standard-deviation ::sum ::count]))
 (defn describe
   "Given a sequence/collection of numbers (doubles!)
   returns a map of descriptive statistics. "
@@ -16,12 +18,13 @@
     (doseq [d data]
       (.addValue descriptive-stats d))
     (-> (bean descriptive-stats)
-        (assoc :standard-deviation (.getStandardDeviation descriptive-stats))
+        (assoc :standard-deviation (.getStandardDeviation descriptive-stats)
+               :count (.getN descriptive-stats))
         (assoc :perc25 (perc-fn 25)
                :median (perc-fn 50)
                :perc75 (perc-fn 75)
                :perc95 (perc-fn 95))
-        (select-keys [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum]))))
+        (select-keys selected-keys))))
 
 (defn describe-as-ints [data]
   (m/map-vals int (describe data)))
@@ -34,5 +37,5 @@
    (describe-as-vector describe data))
   ([describe-fn data]
    (->> (describe-fn data)
-        ((juxt :min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum)))))
+        ((apply juxt selected-keys)))))
 

@@ -376,13 +376,12 @@
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
 
-  ;; first check batch job delays
+  ;; first check batch job delays - the last field is count
   (describe-durations-per-day multiple-days-data :delays "delay_seconds")
-;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606]}
-;;     {:start-time "2020-08-09T00:00Z", :delays-stats [6 12 27 36 318 1586 72 188 6963]}
-;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611]}
-;;     {:start-time "2020-08-11T00:00Z", :delays-stats [4 10 14 35 186 487 45 71 9475]}]
-
+;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606 95]}
+;;     {:start-time "2020-08-09T00:00Z", :delays-stats [6 12 27 36 318 1586 72 188 6963 96]}
+  ;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611 335]}
+;;     {:start-time "2020-08-11T00:00Z", :delays-stats [4 10 14 35 186 487 45 71 9475 208]}]
   ;; then :delta-durations
   (describe-durations multiple-days-data :delta-durations)
 ;; => {:min 0.0, :perc95 837.6999999999998, :mean 252.4925839188132, :standard-deviation 276.7040042324224, :median 121.5, :max 2572.0, :perc25 103.0, :perc75 266.25, :sum 646886.0}
