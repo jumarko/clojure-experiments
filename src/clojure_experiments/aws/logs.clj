@@ -101,7 +101,6 @@
    (let [max-polling-time 10000
          polling-start (System/currentTimeMillis)]
      (loop []
-       (println "Getting results for query: " query-id)
        (let [results (if remove-incomplete-jobs?
                        (get-finished-query-results query-id)
                        (get-query-results query-id))
@@ -362,7 +361,7 @@
             [:p [:b (format "%s -- %s" start-time end-time)]]
             [:div {:style {:display "flex" :flex-direction "col"}}
              [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" (color "job_type"))]
-             [:vega-lite (hist "Other jobs total durations in seconds" other-durations "duration_seconds")]
+             [:vega-lite (hist "Other jobs total durations in seconds" other-durations "duration_seconds" (color "job_type"))]
              [:vega-lite (hist "Delta jobs total durations in seconds" delta-durations "duration_seconds")]
              ;; boxplot is confusing => don't show it
              #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
@@ -380,13 +379,33 @@
   (describe-durations-per-day multiple-days-data :delays "delay_seconds")
 ;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606 95]}
 ;;     {:start-time "2020-08-09T00:00Z", :delays-stats [6 12 27 36 318 1586 72 188 6963 96]}
-  ;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611 335]}
-;;     {:start-time "2020-08-11T00:00Z", :delays-stats [4 10 14 35 186 487 45 71 9475 208]}]
+;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611 335]}
+;;     {:start-time "2020-08-11T00:00Z", :delays-stats [4 10 15 39 174 549 45 77 17052 375]}
+
   ;; then :delta-durations
   (describe-durations multiple-days-data :delta-durations)
 ;; => {:min 0.0, :perc95 837.6999999999998, :mean 252.4925839188132, :standard-deviation 276.7040042324224, :median 121.5, :max 2572.0, :perc25 103.0, :perc75 266.25, :sum 646886.0}
 
   (describe-durations-per-day multiple-days-data :delta-durations)
+  ;; [min p25 median p75 p95 max avg stdev sum count]
+
+;; => [{:start-time "2020-08-10T00:00Z",
+;;      :delta-durations-stats [0 102 119 334 975 1564 266 291 69631 261]}
+;;     {:start-time "2020-08-11T00:00Z",
+;;      :delta-durations-stats [83 97 117 154 284 539 141 73 41655 294]}
+;;     {:start-time "2020-08-12T00:00Z",
+;;      :delta-durations-stats [83 93 113 142 478 779 151 112 36592 241]}
+;;     {:start-time "2020-08-13T00:00Z",
+;;      :delta-durations-stats [21 45 88 107 192 569 91 62 21135 232]}
+;;     {:start-time "2020-08-14T00:00Z",
+;;      :delta-durations-stats [19 32 39 67 180 1387 68 109 17475 255]}
+;;     {:start-time "2020-08-15T00:00Z",
+;;      :delta-durations-stats [26 31 56 67 213 213 65 52 717 11]}
+;;     {:start-time "2020-08-16T00:00Z",
+;;      :delta-durations-stats [19 37 62 93 114 115 67 30 1349 20]}
+;;     {:start-time "2020-08-17T00:00Z",
+;;      :delta-durations-stats [19 28 37 53 82 116 42 18 4208 100]}]
+
 ;; => [{:start-time "2020-07-28T00:00Z", :delta-durations-stats [78 102 121 219 639 958 209 181 44061]}
 ;;     {:start-time "2020-07-29T00:00Z", :delta-durations-stats [77 103 120 194 697 1059 213 202 43187]}
 ;;     {:start-time "2020-07-30T00:00Z", :delta-durations-stats [80 102 114 223 837 1539 237 257 61242]}
@@ -401,6 +420,10 @@
 ;;     {:start-time "2020-08-08T00:00Z", :delta-durations-stats [103 111 122 131 576 576 164 138 3134]}
 ;;     {:start-time "2020-08-09T00:00Z", :delta-durations-stats [100 103 118 469 549 549 244 186 4151]}
 ;;     {:start-time "2020-08-10T00:00Z", :delta-durations-stats [0 102 119 334 975 1564 266 291 69631]}
+;;     {:start-time "2020-08-11T00:00Z", :delta-durations-stats [83 97 117 154 284 539 141 73 41655 294]}
+;;     {:start-time "2020-08-12T00:00Z", :delta-durations-stats [83 93 113 142 478 779 151 112 36592 241]}
+;;     {:start-time "2020-08-13T00:00Z", :delta-durations-stats [21 45 88 107 192 569 91 62 21135 232]}
+
 
   ;; git clone durations are more interesting - this if for ALL analyses
 
@@ -408,6 +431,7 @@
 ;; => {:min 0.0, :perc95 492.03024999999997, :mean 79.47033029801325, :standard-deviation 189.37814098852846, :median 19.066000000000003, :max 1784.198, :perc25 6.24275, :perc75 27.712, :sum 288000.47699999984}
 
   (describe-durations-per-day multiple-days-data :clone-durations)
+
 ;; => [{:start-time "2020-07-28T00:00Z", :clone-durations-stats [1 3 13 24 381 790 52 133 18307]}
 ;;     {:start-time "2020-07-29T00:00Z", :clone-durations-stats [1 4 15 24 420 974 55 140 18902]}
 ;;     {:start-time "2020-07-30T00:00Z", :clone-durations-stats [1 3 16 24 517 1153 72 179 29090]}
@@ -422,6 +446,7 @@
 ;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [1 2 3 10 29 442 15 52 2262]}
 ;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [0 2 2 6 75 355 19 65 3573]}
 ;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 6 19 395 557 1158 157 237 74718]}
+;;     {:start-time "2020-08-11T00:00Z", :clone-durations-stats [1 3 5 10 35 357 12 28 4614 372]}
 
   ;; git clone durations - ONLY delta analyses
   ;; - WARNING: git clone bottleneck is moved to "git fetch" when using the "optimized git clone"
@@ -445,6 +470,7 @@
 ;;     {:start-time "2020-08-08T00:00Z", :clone-durations-stats [18 20 22 29 442 442 60 113 1158]}
 ;;     {:start-time "2020-08-09T00:00Z", :clone-durations-stats [0 19 22 333 355 355 126 156 2272]}
 ;;     {:start-time "2020-08-10T00:00Z", :clone-durations-stats [0 14 20 33 612 1158 114 222 29819]}
+;;     {:start-time "2020-08-11T00:00Z", :clone-durations-stats [1 4 5 10 33 357 11 22 3248 294]}
 
   ;; compare to full analyses
   (-> (filter-job-type "run-analysis" multiple-days-data)
