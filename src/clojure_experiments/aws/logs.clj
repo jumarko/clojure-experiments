@@ -427,6 +427,10 @@
 ;;      :delta-durations-stats [19 37 62 93 114 115 67 30 1349 20]}
 ;;     {:start-time "2020-08-17T00:00Z",
 ;;      :delta-durations-stats [19 28 37 53 82 116 42 18 4208 100]}]
+  ;; => [{:start-time "2020-08-21T00:00Z", :delta-durations-stats [21 31 40 61 104 605 59 75 12984 217]}
+  ;;     {:start-time "2020-08-22T00:00Z", :delta-durations-stats [25 33 43 57 87 107 45 17 1372 30]}
+  ;;     {:start-time "2020-08-23T00:00Z", :delta-durations-stats [27 30 53 59 81 81 48 16 577 12]}
+  ;;     {:start-time "2020-08-24T00:00Z", :delta-durations-stats [25 34 62 75 253 272 65 51 1377 21]}]
 
 ;; => [{:start-time "2020-07-28T00:00Z", :delta-durations-stats [78 102 121 219 639 958 209 181 44061]}
 ;;     {:start-time "2020-07-29T00:00Z", :delta-durations-stats [77 103 120 194 697 1059 213 202 43187]}
