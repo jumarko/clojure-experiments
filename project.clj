@@ -128,6 +128,8 @@
                  [redux "0.1.4"]
                  [net.cgrand/xforms "0.19.0"]
 
+                 ;; probability distributions in Clojure
+                 [distributions "0.1.2"]
 
                  [thi.ng/geom "1.0.0-RC3"]
                  ;; added explicitly otherwise I was getting "namespace 'cheshire.factory' not found error"

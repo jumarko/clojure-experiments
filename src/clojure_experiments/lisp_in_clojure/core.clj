@@ -38,3 +38,16 @@
     (vector? expr) (eval-vector expr)
     (list? expr) (eval-list expr)
     :else :completely-confused))
+
+
+(def ops
+  {:lt <
+   :gt >
+   :eq =})
+
+(defn maker [op path val]
+  (fn [rec] ((get ops op) (get-in rec path) val)))
+
+(comment
+  ((maker :gt [:resistors 0 :value] 470)
+   {:resistors [{:value 480}]}))
