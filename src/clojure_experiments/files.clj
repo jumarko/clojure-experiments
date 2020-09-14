@@ -43,3 +43,20 @@
   )
 
 
+;;; Walking file tree - e.g. filtering git directories
+(defn discover-no-subdirs [path]
+  (let [git-repos (atom [])]
+    (java.nio.file.Files/walkFileTree (java.nio.file.Paths/get path (make-array String 0))
+                                      (proxy [java.nio.file.SimpleFileVisitor] []
+                                        (preVisitDirectory [dir attrs]
+                                          (if (-> (.resolve dir ".git") .toFile .exists)
+                                            (do
+                                              (swap! git-repos conj (str dir))
+                                              java.nio.file.FileVisitResult/SKIP_SUBTREE)
+                                            java.nio.file.FileVisitResult/CONTINUE))))
+    @git-repos))
+(comment
+  (def gits (time (discover-no-subdirs "/Users/jumar/workspace/java")))
+  "Elapsed time: 3780.919339 msecs")
+
+
