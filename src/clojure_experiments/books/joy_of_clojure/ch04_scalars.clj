@@ -12,3 +12,36 @@
       ]
   (- actual-total approx-total))
 ;; => 0.34332275390625
+
+
+;;; 4.4 Symbolic resolution & metadata
+
+;; equally named symbols often aren't the same because they can have different metadata
+;; notice that symbol equality depends on neither equality nor metadata:
+(let [x (with-meta 'goat {:ornery true})
+      y (with-meta 'goat {:ornery false})]
+  [(= x y)
+   (identical? x y)
+   (meta x)
+   (meta y)])
+;; => [true false {:ornery true} {:ornery false}]
+
+
+
+
+;;; Regular expressions
+
+;; comments and whitespaces are ignored
+(def with-comment #"(?x)   [Hh]ello, #something everybody knows
+                           [Ww]orld!")
+
+(re-find with-comment "Hello,World!")
+;; => "Hello,World!"
+
+;; multiline regex `m` modifier switches ^ and $ to match end of lines instead of end of the regex
+(def multi-line #"(?m)Hello,World$")
+;; this wouldn't match without `(?m)`
+()re-find multi-line "Hello,World
+ahoj
+hi")
+;; => "Hello,World"
