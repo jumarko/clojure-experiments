@@ -4,16 +4,21 @@
 ;;; lazy quick sort (p. 133) - This is a gem!
 (defn sort-parts [work]
   (lazy-seq
+   ;; `part` is a lazy seq of the elements smaller than the pivot
+   ;; that means it keeps recurcing but not realizing much 
+   ;; and if you need only a few first elements it's much more efficient
+   ;; than the full sort
    (loop [[part & parts] work]
      (if-let [[pivot & xs] (seq part)]
        (let [smaller? #(< % pivot)]
          (recur (list*
-                 (filter smaller? xs)
+                 (filter smaller? xs) ; this is lazy!
                  pivot
-                 (remove smaller? xs)
+                 (remove smaller? xs) ; this is lazy!
                  parts)))
        (when-let [[x & parts] parts]
          (cons x (sort-parts parts)))))))
+
 
 (defn lazy-qsort [xs]
   (sort-parts (list xs)))
@@ -32,13 +37,17 @@
 
 #_(time (lazy-qsort numbers))
 ;;=> "Elapsed time: 0.062903 msecs"
+
 #_(time (doall (take 1000 (lazy-qsort numbers))))
 ;;=> "Elapsed time: 417.165721 msecs"
+
 #_(time (doall (take 10000 (lazy-qsort numbers))))
 ;;=> "Elapsed time: 861.250399 msecs"
+
 ;; approaching 100,000 numbers we can see we have similar running time to native sort with full 10^6 numbers
 #_(time (doall (take 100000 (lazy-qsort numbers))))
 ;;=> "Elapsed time: 1988.791992 msecs"
+
 ;; finally, the whole sequence is significantly slower than than native sort
 #_(time (doall (lazy-qsort numbers)))
 ;; "Elapsed time: 14839.150604 msecs"
@@ -143,12 +152,24 @@
      [])))
 
 (lz-rec-step [1 2 3 4])
-#(prn (class %))
 ;; => (1 (2 (3 (4 ()))))
 
-;; not it works but don't try to print/inspect it!
-;; (it would throw StackOverflowError again due to the printer)
-(def xs (doall (lz-rec-step (range 20000))))
+;; not it works?
+(def xs (lz-rec-step (range 20000)))
+;; but don't try to print/inspect it  naively - it would throw StackOverflowError again 
+(first xs)
+;; => 0
+#_(second xs)
+;; it failed because the second element is the whole rest of the sequence - you need to step down
+(first (second xs))
+;; => 1
+(-> xs
+    second ; 1,2,3,4,...
+    second ; 2,3,4,...
+    second ; 3,4,...
+    second ; 4,...
+    first)
+;; => 4
 
 
 ;; Simpler lazy-seq example
