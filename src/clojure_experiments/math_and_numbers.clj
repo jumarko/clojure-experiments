@@ -1,4 +1,5 @@
-(ns clojure-experiments.math-and-numbers)
+(ns clojure-experiments.math-and-numbers
+  (:require [clojure.math.numeric-tower :as m]))
 
 ;; interesting example used for demonstrating JVM failure
 ;; in apangin's talk "JVM crash dump analysis": https://www.youtube.com/watch?v=jd6dJa7tSNU
@@ -67,4 +68,28 @@
 ;; => 4.9E-324
 
 
+;; Floating points, BigDecimal-s and precision
+(= 0.57 (float 0.57))
+
+;; this yields double
+(defn ratio->centi-float-precision
+  [v]
+  (* 0.01 (m/round (* 100 (float v)))))
+
+(ratio->centi-float-precision 0.57)
+;; => 0.5700000000000001
+
+;; this yields float and although less precise it rounds "better" naturally
+(defn ratio->centi-float-precision2
+  [v]
+  (-> (* 0.01M (m/round (* 100 v)))
+      float ))
+
+(ratio->centi-float-precision2 0.57)
+;; => 0.57
+
+(float (* (float 1.89) 791))
+;; => 1494.99
+(* (float 1.89) 791)
+;; => 1494.9899886846542
 
