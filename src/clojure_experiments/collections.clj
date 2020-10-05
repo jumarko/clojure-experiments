@@ -275,3 +275,15 @@ db
   ;;
   )
 
+
+;;; sort-by
+
+;; sort-by (Functional Design in Clojure)
+;; 3 levels of higher-order functions
+(sort-by (juxt (comp - :year) :title)
+         [{:year 2019 :title "Pragmatic Programmer"}
+          {:year 2020 :title "Clojure: The Essential Reference"}
+          {:year 2019 :title "BPF Performance Tools"}])
+;; => ({:year 2020, :title "Clojure: The Essential Reference"}
+;;     {:year 2019, :title "BPF Performance Tools"}
+;;     {:year 2019, :title "Pragmatic Programmer"})
