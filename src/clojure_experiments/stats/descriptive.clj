@@ -5,7 +5,7 @@
             [medley.core :as m])
   (:import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics))
 
-(def selected-keys [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum :count])
+(def selected-keys [:min :max :mean :standard-deviation :sum :count])
 
 (s/fdef describe
   :args (s/cat :data (s/every double?))
@@ -21,11 +21,11 @@
         desc-stats (-> (bean descriptive-stats)
                        (assoc :standard-deviation (.getStandardDeviation descriptive-stats)
                               :count (.getN descriptive-stats))
+                       (select-keys selected-keys)
                        (assoc :perc25 (perc-fn 25)
                               :median (perc-fn 50)
                               :perc75 (perc-fn 75)
-                              :perc95 (perc-fn 95))
-                       (select-keys selected-keys))
+                              :perc95 (perc-fn 95)))
         ;; hardcoded confidence level 95% is enough right now
         confidence-level 0.95
         stats-with-confidence-intervals (assoc desc-stats
