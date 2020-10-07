@@ -397,6 +397,10 @@
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
 
+  ;; Calculate mean/median and 95% confidence interval
+
+
+
   ;; first check batch job delays - the last field is count
   (describe-durations-per-day multiple-days-data :delays "delay_seconds")
 ;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606 95]}
@@ -406,6 +410,9 @@
 
   ;; then :delta-durations
   (describe-durations multiple-days-data :delta-durations)
+  ;; 7.10.2020:
+  ;; => {:min 18.0, :perc95 77.0, :mean 41.1422287390029, :standard-deviation 22.398382172681043, :median-confidence [32.85124062839878 35.14875937160122], :median 34.0, :max 261.0, :count 682, :perc25 28.0, :mean-confidence [39.458217043083515 42.82624043492229], :perc75 48.0, :sum 28059.0}
+  ;; Much older:
 ;; => {:min 0.0, :perc95 837.6999999999998, :mean 252.4925839188132, :standard-deviation 276.7040042324224, :median 121.5, :max 2572.0, :perc25 103.0, :perc75 266.25, :sum 646886.0}
 
   (describe-durations-per-day multiple-days-data :delta-durations)
