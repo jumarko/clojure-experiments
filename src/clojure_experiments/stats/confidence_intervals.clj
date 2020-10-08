@@ -1,4 +1,6 @@
 (ns clojure-experiments.stats.confidence-intervals
+  "Calculating confidence intervals for a mean and a median.
+  Uses informal formula for median."
   (:require [clojure.spec.alpha :as s])
   (:import org.apache.commons.math3.distribution.TDistribution))
 
@@ -54,7 +56,9 @@
 (s/fdef confidence-interval
   :args (s/cat :type #{:mean :median}
                :confidence-level (s/double-in :min 0.0 :max 1.0)
-               :stats map?))
+               :stats (s/keys :req-un [::count]
+                              :opt-un [::mean ::standard-deviation
+                                       ::median ::perc25 ::perc75])))
 (defn confidence-interval
   "Calculates confidence interval for mean or median using given confidence level
   and existing precomputed summary statistics.
@@ -65,8 +69,10 @@
   For mean, we use the formula based on Central-limit theorem that defines standard error and margin of error (via Student's T distribution)
   - T-Distribution: https://commons.apache.org/proper/commons-math/javadocs/api-3.5/org/apache/commons/math3/distribution/TDistribution.html
   - https://www.statisticshowto.com/probability-and-statistics/confidence-interval/
-  For median, we use informal formula defined in Dr Nic's video: https://www.youtube.com/watch?v=6XT8MkIzF7w
-    - another alternative would be Bootstrapping
+
+  For median, we use an informal formula defined in Dr Nic's video: https://www.youtube.com/watch?v=6XT8MkIzF7w
+  as `median +- 1.5 * IQR/sqrt(n)` where IQR is interquartile range.
+  Another alternative would be to use Bootstrapping.
   More info about calculating confidence interval for a median:
   - Confidence interval for a median and other quantiles: https://www-users.york.ac.uk/~mb55/intro/cicent.htm
   - https://www.researchgate.net/post/How_to_calculate_changes_95_CI_in_median
