@@ -384,3 +384,57 @@
 ;; => false
 
 
+;;; Continuation-passing style (p. 163)
+
+;; factorial using CPS style
+(defn fac-cps [n k]
+  ;; `cont` is the "Continuation" function - notice it also calls the "Return" function `k`
+  ;; notice that `k` is first just `identity` but then it becomes `cont` function as passed in recur
+  (letfn [(cont [v]
+            #_(println "Computing factorial" n "using value:" v)
+            ;; when n reaches zero, the stack of `cont` functions will get called repeatedly here
+            ;; but the very last `cont` implementation that would use `n` bound to zero won't get called at all
+            ;; because it's the previous version of `cont` passed in as `k` that gets called
+            (k (* v n)))]
+    ;; `zero?` is the "Accept" function
+    (if (zero? n)
+      ;; when n reaches zero, this triggers calls of `cont` functions stack
+      (k 1)
+      (recur (dec n) cont))))
+
+(defn fac [n]
+  ;; identity is the "Return" function
+  (fac-cps n identity))
+(fac 5)
+;; Computing factorial 1 using value: 1
+;; Computing factorial 2 using value: 1
+;; Computing factorial 3 using value: 2
+;; Computing factorial 4 using value: 6
+;; Computing factorial 5 using value: 24
+;; => 120
+
+;; it can compute huge numbers too
+;; but don't try to print this in the buffer!
+#_(fac 5000N)
+
+;; generalized builer function
+(defn make-cps [accept? kend kont]
+  (fn [n]
+    ((fn [n k]
+       (let [cont (fn [v]
+                    (k ((partial kont v) n)))]
+         (if (accept? n)
+           (k 1)
+           (recur (dec n) cont))))
+     n kend)))
+
+(def fac (make-cps zero?
+                   identity
+                   #(* %1 %2)))
+(fac 5);; => 120
+
+(def tri (make-cps #(== 1 %)
+                   identity
+                   #(+ %1 %2)))
+(tri 10) ;; => 55
+
