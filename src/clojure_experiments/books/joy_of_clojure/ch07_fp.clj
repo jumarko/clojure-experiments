@@ -438,3 +438,114 @@
                    #(+ %1 %2)))
 (tri 10) ;; => 55
 
+
+;;;; A* implementation (p. 165)
+
+;; borrow the neighboars function from the chapter 5
+(defn neighbors
+  ([size yx]
+   (neighbors [[-1 0] [1 0] [0 -1] [0 1]]
+              size
+              yx))
+  ([deltas size [y x :as yx]]
+   ;; my own implementation
+   (for [[dy dx :as d] deltas
+         :let [newyx (mapv + d yx)]
+         :when (every? #(< -1 % size) newyx)]
+     newyx)))
+(neighbors 5 [0 0])
+;; => ([1 0] [0 1])
+
+;; 1. estimate cost by assuming we can travel to the right edge and then down
+(defn estimate-cost [step-cost-est size y x]
+  (* step-cost-est
+     (- (* 2 size)
+        x
+        y
+        2)))
+;; having grid of size 5, that is upper-left coordinates are [0 0] and lower right [4 4]
+;; we can get the estimate of 7200 for cost 900 (going 4 steps to the right and 4 steps down)
+(estimate-cost 900 5 0 0)
+;; => 7200
+
+;; 2. compute cost of the path so far
+(defn path-cost [node-cost
+                 {:keys [cost] :as cheapest-neighbor}]
+  (+ node-cost
+     (or cost 0)))
+(path-cost 900 {:cost 1})
+;; => 901
+
+;; 3. finally, `total-cost`
+(defn total-cost [new-cost step-cost-est size y x]
+  (+ new-cost
+     (estimate-cost step-cost-est size y x)))
+(total-cost 0 900 5 0 0)
+;; => 7200
+(total-cost 1000 900 5 3 4)
+;; => 1900
+(total-cost (path-cost 900 {:cost 1})
+            900 5 3 4)
+;; => 1801
+
+;;; We also need `min-by` function
+(defn min-by [f coll]
+  (when (seq coll) ; this guards against empty seq because there's no clear "minium" of such a sequence
+    (reduce (fn [min other]
+              (if (> (f min) (f other))
+                other
+                min))
+            coll)))
+
+(min-by #(* % %) [-3 2 3 4])
+;; => 2
+(min-by #(* % %) [])
+;; => nil
+
+(min-by :cost [{:cost 100} {:cost 36} {:cost 9}])
+;; => {:cost 9}
+
+
+;;; A* implementation (p. 167)
+;;; - tail-recursive implementation
+(defn astar [start-yx step-est cell-costs]
+  (let [size (count cell-costs)]
+    (loop [steps 0
+           routes (vec (repeat size (vec (repeat size nil))))
+           work-todo (sorted-set [0 start-yx])]
+      (if (empty? work-todo)
+        [(peek (peek routes))
+         :steps steps]
+        (let [[_ yx :as work-item] (first work-todo)
+              rest-work-todo (disj work-todo work-item)
+              nbr-yxs (neighbors size yx)
+              cheapest-nbr (min-by :cost
+                                   (keep #(get-in routes %)
+                                         nbr-yxs))
+              ;; calculate path so far
+              newcost (path-cost (get-in cell-costs yx)
+                                 cheapest-nbr)
+              oldcost (:cost (get-in routes yx))]
+          (if (and oldcost (>= newcost oldcost))
+            (recur (inc steps) routes rest-work-todo)
+            (recur (inc steps)
+                   ;; place a new path in the routes
+                   (assoc-in routes yx {:cost newcost :yxs (conj (:yxs cheapest-nbr []) yx)})
+                   ;; add the estimated path to the todo
+                   (into rest-work-todo
+                         (map (fn [[y x :as w]]
+                                [(total-cost newcost step-est size y x) w])
+                              nbr-yxs)))))))))
+
+;; world defined on p 165
+(def world [[1   1   1   1   1]
+            [999 999 999 999 1]
+            [1   1   1   1   1]
+            [1 999 999 999 999]
+            [1   1   1   1   1]])
+(astar [0 0]
+       900
+       world)
+;; => [{:cost 17, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [2 3] [2 2] [2 1] [2 0] [3 0] [4 0] [4 1] [4 2] [4 3] [4 4]]} :steps 94]
+
+
