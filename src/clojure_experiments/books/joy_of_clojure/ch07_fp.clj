@@ -457,6 +457,7 @@
 ;; => ([1 0] [0 1])
 
 ;; 1. estimate cost by assuming we can travel to the right edge and then down
+;; - note that A* requires that the function never "over-estimates".
 (defn estimate-cost [step-cost-est size y x]
   (* step-cost-est
      (- (* 2 size)
@@ -548,4 +549,60 @@
        world)
 ;; => [{:cost 17, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [2 3] [2 2] [2 1] [2 0] [3 0] [4 0] [4 1] [4 2] [4 3] [4 4]]} :steps 94]
 
+(astar [0 0]
+       900
+       [[   1   1   1   2   1]
+        [   1   1   1 999   1]
+        [   1   1   1 999   1]
+        [   1   1   1 999   1]
+        [   1   1   1   1   1]])
+;; => [{:cost 9, :yxs [[0 0] [0 1] [0 2] [1 2] [2 2] [3 2] [4 2] [4 3] [4 4]]} :steps 134]
+
+
+(astar [0 0]
+       900
+       [[1   1   1   2   1]
+        [1   1   1 999   1]
+        [1   1   1 999   1]
+        [1   1   1 999   1]
+        [1   1   1 666   1]])
+;; => [{:cost 10, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [3 4] [4 4]]} :steps 132]
+
+
+;;; Try Dijkstra algorithm using our generic `astar` function (p. 455)
+(defn dijkstra-estimate-cost [step-cost-est sz y x]
+  0)
+(def estimate-cost dijkstra-estimate-cost)
+
+(astar [0 0]
+       900
+       world)
+;; astar:
+;; => [{:cost 17, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [2 3] [2 2] [2 1] [2 0] [3 0] [4 0] [4 1] [4 2] [4 3] [4 4]]} :steps 94]
+;; Dijkstra:
+;; => [{:cost 17, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [2 3] [2 2] [2 1] [2 0] [3 0] [4 0] [4 1] [4 2] [4 3] [4 4]]} :steps 81]
+
+(astar [0 0]
+       900
+       [[   1   1   1   2   1]
+        [   1   1   1 999   1]
+        [   1   1   1 999   1]
+        [   1   1   1 999   1]
+        [   1   1   1   1   1]])
+;; astar
+;; => [{:cost 9, :yxs [[0 0] [0 1] [0 2] [1 2] [2 2] [3 2] [4 2] [4 3] [4 4]]} :steps 134]
+;; dijkstra
+;; => [{:cost 9, :yxs [[0 0] [0 1] [0 2] [1 2] [2 2] [3 2] [4 2] [4 3] [4 4]]} :steps 65]
+
+(astar [0 0]
+       900
+       [[1   1   1   2   1]
+        [1   1   1 999   1]
+        [1   1   1 999   1]
+        [1   1   1 999   1]
+        [1   1   1 666   1]])
+;; astar
+;; => [{:cost 10, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [3 4] [4 4]]} :steps 132]
+;; Dijkstra
+;; => [{:cost 10, :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4] [3 4] [4 4]]} :steps 65]
 
