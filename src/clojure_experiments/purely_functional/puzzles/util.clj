@@ -3,8 +3,9 @@
 
 ;;; Note: it's much simpler to just `str` the number to get its digits!
 ;;; -> http://www.4clojure.com/problem/solutions/86
-(defn digits [n]
+(defn digits
   "Returns all digits of given number"
+  [n]
   (assert (pos? n) "Can only work with positive numbers.")
   (loop [n n
          digits '()]
