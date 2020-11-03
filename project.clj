@@ -120,11 +120,11 @@
                  [org.apache.commons/commons-math3 "3.6.1"]
 
                  ;; https://github.com/generateme/fastmath
-                 [generateme/fastmath "1.5.2"]
+                 [generateme/fastmath "2.0.3"]
 
                  ;; kixi.stats: https://github.com/mastodonC/kixi.stats
                  ;; see also lambdaisland: https://lambdaisland.com/episodes/clojure-data-science-kixi-stats
-                 [kixi/stats "0.4.4"] 
+                 [kixi/stats "0.5.4"] 
                  [redux "0.1.4"]
                  [net.cgrand/xforms "0.19.0"]
 
