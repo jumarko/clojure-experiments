@@ -410,6 +410,14 @@
 
   ;; then :delta-durations
   (describe-durations multiple-days-data :delta-durations)
+  ;; 26.10.2020 - using my own stats functions
+;; => {:min 19.0, :perc95 70.0, :mean 44.33704735376044, :standard-deviation 52.079017565494986, :median-confidence [33.574994502283 36.425005497717], :median 35.0, :max 656.0, :count 359, :perc25 29.0, :mean-confidence [38.93156619379294 49.74252851372794], :perc75 47.0, :sum 15917.0}
+  ;; 26.10.2020 - using fastmath.stats/bootstrap-ci
+  (->> multiple-days-data (mapcat :delta-durations) (mapv (fn [job-data] (Double/parseDouble (get job-data "duration_seconds"))))
+       #_fastmath.stats/bootstrap-ci ;; => [38.036434540389955 49.57320334261837 44.33704735376044] (this is 98% confidence)
+       (#(fastmath.stats/bootstrap-ci % 0.95 100 fastmath.stats/median)))   ;; => [34.0 37.0 35.0]
+
+
   ;; 7.10.2020:
   ;; => {:min 18.0, :perc95 77.0, :mean 41.1422287390029, :standard-deviation 22.398382172681043, :median-confidence [32.85124062839878 35.14875937160122], :median 34.0, :max 261.0, :count 682, :perc25 28.0, :mean-confidence [39.458217043083515 42.82624043492229], :perc75 48.0, :sum 28059.0}
   ;; Much older:
