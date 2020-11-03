@@ -1,7 +1,14 @@
 (ns clojure-experiments.stats.confidence-intervals
   "Calculating confidence intervals for a mean and a median.
-  Uses informal formula for median."
-  (:require [clojure.spec.alpha :as s])
+  Uses informal formula for median.
+
+  See other clojure libs:
+  - fastmath.stats/ci: https://github.com/generateme/fastmath/blob/382ec27d23fbaf8925a088c5d5edc27e4596dd0d/src/fastmath/stats.clj#L407
+    (T-student based confidence interval for given data)
+  - fastmath.stats.bootstrap-ci: https://github.com/generateme/fastmath/blob/382ec27d23fbaf8925a088c5d5edc27e4596dd0d/src/fastmath/stats.clj#L439
+    this is very interesting example of Bootstrapping method!"
+  (:require [clojure.spec.alpha :as s]
+            [fastmath.stats :as fm-stats])
   (:import org.apache.commons.math3.distribution.TDistribution))
 
 
@@ -90,3 +97,7 @@
                      {:min 18.0, :perc95 77.0, :mean 41.1422287390029, :standard-deviation 22.398382172681043,
                       :median 34.0, :max 261.0, :count 682, :perc25 28.0, :perc75 48.0, :sum 28059.0})
 ;; => [32.85124062839878 35.14875937160122]
+
+(comment
+  (fm-stats/bootstrap-ci)
+  )
