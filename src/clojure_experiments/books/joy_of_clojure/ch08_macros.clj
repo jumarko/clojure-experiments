@@ -1,6 +1,8 @@
 (ns clojure-experiments.books.joy-of-clojure.ch08-macros
   (:require [clojure.walk :as walk]
-            [clojure.xml :as xml]))
+            [clojure.xml :as xml])
+  (:import [java.io BufferedReader InputStreamReader]
+           java.net.URL))
 
 ;;; eval (p. 175)
 
@@ -242,5 +244,181 @@ d
 ;;     </thing>
 ;;   </grouping>
 ;; </domain>
+
+
+
+;;; Using macros to control symbolic resolution time (p. 186 - 189)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Macroexpand this simple macro to understand how Clojure macros resolve symbols
+(defmacro resolution [] `x)
+(macroexpand '(resolution)) ; it doesn't matter here whether you use macroexpand-1 or macroexpand
+;; => clojure-experiments.books.joy-of-clojure.ch08-macros/x
+
+;; because the name is fully qualified this works without issues:
+(def x 9)
+(resolution)
+;; => 9
+;; this would not work if the symbol was not fully qualified
+(let [x 109] (resolution))
+;; => 9
+
+
+;; Anaphora - awhen (p. 187)
+;; Note: that Clojure provides when-let and if-let that do nest and are much more useful!
+(defmacro awhen [expr & body]
+  `(let [~'it ~expr]
+    (when ~'it
+      ~@body)))
+(awhen [1 2 3] (it 2))
+;; => 3
+
+
+;;; 8.6 Using macros to manage resources (p. 188-189)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; We can use standard with-open when the thing is `java.io.Closeable`
+(defn joc-www []
+  ;; (-> "http://joyofclojure.com/hello" ; doesn't work (timeout)
+  (-> "http://example.com"
+      URL.
+      .openStream
+      InputStreamReader.
+      BufferedReader.
+      ))
+;; Note that this will most likely timeout!
+(let [stream (joc-www)]
+  (with-open [page stream]
+    (println (.readLine page))
+    (print "The stream will now close...")
+    (println "but let's read from it anyway.")
+    (.readLine stream)) ; illegal after close
+  )
+
+
+;; generic with-resource macro that can be used
+;; when `with-open` not (ie. when the resource doesn't implemebt Closeable)
+;; note that unlike `with-open` this doesn't accept multiple bindings
+(defmacro with-resource [binding close-fn & body]
+  `(let ~binding
+     (try 
+       ~@body
+       (finally
+         (~close-fn ~(binding 0))))))
+(let [stream (joc-www)]
+  (with-resource [page stream]
+    #(.close %)
+    (.readLine page)))
+;; => "<!doctype html>"
+
+
+;;; 8.7. macros returning functions (p. 190 - 193)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; we want to create `contract` macro that can be used like this:
+(comment
+  (contract doubler
+            [x]
+            (:require (pos? x))
+            (:ensure (= (* 2 x) %)))
+  )
+
+;; This macro will return a function.
+;; It's useful to first imagine what the function will look like:
+(fn doubler ([f x]
+             {:pre [(pos? x)]
+              :post [(= (* 2 x) %)]}
+             (f x)))
+
+(declare collect-bodies)
+(defmacro contract
+  {:style/indent 1}
+  [name & forms]
+  (list* `fn name (collect-bodies forms)))
+
+;; to allow for multi-arity function definition we start with collect-bodies
+(declare build-contract)
+
+(defn collect-bodies [forms]
+  ;; for every form build a partition of 3 elements: arglist, "requires" contract, and "ensures" contract
+  (for [form (partition 3 forms)]
+    (build-contract form)))
+
+(defn build-contract [c]
+  (let [args (first c)] ; grab args
+    (list (into '[f] args) ; build the arglist vector - fist arg is `f` and then all the explicit args
+          ;; build the metadata map with `:pre`/`:post` keys
+          (apply merge
+                 (for [con (rest c)]
+                   (cond
+                     (= 'require (first con))
+                     (assoc {} :pre (vec (rest con)))
+
+                     (= 'ensure (first con))
+                     (assoc {} :post (vec (rest con)))
+
+                     :else (throw (Exception. (str "Unknown tag " (first con)))))))
+          ;; build the call site - this looks the same as `(cons 'f args)`
+          (list* 'f args))))
+
+;; my simplified version - does it work?
+(defn build-contract [c]
+  (let [args (first c)] ; grab args
+    (list (into '[f] args) ; build the arglist vector - fist arg is `f` and then all the explicit args
+          ;; build the metadata map with `:pre`/`:post` keys
+          (apply merge
+                 (for [con (rest c)
+                       :let [tag (first con) conditions (vec (rest con))]]
+                   (cond
+                     (= 'require tag)
+                     {:pre conditions}
+
+                     (= 'ensure tag)
+                     {:post conditions}
+
+                     :else (throw (Exception. (str "Unknown tag " tag))))))
+          ;; build the call site - this looks the same as `(cons 'f args)`
+          (list* 'f args))))
+
+
+;; use it like this:
+(def doubler-contract
+  (contract doubler
+    [x]
+    (require (pos? x))
+    (ensure (= (* 2 x) %))))
+
+;; test correct use
+(def times2 (partial doubler-contract #(* 2 %)))
+(times2 9)
+;; => 18
+
+;; test incorrect (:use [ :refer []])
+(def times3 (partial doubler-contract #(* 3 %)))
+#_(times3 9)
+;; Execution error (AssertionError) at clojure-experiments.books.joy-of-clojure.ch08-macros/doubler (form-init8072950533536683414.clj:366).
+;; Assert failed: (= (* 2 x) %)
+
+
+;; let's extend doubler-contract to cover two arities
+
+(def doubler-contract
+  (contract doubler
+    [x]
+    (require (pos? x))
+    (ensure (= (* 2 x) %))
+    [x y]
+    (require (pos? x) (pos? y))
+    (ensure (= % (* 2 (+ x y))))))
+;; test a correct use
+((partial doubler-contract #(+ %1 %1 %2 %2))
+ 2 3)
+;; => 10
+
+;; test an incorrect use
+#_((partial doubler-contract #(* 3 (+ %1 %2)))
+ 2 3)
+;; Execution error (AssertionError) at clojure-experiments.books.joy-of-clojure.ch08-macros/doubler (form-init8072950533536683414.clj:406).
+;; Assert failed: (= % (* 2 (+ x y)))
 
 
