@@ -13,6 +13,9 @@
 (deftest test-most-frequent
   (testing "empty collection"
     (is (nil? (most-frequent []))))
-  (testing "non-empty collection"
+  (testing "non-empty collection of numbers"
     (is (= 2 (most-frequent [2 2 3 4 4 2 1 1 3 2])))
-    (is (= 4 (most-frequent [1 1 4 4 5])))))
+    (is (= 4 (most-frequent [1 1 4 4 5]))))
+  (testing "non-empty heterogenous collection"
+    (is (= 2 (most-frequent [2 2 "hello" 3 4 4 nil 2 1 1 {} 3 2])))
+    (is (= "hello" (most-frequent [1 1 "hello" 4 4 "hello" "hello" 5])))))
