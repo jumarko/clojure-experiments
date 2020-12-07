@@ -2,7 +2,7 @@
   "https://adventofcode.com/2020/day/1.
   Input: https://adventofcode.com/2020/day/1/input"
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]))
+            [clojure-experiments.advent-of-code.2020.utils :refer [read-input]]))
 
 (defn sum-2020
   "Finds two numbers in the expense report that sump up to 2020
@@ -16,10 +16,8 @@
     (when x (* x y))))
 
 (def sample-report [1721 979 366 299 675 1456])
-(def test-report (-> (slurp "src/clojure_experiments/advent-of-code/2020/01.txt")
-                     (str/split #"\n")
-                     (as-> $ (mapv #(Integer/parseInt %) $))
-                      vec))
+(def test-report (read-input 1 #(Integer/parseInt %)))
+
 (sum-2020 test-report)
 ;; => 211899
 
