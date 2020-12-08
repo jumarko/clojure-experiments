@@ -224,4 +224,221 @@ bonobo/x
 ((juxt :os compiler) osx)
 ;; => [:joy.udp/osx "clang"]
 
-#_(ns clojure-experiments.books.joy-of-clojure.ch09-data-and-code)
+;; define shorter ns name to make examples with TreeNode shorter
+(ns joc.records)
+
+
+;;; types, protocols, records (p. 207 - 219)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Record, unlike a map, has a type
+(defrecord TreeNode [val l r])
+;; => joc.records.TreeNode
+
+(TreeNode. 5 nil nil)
+;; => #joc.records.TreeNode{:val 5, :l nil, :r nil}
+
+;; Let's try to implement persistent binary tree with records
+(defrecord TreeNode [val l r])
+
+(defn xconj [t v]
+  (cond
+    (nil? t) (TreeNode. v nil nil)
+    (< v (:val t)) (TreeNode. (:val t) (xconj (:l t) v) (:r t))
+    :else (TreeNode. (:val t) (:l t) (xconj (:r t) v))))
+
+(defn xseq [t]
+  (when t
+    (concat (xseq (:l t))
+            [(:val t)]
+            (xseq (:r t)))))
+
+(def sample-tree (reduce xconj nil [3 5 2 4 5]))
+
+
+;; Imagine a FIXO protocol to describe operations that Queues and Stacks have in common
+(defprotocol FIXO
+  (fixo-push [fixo value])
+  (fixo-pop [fixo])
+  (fixo-peek [fixo]))
+;; => FIXO
+
+;; now implement the protocol
+(extend-type TreeNode
+  FIXO
+  (fixo-push [node value]
+    (xconj node value)))
+
+(xseq (fixo-push sample-tree 5/2))
+;; => (2 5/2 3 4 5 5)
+
+;; extend vectors
+(extend-type clojure.lang.IPersistentVector
+  FIXO
+  (fixo-push [vect value]
+    (conj vect value)))
+
+(fixo-push [2 3 4 5 6] 5/2)
+;; => [2 3 4 5 6 5/2]
+
+;; Gotcha - you have to define all the protocol methods in the extend-type to have them defined
+(defprotocol StringOps
+  (rev [s])
+  (upp [s]))
+
+(extend-type String
+  StringOps
+  (rev [s] (clojure.string/reverse s)))
+(rev "ahoj")
+;; => "joha"
+
+(extend-type String
+  StringOps
+  (upp [s] (clojure.string/upper-case s)))
+(upp "ahoj")
+;; => "AHOJ"
+#_(rev "ahoj")
+;; No implementation of method: :rev of protocol: #'joc.records/StringOps found for class: java.lang.String
+
+
+;; extending protocol to `nil`
+;; - we need to extend FIXO to nil explicitly, because nil is a special type:
+#_(reduce  fixo-push nil [3 5 2 4 6 0])
+;; No implementation of method: :fixo-push of protocol: #'joc.records/FIXO found for class: nil
+
+(extend-type nil
+  FIXO
+  (fixo-push [t v]
+    (TreeNode. v nil nil)))
+(xseq (reduce  fixo-push nil [3 5 2 4 6 0]))
+;; => (0 2 3 4 5 6)
+
+
+;; If we need to share protocol methods/code between multiple types
+;; we can use more advanced `extend` construct
+;; You first define a map of functions ...
+(def tree-node-fixo
+  {:fixo-push (fn [node value]
+                (xconj node value))
+   :fixo-peek (fn [node] (if (:l node)
+                           (recur (:l node))
+                           (:val node)))
+   :fixo-pop (fn [node] (if (:l node)
+                          (TreeNode. (:val node) (fixo-pop (:l node)) (:r node))
+                          (:r node)))})
+
+;; ... and then you can use it (and merge it with anything else):
+(extend TreeNode FIXO tree-node-fixo)
+(fixo-peek sample-tree)
+;; => 2
+(fixo-pop sample-tree)
+;; => #joc.records.TreeNode{:val 3, :l nil, :r #joc.records.TreeNode{:val 5, :l #joc.records.TreeNode{:val 4, :l nil, :r nil}, :r #joc.records.TreeNode{:val 5, :l nil, :r nil}}}
+
+;; You could then use tree-node-fixo for another type and just override one of the methods, e.g.
+(defrecord TreeNodeUnmodifiable [])
+(extend TreeNodeUnmodifiable
+  FIXO
+  (merge tree-node-fixo {:fixo-push (fn [_ _] (throw (IllegalStateException. "Cannot modify")))}))
+#_(fixo-push (TreeNodeUnmodifiable.) 1)
+
+;; you can also examine protocol's implementation details
+;; - check `:impls` and `:method-builders`
+;; - see also `satisfies?`
+(:impls FIXO)
+;; => {joc.records.TreeNode
+;;     {:fixo-push #function[joc.records/fn--15839],
+;;      :fixo-peek #function[joc.records/fn--15841],
+;;      :fixo-pop #function[joc.records/fn--15843]},
+;;     clojure.lang.IPersistentVector {:fixo-push #function[joc.records/eval20835/fn--20836]},
+;;     nil {:fixo-push #function[joc.records/eval20892/fn--20893]},
+;;     joc.records.TreeNodeUnmodifiable
+;;     {:fixo-push #function[joc.records/eval20519/fn--20520],
+;;      :fixo-peek #function[joc.records/fn--15841],
+;;      :fixo-pop #function[joc.records/fn--15843]},
+;;     joc.records.TreeNode
+;;     {:fixo-push #function[joc.records/fn--20898],
+;;      :fixo-peek #function[joc.records/fn--20900],
+;;      :fixo-pop #function[joc.records/fn--20902]},
+;;     joc.records.TreeNodeUnmodifiable
+;;     {:fixo-push #function[joc.records/eval20928/fn--20929],
+;;      :fixo-peek #function[joc.records/fn--20900],
+;;      :fixo-pop #function[joc.records/fn--20902]}}(:var FIXO)
+
+
+;; we can implement protocol directly when defining defrecord
+
+(defrecord TreeNode [val l r]
+  FIXO
+  (fixo-push [t v]
+    (if (< v val)
+      (TreeNode. val (fixo-push l v) r)
+      (TreeNode. val l (fixo-push r v))))
+  (fixo-peek [t]
+    (if l
+      (fixo-peek l) ; notice calling fixo-peek instead of using `recur` => recur isn't polymorphic!
+      val))
+  (fixo-pop [t]
+    (if l
+      (TreeNode. val (fixo-pop l) r)
+      r)))
+
+(def sample-tree2 (reduce fixo-push (TreeNode. 3 nil nil) [5 2 4 6]))
+(xseq sample-tree2);; => (2 3 4 5 6)
+
+
+;; we have been using `xseq` because our defrecord cannot implement `clojure.lang.ISeq`
+;; (it's implemented automatically by defrecord)
+;; But we may use `deftype` (that doesn't implement anything automatically)
+
+#_(defrecord InfiniteConstant [i]
+  clojure.lang.ISeq
+  (seq [this]
+    (lazy-seq (cons i (seq this)))))
+;;=> Duplicate method name "seq" with signature "()Lclojure.lang.ISeq;" in class file joc/records/InfiniteConstant
+
+(deftype InfiniteConstant [i]
+  clojure.lang.ISeq
+  (seq [this]
+    (lazy-seq (cons i (seq this)))))
+(take 3 (InfiniteConstant. 5))
+;; => (5 5 5)
+
+
+;;; Putting it all together: a fluent builder for chess moves (p. 219 - 223)
+
+;; p .221: Instead of having a special Move class in Java
+;; we just use a plain map:
+{:from "e7" :to "e8" :castle? false :promotion \Q}
+
+;; now existing sequence functions just work:
+(defn build-move [& pieces]
+  (apply hash-map pieces))
+(build-move :from "e7" :to "e8" :promotion \Q)
+;; => {:from "e7", :promotion \Q, :to "e8"}
+
+;; but using a plain map we cannot define our own toString representation
+;; => try defrecord
+(defrecord Move [from to castle? promotion]
+  Object
+  (toString [this]
+    (format "Move %s to %s%s%s"
+            from
+            to
+            (if castle? " castle" "")
+            (if promotion (str " promote to " promotion) ""))))
+
+(str (Move. "e2" "e4" nil nil))
+;; => "Move e2 to e4"
+
+(str (Move. "e7" "e8" nil \Q))
+;; => "Move e7 to e8 promote to Q"
+
+;; now we can improve our build-move function
+(defn build-move [& {:keys [from to castle? promotion]}]
+  {:pre [from to]}
+  (Move. from to castle? promotion))
+(str (build-move :from "e2" :to "e4"))
+;; => "Move e2 to e4"
+#_(build-move :to "e4")
+;; Assert failed: from
+
