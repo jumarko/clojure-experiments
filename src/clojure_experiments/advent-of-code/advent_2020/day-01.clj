@@ -1,4 +1,4 @@
-(ns clojure-experiments.advent-of-code.2020.01
+(ns clojure-experiments.advent-of-code.advent-2020.day-01
   "https://adventofcode.com/2020/day/1.
   Input: https://adventofcode.com/2020/day/1/input"
   (:require [clojure.test :refer [deftest is testing]]
