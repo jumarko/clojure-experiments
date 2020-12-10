@@ -65,12 +65,11 @@
 
 (defn highest-id [seats-input]
   (->> seats-input
-       (mapv string-to-seat)
-       (mapv seat-id)
+       (mapv (comp seat-id string-to-seat))
        (apply max)))
-(highest-id test-input);; => 980
+(highest-id test-input)
+;; => 980
 
- 
 
 ;;; Part 2 - find your seat.
 
@@ -111,3 +110,5 @@
 (seat-id (find-my-seat test-input))
 ;; => 607
 ;; seat: [75 7]
+
+;; alternative solution from Lambdaislan (plexus): https://youtu.be/eNMJH_GZld0?list=TLPQMDkxMjIwMjC-LE4UoIP7Lw&t=1394
