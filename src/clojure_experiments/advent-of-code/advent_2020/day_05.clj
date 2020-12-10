@@ -71,3 +71,43 @@
 (highest-id test-input);; => 980
 
  
+
+;;; Part 2 - find your seat.
+
+(defn all-seats [max-row]
+  (for [row (range max-row)
+        col (range 8)]
+    [row col]))
+(take 10 (all-seats 66))
+;; => ([0 0] [0 1] [0 2] [0 3] [0 4] [0 5] [0 6] [0 7] [1 0] [1 1])
+
+(defn max-row [seats]
+  (->> seats sort (mapv first) (apply max) ))
+(max-row (mapv string-to-seat test-input))
+;; => 122
+
+(defn missing-seats [seats]
+  ;; using sorted-set just for easier visual check
+  (into (sorted-set) (set/difference (set (all-seats (max-row seats)))
+                                     (set seats))))
+
+(defn find-my-seat
+  "It should be the only missing seat, BUT:
+  - some of the seats at the very fron tand back of the plane don't exist on this aircraft.
+  - your seat wasn't at the very front or back"
+  [test-input]
+  (let [missing (missing-seats (mapv string-to-seat test-input))
+        my-seats (remove (fn [[row col :as seat]]
+                           ;; my seat is such that seats +/- 1 of it won't be missing
+                           ;; `mod` is used to achieve proper 'overflow' of column numbers
+                           ;; into the preceding/next row
+                           (or (missing [row (mod (dec col) 8)])
+                               (missing [row (mod (inc col) 8)])))
+                         missing)]
+    (assert (= 1 (count my-seats))
+            (str "expected only one seat but got: " (pr-str my-seats)))
+    (first my-seats)))
+
+(seat-id (find-my-seat test-input))
+;; => 607
+;; seat: [75 7]
