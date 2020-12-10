@@ -4,7 +4,8 @@
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
             [clojure.string :as str]
             
-            ))
+
+            [clojure.set :as set]))
 
 (def sample-input-one-group
   "abcx
@@ -52,3 +53,17 @@ b")
 
 (count-yes-questions test-input)
 ;; => 6703
+
+
+;;; Part 2: count questions to which _everyone_ answered yes
+
+(defn- count-group-yes-questions [group]
+  (count (apply set/intersection (mapv set group))))
+
+(count-yes-questions sample-input-one-group)
+;; => 3
+(count-yes-questions sample-input-multiple-groups)
+;; => 6
+
+(count-yes-questions test-input)
+;; => 3430
