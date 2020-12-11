@@ -2,8 +2,6 @@
   "https://adventofcode.com/2020/day/3
   Input: https://adventofcode.com/2020/day/3/input"
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
-            [clojure.spec.alpha :as s]
-            [clojure.test :refer [deftest is testing]]
             [clojure.string :as str]))
 
 (def sample-input

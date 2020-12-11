@@ -4,7 +4,6 @@
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
             [clojure.test :refer [deftest is testing are]]
             [clojure.string :as str]
-            [clojure.set :as set]
             [clojure.spec.alpha :as s]))
 
 ;;;; Explore nearby boarding passes.

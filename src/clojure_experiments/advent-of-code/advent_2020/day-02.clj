@@ -1,7 +1,7 @@
 (ns clojure-experiments.advent-of-code.advent-2020.day-02
   "https://adventofcode.com/2020/day/2
   Input: https://adventofcode.com/2020/day/2/input"
-  (:require [clojure-experiments.advent-of-code.2020.utils :refer [read-input]]
+  (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
             [clojure.spec.alpha :as s]
             [clojure.test :refer [deftest is testing]]
             [clojure.string :as str]))

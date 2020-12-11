@@ -2,7 +2,7 @@
   "https://adventofcode.com/2020/day/1.
   Input: https://adventofcode.com/2020/day/1/input"
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure-experiments.advent-of-code.2020.utils :refer [read-input]]))
+            [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]))
 
 (defn sum-2020
   "Finds two numbers in the expense report that sump up to 2020

@@ -3,8 +3,6 @@
   Input: https://adventofcode.com/2020/day/6/input"
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
             [clojure.string :as str]
-            
-
             [clojure.set :as set]))
 
 (def sample-input-one-group
