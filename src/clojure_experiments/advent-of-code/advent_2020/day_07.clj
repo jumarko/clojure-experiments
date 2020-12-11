@@ -62,6 +62,18 @@ dotted black bags contain no other bags.")
 
 (def test-rules (into {} (read-input 7 parse-rule)))
 
+;; TODO juraj: would be useful to have color-graph to be able to use it in part 2
+;; => SKIPPED
+(defn color-graph [color-map]
+  (into {}
+        (mapv
+         (fn [[color deps]]
+           [color
+            (set (mapcat #(get color-map (:bag/color %)) deps))])
+         color-map)))
+
+(color-graph sample-rules)
+
 (defn transitive-colors [color-map]
   (into {}
         (mapv
@@ -93,4 +105,27 @@ dotted black bags contain no other bags.")
   "shiny gold"))
 ;; "Elapsed time: 553.702664 msecs"
 ;; => 300
+
+
+;;; part 2: how many individual bags are required inside your single shiny gold bag?
+(defn count-required-bags
+  [rules bag-color]
+  (->> (get (transitive-colors rules)
+            bag-color)
+       (mapv :bag/count)
+       (apply +)))
+
+(def sample2-input
+  "shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.")
+(def sample2-rules
+  (->> (str/split sample-input #"\n") (mapv parse-rule) (into {})))
+
+(count-required-bags sample2-rules "shiny gold")
+;; => 21
 
