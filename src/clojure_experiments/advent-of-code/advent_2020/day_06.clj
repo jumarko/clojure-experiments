@@ -1,4 +1,4 @@
-(ns clojure-experiments.advent-of-code.advent-2020.day06
+(ns clojure-experiments.advent-of-code.advent-2020.day-06
   "https://adventofcode.com/2020/day/6
   Input: https://adventofcode.com/2020/day/6/input"
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
