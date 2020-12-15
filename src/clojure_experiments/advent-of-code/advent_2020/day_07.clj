@@ -2,9 +2,7 @@
   "https://adventofcode.com/2020/day/7
   Input: https://adventofcode.com/2020/day/7/input"
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
-            [clojure.string :as str]
-            [clojure.set :as set]
-            [com.stuartsierra.dependency :as dep]))
+            [clojure.string :as str]))
 
 ;;;; This is about navigating a graph of bags
 ;;;; Some useful Clojure graph libraries:
