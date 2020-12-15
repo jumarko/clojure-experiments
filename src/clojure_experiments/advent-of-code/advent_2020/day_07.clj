@@ -3,7 +3,8 @@
   Input: https://adventofcode.com/2020/day/7/input"
   (:require [clojure-experiments.advent-of-code.advent-2020.utils :refer [read-input]]
             [clojure.string :as str]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [com.stuartsierra.dependency :as dep]))
 
 ;;;; This is about navigating a graph of bags
 ;;;; Some useful Clojure graph libraries:
@@ -62,18 +63,6 @@ dotted black bags contain no other bags.")
 
 (def test-rules (into {} (read-input 7 parse-rule)))
 
-;; TODO juraj: would be useful to have color-graph to be able to use it in part 2
-;; => SKIPPED
-(defn color-graph [color-map]
-  (into {}
-        (mapv
-         (fn [[color deps]]
-           [color
-            (set (mapcat #(get color-map (:bag/color %)) deps))])
-         color-map)))
-
-(color-graph sample-rules)
-
 (defn transitive-colors [color-map]
   (into {}
         (mapv
@@ -110,10 +99,10 @@ dotted black bags contain no other bags.")
 ;;; part 2: how many individual bags are required inside your single shiny gold bag?
 (defn count-required-bags
   [rules bag-color]
-  (->> (get (transitive-colors rules)
-            bag-color)
-       (mapv :bag/count)
-       (apply +)))
+  (let [transitives (transitive-colors rules)]
+    (->> (get transitives bag-color)
+         (mapv :bag/count)
+         (apply +))))
 
 (def sample2-input
   "shiny gold bags contain 2 dark red bags.
@@ -127,5 +116,57 @@ dark violet bags contain no other bags.")
   (->> (str/split sample-input #"\n") (mapv parse-rule) (into {})))
 
 (count-required-bags sample2-rules "shiny gold")
+;; Should be 126!
 ;; => 21
 
+
+;;; So the above approach doesn't work because it "flattens"
+;;; the dependencies and thus we cannot properly multiply
+;;; the bags counts.
+;;; Instead we need to preserve the graph structure
+;;; and only compute counts on demand
+
+
+(defn subgraph [color-map node]
+  (lazy-seq
+   (if-let [deps (seq (get color-map (:bag/color node)))]
+     (map (fn [dep] (cons dep (subgraph color-map dep)))
+          deps)
+     nil)))
+(subgraph sample-rules #:bag{:color "shiny gold"})
+;; => ((#:bag{:color "vibrant plum", :count 2}
+;;      (#:bag{:color "faded blue", :count 5})
+;;      (#:bag{:color "dotted black", :count 6}))
+;;     (#:bag{:color "dark olive", :count 1}
+;;      (#:bag{:color "faded blue", :count 3})
+;;      (#:bag{:color "dotted black", :count 4})))
+
+(defn make-graph [color-map]
+  (into {} (map (fn [[color _]]
+                  [color (subgraph color-map #:bag{:color color})])
+                color-map)))
+
+(def bag-graph (make-graph sample-rules))
+
+;;; Constructing the graph was an interesting exercise
+;;; But I don't need that!
+;;; It's much easier to just count the dependencies as we go
+(defn count-required-bags2
+  [rules {:bag/keys [color count] :as bag}]
+  (let [inner-bags-count
+        (->> (get rules (:bag/color bag))
+             (mapv (fn [{:bag/keys [_ count] :as inner-bag}]
+                     (count-required-bags2 rules inner-bag)))
+             (apply +))]
+    (if (zero? inner-bags-count)
+      count
+      (+ count (* count inner-bags-count)))))
+;; => #'clojure-experiments.advent-of-code.advent-2020.day-07/count-required-bags2
+
+(dec (count-required-bags2 sample2-rules #:bag {:color "shiny gold"
+                                            :count 1}))
+;; => 32
+(time (dec (count-required-bags2 test-rules #:bag {:color "shiny gold"
+                                              :count 1})))
+;; "Elapsed time: 0.308957 msecs"
+;; => 8030
