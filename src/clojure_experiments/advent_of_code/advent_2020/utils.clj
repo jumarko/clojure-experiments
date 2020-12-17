@@ -13,7 +13,7 @@
   ([puzzle-number parse-line-fn]
    (read-input puzzle-number parse-line-fn #"\R"))
   ([puzzle-number parse-line-fn split-regex]
-   (let [content (slurp (format "src/clojure_experiments/advent-of-code/advent_2020/%02d.txt" puzzle-number))]
+   (let [content (slurp (format "src/clojure_experiments/advent_of_code/advent_2020/%02d.txt" puzzle-number))]
      (if parse-line-fn
        (mapv parse-line-fn (str/split content split-regex))
        content))))
