@@ -216,8 +216,17 @@
   :java-source-paths ["src/java"]
   :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
              "-Djdk.attach.allowAttachSelf=true"
+             ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
+             "--add-modules=jdk.hotspot.agent"
+             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"
+             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED"
+             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
+             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
+             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
              ;; just as an example of overriding default configuration values
-             "-Dconf=my-config.edn"]
+             "-Dconf=my-config.edn"
+             ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
+             "-XX:+ShowCodeDetailsInExceptionMessages"]
   :main ^:skip-aot clojure-experiments.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
