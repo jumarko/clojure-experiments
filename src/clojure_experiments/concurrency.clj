@@ -253,3 +253,26 @@
     (catch Throwable t
       (log/error t "Failed to persist the reported error: " description))))
 
+;; finally blocks vs interrupted threads => works just fine
+(comment
+  (def my-future
+    (future
+      (Thread/sleep 10000)
+      (println "Normally.")
+      (finally
+        (println "Finally!"))))
+  ;; finally still executed
+  (future-cancel my-future)
+
+  (def my-thread (Thread.
+                  (fn []
+                    (try
+                      (Thread/sleep 10000)
+                      (println "Normally.")
+                      (finally
+                        (println "Finally!"))))))
+  (.start my-thread)
+  ;; finally still executed
+  (.interrupt my-thread)
+  ;;
+  )
