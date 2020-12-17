@@ -83,18 +83,18 @@
 (def sample-invalid-number (ffirst (invalid-numbers 5 sample-numbers)))
 (def test-invalid-number (ffirst (invalid-numbers 25 test-numbers)))
 
-(defn find-sets-producting-invalid-number [numbers invalid-number]
+(defn find-sets-producing-invalid-number [numbers invalid-number]
   (->> (all-contiguous-sets numbers)
        (filter #(= invalid-number (apply + %)))))
 
-(find-sets-producting-invalid-number sample-numbers sample-invalid-number)
+(find-sets-producing-invalid-number sample-numbers sample-invalid-number)
 ;; => ((15 25 47 40))
 
 (defn encryption-weakness
   "Picks first contiguous set productin given invalid number
   and computes a sum of its min and max element."
   [numbers invalid-number]
-  (->> (find-sets-producting-invalid-number numbers invalid-number)
+  (->> (find-sets-producing-invalid-number numbers invalid-number)
        first
        ((juxt #(apply min %) #(apply max %)))
        (apply +)))
