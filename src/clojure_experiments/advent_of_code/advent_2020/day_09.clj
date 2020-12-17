@@ -63,7 +63,8 @@
 (ffirst (invalid-numbers 5 sample-numbers))
 ;; => 127
 
-(ffirst (invalid-numbers 25 test-numbers))
+(time (ffirst (invalid-numbers 25 test-numbers)))
+;; "Elapsed time: 20.732429 msecs"
 ;; => 1492208709
 
 
@@ -100,7 +101,8 @@
        (apply +)))
 (encryption-weakness sample-numbers sample-invalid-number)
 ;; => 62
-(encryption-weakness test-numbers test-invalid-number)
+(time (encryption-weakness test-numbers test-invalid-number))
+;; "Elapsed time: 49.159589 msecs"
 ;; => 238243506
 
 
