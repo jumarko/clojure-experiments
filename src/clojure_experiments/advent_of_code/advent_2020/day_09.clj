@@ -67,3 +67,40 @@
 ;; => 1492208709
 
 
+;;; Part 2 - find a contiguous set of at least two numbers
+;;; that give the "invalid number" from Part 1.
+
+(defn all-contiguous-sets [numbers]
+  (mapcat
+   (fn [set-size] (partition set-size 1 numbers))
+   (range 2 (inc (count numbers))))
+  ;; alternative using `for` - but this returns a nested collection
+  #_(for [set-size (range 2 (inc (count numbers)))]
+    (partition set-size 1 numbers)))
+
+#_(all-contiguous-sets sample-numbers)
+
+(def sample-invalid-number (ffirst (invalid-numbers 5 sample-numbers)))
+(def test-invalid-number (ffirst (invalid-numbers 25 test-numbers)))
+
+(defn find-sets-producting-invalid-number [numbers invalid-number]
+  (->> (all-contiguous-sets numbers)
+       (filter #(= invalid-number (apply + %)))))
+
+(find-sets-producting-invalid-number sample-numbers sample-invalid-number)
+;; => ((15 25 47 40))
+
+(defn encryption-weakness
+  "Picks first contiguous set productin given invalid number
+  and computes a sum of its min and max element."
+  [numbers invalid-number]
+  (->> (find-sets-producting-invalid-number numbers invalid-number)
+       first
+       ((juxt #(apply min %) #(apply max %)))
+       (apply +)))
+(encryption-weakness sample-numbers sample-invalid-number)
+;; => 62
+(encryption-weakness test-numbers test-invalid-number)
+;; => 238243506
+
+
