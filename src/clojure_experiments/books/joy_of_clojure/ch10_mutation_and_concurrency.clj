@@ -6,7 +6,11 @@
   - locks (10.5)
   - vars and dynamic binding (10.6)
   "
-  (:require [clojure-experiments.books.joy-of-clojure.ch05-collections :as ch05])
+  (:require
+   [clojure-experiments.books.joy-of-clojure.ch05-collections :as ch05]
+   [clojure.core :as clj]
+   [clojure.core.async :as a])
+  (:refer-clojure :exclude [aget aset count seq])
   (:import java.util.concurrent.Executors))
 
 
@@ -234,5 +238,134 @@
 "Elapsed time: 1001.367097 msecs"
 
 
+;;; Locking (p. 252 - 255)
+
+(defprotocol SafeArray
+  (aset [this i f])
+  (aget [this i])
+  (count [this])
+  (seq [this])
+  )
+
+;; Locking 1: dummy implementation with no locking => unsafe
+(defn make-dumb-array [t sz]
+  (let [a (make-array t sz)]
+    (reify SafeArray
+      (count [_] (clj/count a))
+      (seq [_] (clj/seq a))
+      (aget [_ i] (clj/aget a i))
+      (aset [this i f] (clj/aset a i (f (aget this i)))))))
+
+(defn pummel [a]
+  (dothreads! #(dotimes [i (count a)]
+                 ;; this may help to visualize what's going on
+                 ;; each thread should increment every element once
+                 ;; => 100 threads should increment every element from 0 to 100
+                 #_(println i (aget a i))
+                 (aset a i inc))
+              :threads 100))
+(def D (make-dumb-array Integer/TYPE 8))
+(time (pummel D))
+(seq D)
+;; Should have 100 in each slot!
+;; => (38 63 55 63 60 40 66 61)
 
 
+;; Locking 2: safe implementation with coarse grained locks => contention
+(defn make-safe-array [t sz]
+  (let [a (make-array t sz)]
+    (reify SafeArray
+      (count [_] (clj/count a))
+      (seq [_] (clj/seq a))
+      ;; is locking really neccessary for aget? what could happen?
+      (aget [_ i] (locking a
+                    (clj/aget a i)))
+      (aset [this i f] (locking a
+                         (clj/aset a i (f (aget this i))))))))
+
+(def A (make-safe-array Integer/TYPE 8))
+;; => #'clojure-experiments.books.joy-of-clojure.ch10-mutation-and-concurrency/A
+(time (pummel A))
+(seq A)
+;; => (100 100 100 100 100 100 100 100)
+
+
+;; Locking 3: smart implementation using different read/write locks
+;; Using ReentrantLock
+(import 'java.util.concurrent.locks.ReentrantLock)
+
+(defn lock-i [target-index num-locks]
+  (mod target-index num-locks))
+
+(defn make-smart-array [t sz]
+  (let [a (make-array t sz)
+        locks-count (/ sz 2) ; here we are using number of locks half the size of the array
+        locks (into-array (take locks-count (repeatedly #(ReentrantLock.))))]
+    (reify SafeArray
+      (count [_] (clj/count a))
+      (seq [_] (clj/seq a))
+      (aget [_ i]
+        (let [lk (clj/aget locks (lock-i i locks-count))]
+          (.lock lk)
+          (try
+            (clj/aget a i)
+            (finally
+              (.unlock lk)))))
+      (aset [this i f]
+        (let [lk (clj/aget locks (lock-i i locks-count))]
+          (.lock lk)
+          (try
+            (clj/aget a i)
+            (finally
+              (.unlock lk))))
+        (locking a
+          (clj/aset a i (f (aget this i))))))))
+
+(def S (make-smart-array Integer/TYPE 8))
+;; => #'clojure-experiments.books.joy-of-clojure.ch10-mutation-and-concurrency/A
+(time (pummel S))
+(seq S)
+;; => (100 100 100 100 100 100 100 100)
+
+;;; Vars (p. 256 - 261)
+;; with-local-vars is interesting -> doesn't create an interned var, only local
+;; on p. 259
+(def x 42)
+{:out-var-value x
+ :with-locals (with-local-vars [x 9]
+                {:local-var x
+                 :local-var-value (var-get x)})}
+;; => {:out-var-value 42,
+;;     :with-locals {:local-var #<Var: --unnamed-->,
+;;                   :local-var-value 9}}
+
+(resolve 'x)
+;; => #'clojure-experiments.books.joy-of-clojure.ch10-mutation-and-concurrency/x
+(bound? #'x)
+;; => true
+(thread-bound? #'x)
+;; => false
+
+(with-local-vars [x 9 y 10]
+  {:x {:resolve (resolve 'x)
+       :bound? (bound? x)
+       :thread-bound? (thread-bound? x)}
+   :y {:resolve (resolve 'y)
+       :bound? (bound? y)
+       :thread-bound? (thread-bound? y)}})
+;; => {:x
+;;     {:resolve #'clojure-experiments.books.joy-of-clojure.ch10-mutation-and-concurrency/x,
+;;      :bound? true,
+;;      :thread-bound? true},
+;;     :y {:resolve nil, :bound? true, :thread-bound? true}}
+
+;; Beware of macros built on top of `binding`
+;; like `with-out-str` and `with-precision`
+#_(with-precision 4
+  (map (fn [x] (/ x 3)) (range 1M 4M)))
+;;=>  Non-terminating decimal expansion; no exact representable decimal result.
+
+;; Solve this by using bound-fn
+(with-precision 4
+  (map (bound-fn [x] (/ x 3)) (range 1M 4M)))
+;; => (0.3333M 0.6667M 1M)
