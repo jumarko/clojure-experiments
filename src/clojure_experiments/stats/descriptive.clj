@@ -5,7 +5,7 @@
             [medley.core :as m])
   (:import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics))
 
-(def selected-keys [:min :max :mean :standard-deviation :sum :count])
+(def selected-keys [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum :count])
 
 (s/fdef describe
   :args (s/cat :data (s/every double?))
