@@ -1,5 +1,3 @@
-(ns clojure-experiments.collections
-  "See also experiments.clj"
   (:require [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -287,3 +285,23 @@ db
 ;; => ({:year 2020, :title "Clojure: The Essential Reference"}
 ;;     {:year 2019, :title "BPF Performance Tools"}
 ;;     {:year 2019, :title "Pragmatic Programmer"})
+
+
+
+;; order of keys/vals in a hashmap is consistent with `seq`
+;; but only within the same hashmap: https://clojurians.slack.com/archives/C053AK3F9/p1609787876129600?thread_ts=1609773432.105500&cid=C053AK3F9
+(def m1 (-> {} (assoc 0 :added-first) (assoc 92612215 :added-second)))
+(keys m1)
+;; => (0 92612215)
+(def m2 (-> {} (assoc 92612215 :added-first) (assoc 0 :added-second)))
+(keys m2)
+;; => (92612215 0)
+
+(def m1h (-> (hash-map :very-first -1) (assoc 0 :added-first) (assoc 92612215 :added-second)))
+(keys m1h)
+;; => (0 92612215 :very-first)
+(def m2h (-> (hash-map :very-first -1) (assoc 92612215 :added-first) (assoc 0 :added-second)))
+(keys m2h)
+;; => (92612215 0 :very-first)
+
+
