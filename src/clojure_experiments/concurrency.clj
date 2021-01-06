@@ -276,3 +276,15 @@
   (.interrupt my-thread)
   ;;
   )
+
+
+;; realized? is block on delay while it's waiting for realization:
+(def myd (delay (Thread/sleep 2000)))
+;; returns immediatelly
+(realized? myd)
+;; => false
+(comment 
+  (future @myd)
+  ;; blocked until the delay is "realized" in the future above
+  (realized? myd))
+
