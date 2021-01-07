@@ -17,8 +17,7 @@
   `(future
      (try ~@body
           (catch Throwable e#
-            (println e#)
-            (throw e#)))))
+            (println e#)))))
 
 #_(logging-future (Thread/sleep 20) (/ 1 0))
 (let [start (System/nanoTime)] 
@@ -36,12 +35,11 @@
 
 (defn logging-future+* [body]
   `(let [client-stack-trace# (client-trace)]
-     (future 
+     (future
        (try ~@body
             (catch Throwable e#
               (log/error e#)
-              (log/error client-stack-trace# "Submitting client stack-trace:")
-              (throw e#))))))
+              (log/error client-stack-trace# "client stack trace:"))))))
 
 
 (defmacro logging-future+
