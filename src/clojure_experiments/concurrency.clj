@@ -30,11 +30,8 @@
 
 ;;; Now we get some extra goodies by preserving also the client stacktrace
 ;;; See https://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
-(defn- client-trace []
-  (Exception. "Client stack trace"))
-
 (defn logging-future+* [file line body]
-  `(let [client-stack-trace# (client-trace)]
+  `(let [client-stack-trace# (Exception. "Client stack trace")]
      (future
        (try ~@body
             (catch Throwable e#
@@ -43,8 +40,6 @@
                        "on thread:"
                        (.getName (Thread/currentThread)))
               (log/error client-stack-trace# "client stack trace:"))))))
-
-
 (defmacro logging-future+
   "Logs any error that occurs during the execution of given body in a `future`
   *including* the client stack trace at the time of submitting the future for execution."
@@ -52,7 +47,6 @@
   (logging-future+* *file*
                     (:line (meta &form))
                     body))
-
 #_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
 ;; an improved version of logging-future (logged-future) shared by Sean Corfield:
