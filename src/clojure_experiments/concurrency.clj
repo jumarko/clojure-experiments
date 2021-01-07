@@ -16,7 +16,7 @@
 (defmacro logging-future [& body]
   `(future
      (try ~@body
-          (catch Exception e#
+          (catch Throwable e#
             (println e#)
             (throw e#)))))
 
@@ -38,7 +38,7 @@
   `(let [client-stack-trace# (client-trace)]
      (future 
        (try ~@body
-            (catch Exception e#
+            (catch Throwable e#
               (log/error e#)
               (log/error client-stack-trace# "Submitting client stack-trace:")
               (throw e#))))))
