@@ -52,6 +52,23 @@
 
 #_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
+;; an improved version of logging-future (logged-future) shared by Sean Corfield:
+;; https://groups.google.com/u/1/g/clojure/c/t3Pp8l9Pe4A
+(defmacro logged-future
+  "Given a body, execute it in a try/catch and log any errors."
+  [& body]
+  (let [line (:line (meta &form))
+        file *file*]
+    `(future
+       (try
+         ~@body
+         (catch Throwable t#
+           (println t# "Unhandled exception at:"
+                    ~file "line:" ~line
+                    "on thread:"
+                    (.getName (Thread/currentThread))))))))
+
+#_(logged-future (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
 ;;; pmap related experiments
 ;;; `map-throttled` it's similar to `pmap` but runs in the same thread
