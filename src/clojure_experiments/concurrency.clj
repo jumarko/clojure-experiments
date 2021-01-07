@@ -33,12 +33,15 @@
 (defn- client-trace []
   (Exception. "Client stack trace"))
 
-(defn logging-future+* [body]
+(defn logging-future+* [file line body]
   `(let [client-stack-trace# (client-trace)]
      (future
        (try ~@body
             (catch Throwable e#
-              (log/error e#)
+              (log/error e# "Unhandled exception at:"
+                       ~file "line:" ~line
+                       "on thread:"
+                       (.getName (Thread/currentThread)))
               (log/error client-stack-trace# "client stack trace:"))))))
 
 
@@ -46,7 +49,9 @@
   "Logs any error that occurs during the execution of given body in a `future`
   *including* the client stack trace at the time of submitting the future for execution."
   [& body]
-  (logging-future+* body))
+  (logging-future+* *file*
+                    (:line (meta &form))
+                    body))
 
 #_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
