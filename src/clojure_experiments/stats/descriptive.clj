@@ -36,7 +36,11 @@
 ;; => {:min 18.0, :perc95 77.0, :mean 41.1422287390029, :standard-deviation 22.398382172681043, :median-confidence [32.85124062839878 35.14875937160122], :median 34.0, :max 261.0, :count 682, :perc25 28.0, :mean-confidence [39.458217043083515 42.82624043492229], :perc75 48.0, :sum 28059.0}
 
 (defn describe-as-ints [data]
-  (m/map-vals int (describe data)))
+  (m/map-vals (fn [val]
+                (if (number? val)
+                  (int val)
+                  (mapv int val)))
+              (describe data)))
 
 (defn describe-as-vector
   "Same as `describe` but returns a simple vector of statistics values preserving order
