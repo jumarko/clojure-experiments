@@ -245,3 +245,248 @@
 #_(rich-ui gui)
 
 
+;;; Java arrays (p. 292 - 297)
+;;;
+
+;; Clojure compiler can never resolve the correct call
+;; if we use reference array instead of a primitive array
+;; here `.append` accepts a primitive array
+(str (doto (StringBuilder. "abc")
+   (.append (into-array [\x \y \z]))))
+;; => "abc[Ljava.lang.Character;@1426536"
+;; So it actually called StringBuilder.append(Object) method
+
+(type (into-array [\x \y \z]))
+;; => [Ljava.lang.Character;
+
+;;=> we need primitive array
+(str (doto (StringBuilder. "abc")
+       (.append (char-array [\x \y \z]))))
+;; => "abcxyz"
+
+
+;; make-array and into-array can be used to create primitive arrays
+(let [ary (make-array Long/TYPE 3 3)] ; this creates 2-D array
+  (dotimes [i 3]
+    (dotimes [j 3]
+      (aset ary i j (+ i j))))
+  (map seq ary))
+;; => ((0 1 2) (1 2 3) (2 3 4))
+
+(into-array Integer/TYPE [1 2 3])
+;; => #object["[I" 0x15ef7772 "[I@15ef7772"]
+
+;; creating reference type arrays
+(into-array ["a" "b" "c"])
+;; => #object["[Ljava.lang.String;" 0xeefbf9 "[Ljava.lang.String;@eefbf9"]
+
+(into-array [(java.util.Date.) (java.sql.Time. 0)]) ; notice that `Time` extends `Date`
+;; => #object["[Ljava.util.Date;" 0xacf7780 "[Ljava.util.Date;@acf7780"]
+
+#_(into-array ["a" "b" 1M])
+;; => array element type mismatch
+
+;; use to-array to make heterogenous array of Object-s
+(to-array-2d [[1 2 3]
+              [4 5 6]])
+;; => #object["[[Ljava.lang.Object;" 0x4f6de1e4 "[[Ljava.lang.Object;@4f6de1e4"]
+(to-array ["a" 1M #(%) (proxy [Object] [])])
+;; => #object["[Ljava.lang.Object;" 0x704189b3 "[Ljava.lang.Object;@704189b3"]
+
+;; - it autoboxes primitives!
+(to-array [1 2 3])
+;; => #object["[Ljava.lang.Object;" 0x49994161 "[Ljava.lang.Object;@49994161"]
+(into-array Integer/TYPE [1 2 3])
+;; => #object["[I" 0x39b658f6 "[I@39b658f6"]
+
+(type (to-array [1 2 3]))
+;; => [Ljava.lang.Object;
+(type (into-array [1 2 3]))
+;; => [Ljava.lang.Long;
+(type (into-array Integer/TYPE [1 2 3]))
+;; => [I
+(type (int-array [1 2 3]))
+;; => [I
+(type (aget (int-array [1 2 3])
+            0))
+;; => java.lang.Integer
+
+(into-array Integer [(int 1)])
+;; => #object["[Ljava.lang.Integer;" 0x20b9dc33 "[Ljava.lang.Integer;@20b9dc33"]
+
+;; Array mutability (p. 294)
+(def ary (into-array [1 2 3]))
+(def sary (seq ary))
+sary
+;; => (1 2 3)
+(aset ary 0 42)
+sary
+;; => (42 2 3)
+
+
+;; multimethods
+(defmulti what-is class)
+(defmethod what-is
+  (Class/forName "[Ljava.lang.String;")
+  [_]
+  "1d String")
+(defmethod what-is
+  (Class/forName "[[Ljava.lang.Object;")
+  [_]
+  "2d Object")
+(defmethod what-is
+  (Class/forName "[[[[I")
+  [_]
+  "Primitive 4d int")
+(defmethod what-is
+  (Class/forName "[[D")
+  [_]
+  "Primitive 2d double")
+(what-is (into-array ["a" "b"]))
+;; => "1d String"
+(what-is (to-array-2d [[1 2] [3 4]]))
+;; => "2d Object"
+(what-is (make-array Integer/TYPE 2 2 2 2))
+;; => "Primitive 4d int"
+(what-is (into-array (map double-array [[1.0] [2.0]])))
+;; => "Primitive 2d double"
+
+
+
+;;; Varargs
+#_(String/format "An int %d and a String %s" 99 "luftballons")
+;; => class java.lang.String cannot be cast to class java.util.Locale (java.lang.String and java.util.Locale are in module java.base of loader 'bootstrap')
+(String/format "An int %d and a String %s"
+               (to-array [99 "luftballons"]))
+;; => "An int 99 and a String luftballons"
+
+
+;;; All Clojure functions implement ... (p. 297 - 299)
+(ancestors (class #()))
+;; => #{clojure.lang.IMeta java.lang.Runnable clojure.lang.AFunction java.io.Serializable
+;;      clojure.lang.IFn clojure.lang.Fn clojure.lang.IObj java.util.Comparator java.lang.Object
+;;      java.util.concurrent.Callable clojure.lang.AFn}
+
+(parents (class #()))
+;; => #{clojure.lang.AFunction}
+
+;; java.util.Comparator
+(import '[java.util Comparator Collections ArrayList])
+
+(defn gimme [] (ArrayList. [1 3 4 8 2]))
+
+(doto (gimme)
+  (Collections/sort (Collections/reverseOrder)))
+;; => [8 4 3 2 1]
+
+;; now our own comparator
+(doto (gimme)
+  (Collections/sort
+   (reify Comparator
+     (compare [this l r]
+       (cond
+         (> l r) -1
+         (< l r) 1
+         :else 0)))))
+;; => [8 4 3 2 1]
+
+;; ... but we have better options with Clojure
+(doto (gimme) (Collections/sort #(compare %2 %1)))
+;; => [8 4 3 2 1]
+(doto (gimme) (Collections/sort >))
+;; => [8 4 3 2 1]
+(doto (gimme) (Collections/sort <))
+;; => [1 2 3 4 8]
+(doto (gimme) (Collections/sort (complement <)))
+;; => [8 4 3 2 1]
+
+(doto (gimme) (Collections/sort #(if (< %1 %2) true false)))
+
+;; => See clojure.lang.AFunction
+;; public int compare(Object o1, Object o2){
+;;                                          Object o = invoke(o1, o2);
+
+;;                                          if(o instanceof Boolean)
+;;                                          {
+;;                                           if(RT.booleanCast(o))
+;;                                           return -1;
+;;                                           return RT.booleanCast(invoke(o2,o1))? 1 : 0;
+;;                                           }
+
+;;                                          Number n = (Number) o;
+;;                                          return n.intValue();
+;;                                          }
+
+
+;; java.lang.Runnable
+#_(doto (Thread. #(do (Thread/sleep 5000)
+                    (println "haikeeba")))
+  .start)
+
+
+;; java.util.concurrent.Callable
+(import '[java.util.concurrent FutureTask])
+#_(let [f (FutureTask. #(do (Thread/sleep 5000) 42))]
+  (.start (Thread. #(.run f)))
+  (.get f))
+;; => 42
+
+
+;;; Using Clojure data structures in Java APIs (p. 299 - 302)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; java.util.List
+;; Clojure collections conform to the immutable parts of java.util.List (which extends Collection and Iterable)
+
+(.get '[a b c] 1)
+;; => b
+
+(.get (repeat :a) 138)
+;; => :a
+
+;; vectors are Collection-s
+(.containsAll  '[a b c] '[b c])
+;; => true
+
+;; seqs are immutable
+#_(.add '[a b c] 'd)
+;; => Execution error (UnsupportedOperationException) at clojure-experiments.books.joy-of-clojure.ch12-java-next/eval20812 (form-init1354641799619265954.clj:452).
+
+;; java.lang.Comparable - only vectors implement it!
+(.compareTo [:a :b] [:a])
+;; => 1
+#_(.compareTo [1 2 3] '(1 2 3))
+;; => class clojure.lang.PersistentList cannot be cast to class clojure.lang.IPersistentVector (clojure.lang.PersistentList and clojure.lang.IPersistentVector are in unnamed module of loader 'app')
+
+
+;; java.util.RandomAccess (optimized constant-time access using `.get`)
+;; -> only vectors
+(.get '[a b c] 2)
+;; => c
+
+;; java.util.Collection
+;; - idiom to use immutable clojure collection as a model for creating mutable java collection
+;;   and then call java collections API
+;; - note: this is the `clojure.core/shuffle` function
+(defn shuffle [^java.util.Collection coll]
+  (let [al (java.util.ArrayList. coll)] ; here we build mutable collection
+    (java.util.Collections/shuffle al) ; ... and call the Java API
+    (clojure.lang.RT/vector (.toArray al))))
+
+
+;; java.util.Set
+;; => don't use mutable objects in a set!
+(def x (java.awt.Point. 0 0))
+(def y (java.awt.Point. 0 42))
+(def points #{x y})
+points
+;; => #{#object[java.awt.Point 0x1561daa1 "java.awt.Point[x=0,y=0]"]
+;;      #object[java.awt.Point 0x40f429c0 "java.awt.Point[x=0,y=42]"]}
+
+(.setLocation y 0 0)
+;; We now have two equal objects in the set!!!
+points
+;; => #{#object[java.awt.Point 0x1561daa1 "java.awt.Point[x=0,y=0]"]
+;;      #object[java.awt.Point 0x40f429c0 "java.awt.Point[x=0,y=0]"]}
+
