@@ -1,6 +1,7 @@
 (ns clojure-experiments.books.joy-of-clojure.ch12-java-next
   (:require [clojure.java.io :as io]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.string :as str])
   (:import [com.sun.net.httpserver HttpHandler HttpExchange HttpServer]
            [java.net InetSocketAddress URLDecoder URI]
            [java.io File FilterOutputStream]
@@ -489,4 +490,172 @@ points
 points
 ;; => #{#object[java.awt.Point 0x1561daa1 "java.awt.Point[x=0,y=0]"]
 ;;      #object[java.awt.Point 0x40f429c0 "java.awt.Point[x=0,y=0]"]}
+
+
+;;; definterface (p. 302 - 304)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(definterface ISliceable
+  (slice [^long s ^long e])
+  (^long sliceCount []))
+;; => clojure_experiments.books.joy_of_clojure.ch12_java_next.ISliceable
+
+;; implement the interface
+(def dumb
+  (reify ISliceable
+   (slice [_ s e] [:empty])
+   #_(sliceCount [_] 42)))
+
+(.slice dumb 10 20)
+;; => [:empty]
+#_(.sliceCount dumb)
+;; Receiver class clojure_experiments.books.joy_of_clojure.ch12_java_next$reify__21089 does not define or inherit an implementation of the resolved method 'abstract long sliceCount()' of interface clojure_experiments.books.joy_of_clojure.ch12_java_next.ISliceable.
+
+(def dumb
+  (reify ISliceable
+    (slice [_ s e] [:empty])
+    (sliceCount [_] 42)))
+(.sliceCount dumb)
+;; => 42
+
+;; you can extend ISliceable to other types using a protocol!
+(defprotocol Sliceable
+  (slice [this s e])
+  (sliceCount [this]))
+;; from `extend` docstring:
+;; ...
+;; You can extend
+;; an interface to a protocol. This is primarily to facilitate interop
+;; with the host (e.g. Java) but opens the door to incidental multiple
+;; inheritance of implementation since a class can inherit from more
+;; than one interface, both of which extend the protocol. It is TBD how
+;; to specify which impl to use.
+(extend ISliceable
+  Sliceable
+  {:slice (fn [this s e] (.slice this s e))
+   :sliceCount (fn [this] (.sliceCount this))})
+
+(sliceCount dumb)
+;; => 42
+(slice dumb 0 0)
+;; => [:empty]
+
+
+;; You can now "extend" even final classes like String
+(defn calc-slice-count
+  "Calculates the number of possible slices using the formula:
+    (n + r - 1)!
+  --------------
+    (r!(n - 1)!)
+   where n is (count thing) and r is 2"
+  [thing]
+  (let [! #(reduce * (take % (iterate inc 1)))
+        n (count thing)]
+    (/ (! (- (+ n 2) 1))
+       (* (! 2) (! (- n 1))))))
+
+(extend-type String
+  Sliceable
+  (slice [this s e] (.substring this s (inc e)))
+  (sliceCount [this] (calc-slice-count this)))
+
+(slice "abc" 0 1)
+;; => "ab"
+
+(sliceCount "abc")
+;; => 6
+
+;; Note: it's still not possible to really implement the interface for final classes
+;; - it's just that you can extend the protocol to all the types that implement given interface
+(defprotocol CollectionLike
+  (containsAll [this coll]))
+(extend java.util.Collection
+  CollectionLike
+  {:containsAll (fn [this coll] (.containsAll this coll))})
+(extend-type String
+  CollectionLike
+  (containsAll [this coll] (str/includes? this coll)))
+#_(.containsAll "abc" "ab")
+;; No matching method containsAll found taking 1 args for class java.lang.String
+(containsAll "abc" "ab")
+;; => true
+
+
+;;; Exceptions (p. 304 - 309)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn explode [] (explode))
+#_(try (explode) (catch Exception e "Stack is blown"))
+;; StackOverflowError - catch doesn't apply
+(try (explode) (catch StackOverflowError e "Stack is blown"))
+;; => "Stack is blown"
+(try (explode) (catch Error e "Stack is blown"))
+;; => "Stack is blown"
+(try (explode) (catch Throwable e "Stack is blown"))
+;; => "Stack is blown"
+
+(try (throw (RuntimeException.)) (catch Throwable e "Catching Throwable is Bad"))
+;; => "Catching Throwable is Bad"
+
+
+;; compile-time exceptions - macros
+(defmacro do-something [x] `(~x))
+#_(do-something 1)
+;; class java.lang.Long cannot be cast to class clojure.lang.IFn (java.lang.Long is in module java.base of loader 'bootstrap'; clojure.lang.IFn is in unnamed module of loader 'app')
+
+(comment
+  (prn *e)
+  ;; prints class, message and ex-data if present
+  (clojure.stacktrace/print-throwable *e)
+  ;; includes stacktrace of chained exceptions
+  (clojure.stacktrace/print-cause-trace *e)
+  ;; only the top-level exception trac
+  (clojure.stacktrace/print-stack-trace *e)
+  ,)
+
+;; prefer throwing compile-time exceptions in macros if possible to fail fast
+;; => don't throw inside quoted form when you can check earlier!
+
+(defmacro pairs [& args]
+  (if (even? (count args))
+    `(partition 2 '~args)
+    (throw (Exception. (str "pairs requires an even number of args"))))
+  )
+;; this fails immediately!
+#_(fn [] (pairs 1 2 3))
+;;=>  pairs requires an even number of args
+
+
+;; interesting macro catching NPE in all the forms
+(defmacro -?> [& forms]
+  `(try (-> ~@forms)
+        (catch NullPointerException _# nil)))
+(-?> 25 Math/sqrt (+ 100))
+;; => 105.0
+(-?> 25 Math/sqrt (and nil) (+ 100))
+;; => nil
+
+;; use `ex-info` to pass structured data instead of encoding
+;; them into a message or the java exception class hierarchy
+(defn perform-cleaner-act [x y]
+  (try
+    (/ x y)
+    (catch ArithmeticException e
+      (throw (ex-info "You attempted an unclean act"
+                      {:args [x y]})))))
+#_(perform-cleaner-act 42 0)
+;; 1. Unhandled clojure.lang.ExceptionInfo
+;; You attempted an unclean act
+;; {:args [42 0]}
+
+
+;; use ex-data to provide more info
+#_(try (perform-cleaner-act 42 0)
+     (catch RuntimeException e
+       (println "Received error:" (.getMessage e))
+       (when-let [ctx (ex-data e)]
+         (println "More info:" ctx))))
+;; Received error: You attempted an unclean act
+;; More info: {:args [42 0]}
 
