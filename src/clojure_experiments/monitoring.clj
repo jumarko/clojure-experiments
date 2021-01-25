@@ -31,8 +31,25 @@
 (comment
 
   (import '(sun.jvm.hotspot.oops InstanceKlass Method))
+
+  ;; VM: http://www.javamagazine.mozaicreader.com/JanFeb2017#&pageSet=32&page=0
+  (import '(sun.jvm.hotspot HotSpotAgent))
   (import '(sun.jvm.hotspot.runtime VM))
-  (import '(sun.jvm.hotspot.tools Tool))
+
+  ;; need to initialize VM first by attaching
+  ;; - this doesn't work -> would need to find a different way how to "attach"
+  ;;      Can't ptrace attach to the process
+  ;; (def hotspot-agent (HotSpotAgent.))
+  ;; (.attach hotspot-agent (-> (java.lang.ProcessHandle/current) .pid int))
+
+  ;; this doesn't have any effect on the `VM` I use below - it's still not initialized
+  (import '(com.sun.tools.attach VirtualMachine))
+  ;; inspired by `clj-async-profiler.core`
+  (VirtualMachine/attach (-> (java.lang.ProcessHandle/current) .pid str))
+
+  (def system-dict (-> (VM/getVM) .getSystemDictionary))
+
+
 
   ;; end
   )
