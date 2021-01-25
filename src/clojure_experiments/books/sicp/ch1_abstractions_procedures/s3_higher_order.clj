@@ -84,6 +84,13 @@
               (iter new (improve-fn new))))]
     (iter start (improve-fn start))))
 
+;; better alternative in clojure?
+(defn fixed-point [improve-fn start]
+  (reduce #(if (e/better-good-enough? %1 %2)
+             (reduced %2)
+             %2)
+          (iterate improve-fn start)))
+
 (defn average-damp [f]
   (fn [x] (c/avg (f x) x)))
 
