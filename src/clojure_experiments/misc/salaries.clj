@@ -1,4 +1,5 @@
-(ns clojure-experiments.misc.salaries)
+(ns clojure-experiments.misc.salaries
+  "Desired salaries calculations based on involvement and expected ratios.")
 
 (def salaries
   {:leader 480
