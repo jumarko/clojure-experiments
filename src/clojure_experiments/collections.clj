@@ -305,3 +305,12 @@ db
 ;; => (92612215 0 :very-first)
 
 
+(nthrest (range 10) 2)
+;; => (2 3 4 5 6 7 8 9)
+(drop 2 (range 10))
+;; => (2 3 4 5 6 7 8 9)
+
+
+(take 20 (nthrest (map pr (range)) 2))
+
+(take 20 (drop 2 (map pr (range))))
