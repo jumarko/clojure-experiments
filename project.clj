@@ -206,6 +206,9 @@
                  [com.github.haifengl/smile-math "2.4.0"]
                  [com.github.haifengl/smile-graph "2.4.0"]
                  [com.github.haifengl/smile-data "2.4.0"]
+
+                 ;; jme-clj - jMonkeyEngine wrapper for clojure: https://github.com/ertugrulcetin/jme-clj
+                 [jme-clj "0.1.0"]
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
@@ -215,6 +218,7 @@
 
   :java-source-paths ["src/java"]
   :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+             "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
              "-Djdk.attach.allowAttachSelf=true"
              ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
              "--add-modules=jdk.hotspot.agent"
