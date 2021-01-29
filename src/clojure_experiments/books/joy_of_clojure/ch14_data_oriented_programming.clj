@@ -144,3 +144,87 @@
 ;; => [what/the :huh?]
 
 
+
+;;; Simple event sourcing (p. 348 - 357)
+
+;; let's start with a simple snapshot of a state
+;; - basebal:
+{:ab 5 :h 2 :avg 0.400}
+
+;; this stype is always derived from events which are maps too
+{:result :hit}
+
+(defn valid? [event]
+  (boolean (:result event)))
+
+;; apply the event to the state
+(defn effect [{:keys [ab h] :or {ab 0 h 0}}
+              event]
+  (let [ab (inc ab)
+        h (if (= :hit (:result event))
+            (inc h)
+            h)
+        avg (double (/ h ab))]
+    {:ab ab :h h :avg avg}))
+
+(effect {} {:result :hit})
+;; => {:ab 1, :h 1, :avg 1.0}
+
+(effect {:ab 599 :h 180}
+        {:result :out})
+;; => {:ab 600, :h 180, :avg 0.3}
+
+;; it will be nice to validate the effect before applying it:
+(defn apply-effect [state event]
+  (if (valid? event)
+    (effect state event)
+    state))
+(apply-effect {:ab 600 :h 180 :avg 0.3}
+              {:result :hit})
+;; => {:ab 601, :h 181, :avg 0.3011647254575707}
+
+;; Finally let's apply a sequence of effects
+;; Note: I don't like using anonymous functions like in the book (especially when an error is thrown and you have to investigate the stacktrace)
+(defn effect-all [state events]
+  (reduce apply-effect state events))
+
+(effect-all {:ab 0 :h 0}
+            [{:result :hit}
+             {:result :out}
+             {:result :hit}
+             {:result :out}])
+;; => {:ab 4, :h 2, :avg 0.5}
+
+;; let's try 100 random events
+(def events (repeatedly
+             100
+             (fn [] (rand-map
+                     1
+                     #(-> :result)
+                     #(if (< (rand-int 10) 3) ; 30% chance to 'hit'
+                        :hit
+                        :out)))))
+(effect-all {} events)
+;; => {:ab 100, :h 29, :avg 0.29}
+
+
+;; Rewinding is as simple as applying only a subset of events
+(effect-all {} (take 50 events))
+;; => {:ab 50, :h 13, :avg 0.26}
+
+
+;; gather historical timeline
+(defn fx-timeline [state events]
+  (reductions apply-effect state events))
+(fx-timeline {} (take 10 events))
+;; => ({}
+;;     {:ab 1, :h 1, :avg 1.0}
+;;     {:ab 2, :h 1, :avg 0.5}
+;;     {:ab 3, :h 2, :avg 0.6666666666666667}
+;;     {:ab 4, :h 2, :avg 0.5}
+;;     {:ab 5, :h 2, :avg 0.4}
+;;     {:ab 6, :h 3, :avg 0.5}
+;;     {:ab 7, :h 3, :avg 0.4285714285714286}
+;;     {:ab 8, :h 4, :avg 0.5}
+;;     {:ab 9, :h 4, :avg 0.4444444444444444}
+;;     {:ab 10, :h 4, :avg 0.4})
