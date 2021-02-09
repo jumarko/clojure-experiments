@@ -359,3 +359,108 @@
 ;; you can as well check with effect-all:
 (effect-all {} @(agent-for-player "Nick"))
 
+;;; Code as data as code
+
+;; naive approach using these functions would work for a few cases:
+(defn meters->feet [m] (* m 3.2808398901312))
+(meters->feet 1609.344)
+;; => 5279.999992143306
+
+(defn meters->miles [m] (* m 0.000621))
+(meters->miles 1609.344)
+;; => 0.999402624
+
+;; ... but the naive approach becomes inflexible shortly
+;; => Let's build DSL - unit conversion specification language:
+;; Text description:
+;; The base unit of distance is the meter. There are 1,000 meters in a kilometer.
+;; There are 100 centimeters in a meter. There are 10 millimeters in a centimer.
+;; There are 3.28083 feet in a meter. Finally, there are 5,280 feet in a mile
+
+;; let's convert the text description:
+#_(Our base unit of distnace is the :meter
+     [There are 1000 :meters in a :kilometer]
+     [There are 100 :centimeters in a :meter]
+     [There are 10 :millimeters in a :centimeter]
+     [There are 3.28083 :feet in a :meter]
+     [There are 5280 :feet in a :mile])
+
+;; let's improve
+#_(define unit of distance
+  {:m 1
+   :km 1000
+   :cm 1/100
+   :mm [1/10 of a :cm]
+   :ft 0.3048
+   :mile [is 5280 :ft]})
+
+;; similar to `ch7/convert` but better checks and error reporting
+(defn relative-units [context unit]
+  (if-let [spec (get context unit)]
+    (if (vector? spec)
+      (ch7/convert context spec)
+      spec)
+    (throw (RuntimeException. (str "Undefined unit " unit)))))
+
+(relative-units {:m 1 :cm 1/100 :mm [1/10 :cm]} :mm)
+;; => 1/1000
+#_(relative-units {:m 1 :cm 1/100 :mm [1/10 :cm]} :ramsden-chain)
+;;=> Undefined unit :ramsden-chain
+
+;; Finally, let's create a macro
+(defmacro defunits-of [name base-unit & conversions]
+  (let [magnitude (gensym)
+        unit (gensym)
+        units-map (into `{~base-unit 1}
+                        (map vec (partition 2 conversions)))]
+    `(defmacro ~(symbol (str "unit-of-" name))
+       [~magnitude ~unit]
+       `(* ~~magnitude
+           ~(case ~unit
+              ~@(mapcat (fn [[u# & r#]]
+                          `[~u# ~(relative-units units-map u#)])
+                        units-map))))))
+
+(defunits-of distance :m
+  :km 1000
+  :cm 1/100
+  :mm [1/10 :cm]
+  :ft 0.3048
+  :mile [5280 :ft])
+;; => macroexpands to:
+#_(defmacro unit-of-distance [G__21971 G__21972]
+  (seq
+   (concat
+    (list '*)
+    (list G__21971)
+    (list
+     (case
+         G__21972
+       :mm
+       1/1000
+       :m
+       1
+       :cm
+       1/100
+       :ft
+       0.3048
+       :km
+       1000
+       :mile
+       1609.344)))))
+
+(unit-of-distance 1 :m)
+;; => 1
+(unit-of-distance 1 :cm)
+;; => 1/100
+(unit-of-distance 1 :mm)
+;; => 1/1000
+(unit-of-distance 1 :ft)
+;; => 0.3048
+(unit-of-distance 1 :mile)
+;; => 1609.344
+
+;; look how simple the expansion is!
+(macroexpand '(unit-of-distance 1 :cm))
+;; => (clojure.core/* 1 1/100)
+
