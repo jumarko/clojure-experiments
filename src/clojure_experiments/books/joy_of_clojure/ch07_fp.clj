@@ -152,6 +152,7 @@
    :post [(:veggie %) (nil? (:meat %))]}
   (f m))
 
+
 #_(vegan-constraints put-things {:veggie "carrot"})
 ;; Assert failed: (nil? (:meat %))
 
@@ -169,6 +170,38 @@
 
 #_(finicky put-things {:meat "chicken"})
 ;; Assert failed: (= (:meat %) (:meat m))
+
+
+;; my little experiments
+(defn pre-post [x]
+  {:pre [(number? x)]
+   :post [(int? %)]}
+  (* x x))
+(pre-post 10)
+;; => 100
+#_(pre-post "10")
+;; Execution error (AssertionError) at clojure-experiments.core/pre-post (form-init5739487266911467216.clj:157).
+;; Assert failed: (number? x)
+#_(pre-post 10.0)
+;; Execution error (AssertionError) at clojure-experiments.core/pre-post (form-init5739487266911467216.clj:157).
+;; Assert failed: (int? %)
+
+
+;; try truss library with richer error messages
+
+(require '[taoensso.truss :as it :refer [have have! have?]])
+(defn pre-post2 [x]
+  {:pre [(have number? x)]
+   :post [(have int? %)]}
+  (* x x))
+#_(pre-post2 "10")
+;; Invariant violation in `clojure-experiments.core:159`. Test form: `(number? x)` with failing input: `10`
+#_(pre-post2 10.0)
+;; Invariant violation in `clojure-experiments.core:160`. Test form: `(int? %)` with failing input: `100.0`
+
+
+
+
 
 (conj {:a 1 } {:b 2 :c 3})
 ;; => {:a 1, :b 2, :c 3}
