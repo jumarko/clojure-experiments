@@ -1216,3 +1216,8 @@ d-m
 ;; => 8
 
 (comp)
+
+
+;; see https://savo.rocks/posts/a-random-job-interview-challenge-in-clojure/
+(mapv (juxt (comp str first) count) (partition-by identity "aaaabbbcca"))
+;; => (["a" 4] ["b" 3] ["c" 2] ["a" 1])
