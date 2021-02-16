@@ -95,7 +95,7 @@
   (str/join " "
             (map str/capitalize names)))
 
-(full-name ["Stu" "Alice" nil])
+#_(full-name ["Stu" "Alice" nil])
 
 
 ;;; arbitrary predicates

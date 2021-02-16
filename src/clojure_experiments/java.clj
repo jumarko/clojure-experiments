@@ -15,3 +15,13 @@
 (def c (->MyInfo 1 2 3))
 (= a c)
 ;; => false
+
+
+;; finalize called twice?
+(defn test1 []
+  (reify Object
+    (toString [this] (println "ahoj") (str this))
+    (finalize [this]
+      (prn this)
+      (println "collected"))))
+#_(do (test1) (System/gc))
