@@ -284,5 +284,60 @@
 ;; => [108 108]
 
 
-;; 
-(deftype TtlCache)
+;;; Coercion
+;;;;;;;;;;;;;;
+
+;; factorial without primitives
+(defn factorial-a [original-x]
+  ;; acc here is primitive because it's defined with a literal number
+  ;; but type of x is unknown
+  (loop [x original-x acc 1]
+    (if (>= 1 x) acc (recur (dec x) (* x acc)))))
+(factorial-a 10)
+;; => 3628800
+(factorial-a 20)
+;; => 2432902008176640000
+(time (dotimes [_ 1e5]
+        (factorial-a 20)))
+;; "Elapsed time: 67.290228 msecs"
+
+;; let's coerce x to long to make it fastk
+(defn factorial-b [original-x]
+  ;; acc here is primitive because it's defined with a literal number
+  ;; but type of x is unknown
+  (loop [x (long original-x) acc 1]
+    (if (>= 1 x) acc (recur (dec x) (* x acc)))))
+(time (dotimes [_ 1e5]
+        (factorial-b 20)))
+;; "Elapsed time: 26.985663 msecs"
+
+;; explicit coercion in `loop` is the same as using "type hint" on the fn arg
+(defn factorial-c [^long original-x]
+  (loop [x original-x acc 1]
+    (if (>= 1 x) acc (recur (dec x) (* x acc)))))
+(time (dotimes [_ 1e5]
+        (factorial-c 20)))
+;; "Elapsed time: 27.574799 msecs"
+
+;; Let's try "unchecked math" as the final optimization
+(set! *unchecked-math* true)
+(defn factorial-d [^long original-x]
+  ;; acc here is primitive because it's defined with a literal number
+  ;; but type of x is unknown
+  (loop [x original-x acc 1]
+    (if (>= 1 x) acc (recur (dec x) (* x acc)))))
+;; Note: you switch unchecked-math immediatelly to false but that doesn't mean
+;; that following function calls will use "checked math"
+;; !!! *unchecked-math* is used during the compilation phase!!!
+(set! *unchecked-math* false)
+(time (dotimes [_ 1e5]
+        (factorial-d 20)))
+"Elapsed time: 9.268438 msecs"
+(time (dotimes [_ 1e5]
+        (factorial-d 21)))
+;; Unfortunately, using unchecked math you introduced an error:
+(factorial-d 21)
+;; => -4249290049419214848
+
+
+
