@@ -340,4 +340,51 @@
 ;; => -4249290049419214848
 
 
+;;; Using double for large factorials
 
+(double Long/MAX_VALUE)
+;; => 9.223372036854776E18
+Double/MAX_VALUE
+;; => 1.7976931348623157E308
+
+(defn factorial-e [^double original-x]
+  ;; Here we're using 1.0 literals instead of 1 to get doubles instead of longs
+  ;; This also slightly improves performance
+  (loop [x original-x acc 1.0]
+    (if (>= 1.0 x) acc (recur (dec x) (* x acc)))))
+(factorial-e 10.0)
+;; => 3628800.0
+(factorial-e 20.0)
+;; => 2.43290200817664E18 ; less precise than the long version
+(factorial-e 30.0)
+;; => 2.652528598121911E32
+(factorial-e 170.0)
+;; => 7.257415615308004E306
+(factorial-e 171.0)
+;; => ##Inf
+
+;; doubles are still fast:
+(time (dotimes [_ 1e5] (factorial-e 20)))
+;; "Elapsed time: 10.413068 msecs"
+
+
+;;; Using auto-promotion for large factorials
+;;; promoting operators: +', -', *', inc', dec'
+
+;; notice that we still use ^long on `original-x`
+;; because that's just for the iteration - we don't assume anybody to compute
+;; factorials for numbers larger than Long/MAX_VALUE
+(defn factorial-f [^long original-x]
+  (loop [x original-x, acc 1]
+    (if (>= 1 x)
+      acc
+      (recur (dec x) (*' x acc)))))
+(factorial-f 20)
+;; => 2432902008176640000
+(factorial-f 30)
+;; => 265252859812191058636308480000000N
+(time (factorial-f 171))
+;; "Elapsed time: 0.833 msecs"
+;; => 1241018070217667823424840524103103992616605577501693185388951803611996075221691752992751978120487585576464959501670387052809889858690710767331242032218484364310473577889968548278290754541561964852153468318044293239598173696899657235903947616152278558180061176365108428800000000000000000000000000000000000000000N
+(time (dotimes [_ 1e5] (factorial-f 20)))
+;; "Elapsed time: 33.752078 msecs"
