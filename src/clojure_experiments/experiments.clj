@@ -443,7 +443,8 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
   (map->Car car-map))
 
 (clojure.edn/read-string
- {:readers {'car read-car}}
+ {:readers {'car read-car}
+  :default second}
  "#car{:year 2017, :model \"Aston Martin V8 Vantage\", :price 3000000}")
 
 (map nil [1 2 3])
