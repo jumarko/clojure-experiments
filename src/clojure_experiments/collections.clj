@@ -455,3 +455,26 @@ db
 
   ,)
 
+;; it would be nicer to have a basic clj-http specific wrapper for `iteration`:
+(defn http-api-iteration
+  "Simple wrapper on top of `iteration` for fetching from HTTP APIs via clj-http.core/get"
+  [main-url http-get-params next-page-fn value-fn]
+  (let [api (fn fetch-page [page-url]
+              (log/debug "Fetch page: " page-url)
+              (let [response (http/get page-url http-get-params)]
+                (log/debug "Fetch page FINISHED: " page-url)
+                response))
+        api-reducible (iteration api :kf next-page-fn :vf value-fn :initk main-url)]
+    api-reducible))
+(comment
+  (let [my-installation-token "generate-jwt-and-get-installation-access-token-from-that"
+        api-reducible (http-api-iteration "https://api.github.com/installation/repositories"
+                                          {:accept "application/vnd.github.v3+json"
+                                           :headers {"Authorization" (str "Bearer " my-installation-token)}
+                                           :as :json
+                                           :query-params {:per_page "100"}}
+                                          (fn [response] (get-in response [:links :next :href]))
+                                          (fn [response] (get-in response [:body :repositories])))]
+    (into [] cat api-reducible))
+  ,)
+
