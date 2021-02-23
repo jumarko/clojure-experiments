@@ -1,3 +1,4 @@
+(ns clojure-experiments.collections
   (:require [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -314,3 +315,42 @@ db
 (take 20 (nthrest (map pr (range)) 2))
 
 (take 20 (drop 2 (map pr (range))))
+
+
+;; unfold from hiredman for API response pagination for example: https://gist.github.com/hiredman/022e617e37f9c5622e1a943a5c34afe5#file-scratch-clj-L1-L18
+;; <<
+;; Ramon Rios: Did someone recomends a lib to deal with responses pagination?
+;; hiredman: if you mean unpaginating api responses, this is the basic pattern I use https://gist.github.com/hiredman/022e617e37f9c5622e1a943a5c34afe5#file-scratch-clj-L1-L18 I've written a lot of different versions of that. that particular unfold doesn't create a lazy seq
+;; there is also a ticket to add similar functionality to core https://clojure.atlassian.net/browse/CLJ-2555 which supersedes an older ticket with more of a write up and commentary on it https://clojure.atlassian.net/browse/CLJ-1906
+;; >>
+;; See also clojure-experiments.flatland.useful
+(defn unfold
+  "Returns a reducible whose values are created by iterative
+  application of `producer` to the previous value, start with
+  `seed`. Stops generating values when `continue?` returns false."
+  {:added "1.9"}
+  [continue? producer seed]
+  (reify
+    clojure.lang.IReduceInit
+    (reduce [_ fun init]
+      (loop [init (fun init seed)
+             seed seed]
+        (if (reduced? init)
+          @init
+          (if (continue? seed)
+            (let [next-seed (producer seed)]
+              (recur (fun init next-seed)
+                     next-seed))
+            init))))))
+;; my example:
+(reduce conj []
+        (unfold #(< % 10) inc 0))
+;; => [0 1 2 3 4 5 6 7 8 9 10]
+
+;; hiredman's eample:
+(into []
+      (unfold
+       (partial some some?)
+       (fn [seqs] (map next seqs))
+       [(range 3) (range 5) (range 6)]))
+;; => [[(0 1 2) (0 1 2 3 4) (0 1 2 3 4 5)] ((1 2) (1 2 3 4) (1 2 3 4 5)) ((2) (2 3 4) (2 3 4 5)) (nil (3 4) (3 4 5)) (nil (4) (4 5)) (nil nil (5)) (nil nil nil)]
