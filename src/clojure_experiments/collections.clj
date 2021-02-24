@@ -478,3 +478,23 @@ db
     (into [] cat api-reducible))
   ,)
 
+
+;; just my experiment with IReduce and IReduceInit
+(def myri (reify
+            clojure.lang.IReduce
+            (reduce [_ rf]
+              (loop [acc 0]
+                (if (< acc 10)
+                  (recur (inc acc))
+                  acc)))
+            clojure.lang.IReduceInit
+            (reduce [_ rf init]
+              (loop [acc init]
+                (if (< acc 10)
+                  (recur (inc acc))
+                  acc)))))
+(reduce identity myri)
+;; => 10
+(reduce identity 13 myri)
+;; => 13
+

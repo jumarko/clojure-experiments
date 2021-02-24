@@ -1,4 +1,6 @@
-(ns clojure-experiments.books.joy-of-clojure.ch15-performance)
+(ns clojure-experiments.books.joy-of-clojure.ch15-performance
+  "See also `clojure-experiments.collections/unfold`."
+  (:require [reducer  :as r]))
 
 
 ;;; Type hints
@@ -412,3 +414,280 @@ Double/MAX_VALUE
 ;; => 1241018070217667823424840524103103992616605577501693185388951803611996075221691752992751978120487585576464959501670387052809889858690710767331242032218484364310473577889968548278290754541561964852153468318044293239598173696899657235903947616152278558180061176365108428800000000000000000000000000000000000000000N
 (time (dotimes [_ 1e5] (factorial-f 20)))
 ;; "Elapsed time: 33.752078 msecs"
+
+
+
+;;; Reducibles
+;;;;;;;;;;;;;;;
+
+(defn empty-range? [start end step]
+  (or (and (pos? step) (>= start end))
+      (and (neg? step) (<= start end))))
+
+(defn lazy-range [i end step]
+  (lazy-seq
+   (if (empty-range? i end step)
+     nil ; nil terminates lazy seq
+     (cons i (lazy-range (+ i step)
+                         end
+                         step)))))
+(lazy-range 5 10 2)
+;; => (5 7 9)
+(lazy-range 6 0 -1)
+;; => (6 5 4 3 2 1)
+(range 6 0 -1)
+;; => (6 5 4 3 2 1)
+
+(reduce conj [] (lazy-range 6 0 -1))
+;; => [6 5 4 3 2 1]
+;; is the same as this?
+(vec (lazy-range 6 0 -1))
+;; => [6 5 4 3 2 1]
+
+(reduce + 0 (lazy-range 6 0 -1))
+;; => 21
+
+
+;; instead of paying the penalty for using lazy seqs when we don't need them
+;; let's built a function that returns a function that acts like `reduce`.
+;; => you just call it to extract the elements of the collection
+;; See also `clojure-experiments.collections/unfold`
+(defn reducible-range [start end step]
+  (fn [reducing-fn init]
+    (loop [result init, i start]
+      (if (empty-range? i end step)
+        result
+        (recur (reducing-fn result i)
+               (+ i step))))))
+
+(def countdown-reducible (reducible-range 6 0 -1))
+(countdown-reducible conj [])
+;; => [6 5 4 3 2 1]
+(countdown-reducible + 0)
+;; => 21
+
+(time ((reducible-range 1000000 0 -1)
+       + 0))
+;; After several invocations:
+;;   "Elapsed time: 18.307556 msecs"
+
+;; the duration is much longer!
+(time (reduce + 0(lazy-range 1000000 0 -1)))
+;; "Elapsed time: 105.026483 msecs"
+
+
+;;; can we call map, filter, et al on a reducable?
+(defn half [x]
+  (/ x 2))
+(half 4)
+;; => 2
+(half 7)
+;; => 7/2
+
+(defn sum-half [result input]
+  ;; notice + is the reducing function here and it's hardcoded
+  (+ result (half input)))
+(reduce sum-half 0 (lazy-range 0 10 2))
+;; => 10
+
+(comment
+  (reduce sum-half 0 (lazy-range 0 10 2))
+  ;; => 10
+  )
+
+((reducible-range 0 10 2) sum-half 0)
+;; => 10
+
+;; let's make it more generic by not hardcoding the reducing function (+)
+(defn half-transformer [f1]
+  (fn f1-half [result input]
+    (f1 result (half input))))
+((reducible-range 0 10 2) (half-transformer +) 0)
+;; => 10
+((reducible-range 0 10 2) (half-transformer conj) [])
+;; => [0 1 2 3 4]
+
+;; ... but `half` is still hardcoded!
+;; => we need another wrapper on top of the previous one.
+(defn mapping [mapping-fn]
+  (fn map-transformer [rf]
+    ;; this is "reducing function"
+    (fn map-rf [result input]
+      (rf result (mapping-fn input)))))
+
+((reducible-range 0 10 2) ((mapping half) +) 0)
+;; => 10
+((reducible-range 0 10 2) ((mapping half) conj) [])
+;; => [0 1 2 3 4]
+((reducible-range 0 10 2) ((mapping list) conj) [])
+;; => [(0) (2) (4) (6) (8)]
+
+;; note that we can try the same thing with `map` now:
+((reducible-range 0 10 2) ((map half) conj) [])
+;; => [0 1 2 3 4]
+
+
+;; mapping produces a collection of the same size as the input
+;; `filtering` is a way how to produce a smaller collection
+(defn filtering [pred]
+  (fn filter-transformer [rf]
+    (fn filter-rf [result input]
+      (if (pred input)
+        (rf result input)
+        result))))
+#_((reducible-range 0 10 1) ((filtering any?) conj) [])
+;; => [0 1 2 3 4 5 6 7 8 9]
+((reducible-range 0 10 1) ((filtering even?) conj) [])
+;; => [0 2 4 6 8]
+
+;; we can now combine both filtering and mapping because both return transformers
+((reducible-range 0 10 2)
+ ;; Notice that we combine "reducing functions" here: `((filtering #(not= %2)) con)` produces the `filter-rf` reducing function
+ ;; which is passed as an arg to `map-transformer` and it produces the `map-rf` reducing function;
+ ;; which is finally called by `reduciable-range` when traversing the collection
+ ((filtering #(not= % 2))
+  ((mapping half) conj))
+ [])
+;; => [0 2 3 4]
+
+;; .. and we can switch their order
+((reducible-range 0 10 2)
+ ((mapping half)
+  ((filtering #(not= % 2)) conj))
+ [])
+;; => [0 1 3 4]
+
+
+(defn mapcatting [map-fn]
+  (fn mapcat-transformer [rf]
+    (fn mapcat-rf [result input]
+      ;; Notice calling `map-fn` here and treating the result as reducible
+      ;; - there's no explicit concatenation
+      (let [reducible (map-fn input)]
+        (reducible rf result)))))
+
+(defn and-plus-ten [x]
+  (reducible-range x (+ 11 x) 10))
+((and-plus-ten 5) conj [])
+;; => [5 15]
+
+((reducible-range 0 10 2)
+ ((mapcatting and-plus-ten) conj)
+ [])
+;; => [0 10 2 12 4 14 6 16 8 18]
+;; compare to simple mapping
+((reducible-range 0 10 2)
+ ((mapping and-plus-ten) conj)
+ [])
+;; => [#function[clojure-experiments.books.joy-of-clojure.ch15-performance/reducible-range/fn--23900] #function[clojure-experiments.books.joy-of-clojure.ch15-performance/reducible-range/fn--23900] #function[clojure-experiments.books.joy-of-clojure.ch15-performance/reducible-range/fn--23900] #function[clojure-experiments.books.joy-of-clojure.ch15-performance/reducible-range/fn--23900] #function[clojure-experiments.books.joy-of-clojure.ch15-performance/reducible-range/fn--23900]]
+
+
+;; let's create r-map and r-filter to use them in a way similar to map and filter
+;; Note: the code common between `r-map` and `r-filter` can be factored out;
+;; this is what `clojure.core.reducers/reducer` does
+(defn r-map [mapping-fn reducible]
+  (fn new-reducible [reducing-fn init]
+    (reducible ((mapping mapping-fn) reducing-fn) init)))
+
+(defn r-filter [filter-pred reducible]
+  (fn new-reducible [reducing-fn init]
+    (reducible ((filtering filter-pred) reducing-fn) init)))
+
+(def our-final-reducible
+  (r-filter #(not= % 2)
+            (r-map half (reducible-range 0 10 2))))
+(our-final-reducible conj [])
+;; => [0 1 3 4]
+
+
+;;; Let's measure the performance effect
+(comment
+  
+  (require '[criterium.core :as crit])
+
+  ;; lazy seqs
+  (crit/quick-bench (reduce + 0 (filter even? (map half (lazy-range 0 (* 10 1000 1000) 2)))))
+  ;; Execution time mean : 1.796338 sec
+
+  ;; lazy chunked seqs
+  (crit/quick-bench (reduce + 0 (filter even? (map half (range 0 (* 10 1000 1000) 2)))))
+  ;; Execution time mean : 464.296606 ms
+
+  ;; reducibles
+  (crit/quick-bench ((r-filter even? (r-map half (reducible-range 0 (* 10 1000 1000) 2)))
+                     +
+                     0))
+  ;; Execution time mean : 392.990063 ms
+  
+  ,)
+
+
+;;; Integrating reducibles with Clojure reduce
+
+;; just my experiment with IReduce and IReduceInit
+(def myri (reify
+            clojure.lang.IReduce
+            (reduce [_ rf]
+              (loop [acc 0]
+                (if (< acc 10) (recur (inc acc))
+                  acc)))
+            clojure.lang.IReduceInit
+            (reduce [_ rf init]
+              (loop [acc init]
+                (if (< acc 10)
+                  (recur (inc acc))
+                  acc)))))
+(reduce identity myri)
+;; => 10
+(reduce identity 13 myri)
+;; => 13
+
+
+;; let's try reducers
+(require '[clojure.core.reducers :as r])
+
+(defn core-r-map [mapping-fn core-reducible]
+  (r/reducer core-reducible (mapping mapping-fn)))
+
+(defn core-r-filter [filter-pred core-reducible]
+  (r/reducer core-reducible (filtering filter-pred)))
+
+(reduce conj []
+        (core-r-filter #(not= % 2)
+                       (core-r-map half [0 2 4 6 8])))
+;; => [0 1 3 4]
+
+;; Compare performance? Does using the ColLReduce protocol make it slower?
+(time ((reducible-range 1000000 0 -1)
+       + 0))
+;; "Elapsed time: 34.490845 msecs"
+(time (reduce + 0 (core-r-map identity (range 1e6))
+       ))
+;; "Elapsed time: 43.655903 msecs"
+
+;; Implement your own 'core reducible'
+(defn reduce-range [reducing-fn init start end step]
+  (loop [result init, i start]
+    (if (empty-range? i end step)
+      result
+      (recur (reducing-fn result i)
+             (+ i step)))))
+
+(require '[clojure.core.protocols :as protos])
+(defn core-reducible-range [start end step]
+  (reify protos/CollReduce
+    (coll-reduce [this reducing-fn init]
+      (reduce-range reducing-fn init start end step))
+    (coll-reduce [this reducing-fn]
+      (if (empty-range? start end step)
+        (reducing-fn)
+        (reduce-range reducing-fn start (+ start step) end step)))))
+(time ((reducible-range 1e7 0 -1)
+       + 0))
+;; => 5.0000005E13
+;; "Elapsed time: 575.320062 msecs"
+
+(time (reduce + 0
+              (core-reducible-range 1e7 0 -1)))
+;; => 5.0000005E13
+;; "Elapsed time: 558.873644 msecs"
