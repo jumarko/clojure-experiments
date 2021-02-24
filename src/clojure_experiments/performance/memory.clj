@@ -31,12 +31,12 @@
 (take 10 fib-seq)
 ;; => (0 1 1 2 3 5 8 13 21 34)
 
-(cljol/view [fib-seq] opts)
-
-
-(cljol/view [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]] opts)
-(cljol/write-dot-file [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]]
-                  "lazy-fib-seq-vector-of-nthrest.dot" opts)
+;; cljol experiments 
+(comment
+  (cljol/view [fib-seq] opts)
+  (cljol/view [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]] opts)
+  (cljol/write-dot-file [[fib-seq (nthrest fib-seq 1) (nthrest fib-seq 2)]]
+                        "lazy-fib-seq-vector-of-nthrest.dot" opts))
 
 
 ;;; Memory-Meter: Comparing sizes of various collections
@@ -138,13 +138,17 @@
 
 ;;; Measuring memory allocated by a single thread / method
 ;; https://stackoverflow.com/questions/61539760/benchmarking-jvm-memory-consumption-similarly-to-how-it-is-done-by-the-os
-(defn allocated-bytes [f]
+(defn thread-allocated-bytes [t]
   (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)
-        thread-id (.getId (Thread/currentThread))
-        start (.getThreadAllocatedBytes thread-mbean thread-id)]
+        thread-id (.getId t)]
+    (.getThreadAllocatedBytes thread-mbean thread-id)))
+
+(defn allocated-bytes
+  [f]
+  (let [thread (Thread/currentThread)
+        start (thread-allocated-bytes thread)]
     (f)
-    (- (.getThreadAllocatedBytes thread-mbean thread-id)
-       start)))
+    (- (thread-allocated-bytes thread) start)))
 
 (allocated-bytes #())
 ;; => 20336
@@ -153,6 +157,46 @@
 ;; notice that JOL shown 29480 bytes for vector of 1000 numbers so this looks close
 (allocated-bytes (fn [] (vec (range 1000000))))
 ;; => 29436912
+
+;; bytes allocated by a different thread
+;; - notice that thread is stopped abruptly to avoid over-consumption
+
+(comment
+  
+  (let [how-much 1e8
+        t (Thread.  (fn []
+                      (let [v (vec (range how-much))])
+                      (Thread/sleep 1000) (println "DONE.")))]
+    (println "Thread allocated - before start:" (thread-allocated-bytes t))
+    (.start t)
+    (println "Thread allocated - after start:" (thread-allocated-bytes t))
+
+    (Thread/sleep 100)
+    (println "Thread allocated - after 100 ms:" (thread-allocated-bytes t))
+
+    (when (< 1e6 (thread-allocated-bytes t))
+      (println "Stopping the thread...")
+      ;; note that `(.interrupt t)` isn't enough here - the thread is busy allocating and cannot be interrupted
+      (.stop t)
+      (println "Thread stopped")
+      (println "Thread allocated - after stop:" (thread-allocated-bytes t)))
+
+    (Thread/sleep 200)
+    (println "Thread allocated - after 300 ms:" (thread-allocated-bytes t))
+
+    (Thread/sleep 800)
+    (println "Thread allocated - after 1100 ms:" (thread-allocated-bytes t)))
+  ,)
+;; prints:
+;; Thread allocated - before start: -1
+;; Thread allocated - after start: 14064
+;; Thread allocated - after 100 ms: 125412240
+;; Stopping the thread...
+;; Thread stopped
+;; Thread allocated - after stop: -1
+;; Thread allocated - after 300 ms: -1
+;; Thread allocated - after 1100 ms: -1
+
 
 
 ;;; TODO: add jvm-hiccup-meter: https://github.com/clojure-goes-fast/jvm-hiccup-meter
