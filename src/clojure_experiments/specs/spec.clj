@@ -715,3 +715,55 @@
    (conj a k v))
  []
  (subvec [:a :b :c] 0 1))
+
+
+;;; fdef reloading experiment
+;;; -> you need to call `stest/instrument` any time you change either fdef definition or the function definition
+(s/fdef hello
+  :args (s/cat :a int?))
+(defn hello [a]
+  (inc a))
+hello
+;; => #'clojure-experiments.spec/hello
+
+(stest/instrument `hello)
+;; Notice the var `hello` now points to the spec wrapper created by `instrument`
+;; => #function[clojure.spec.test.alpha/spec-checking-fn/fn--3026]
+
+(hello 10)
+;; => 11
+
+;; If I just change the fdef, it's not reflected
+(s/fdef hello
+  :args (s/cat :a string?))
+
+;; ... this fails with spec error rather than ClassCastException inside the function body
+#_(hello "ahoj")
+;; Execution error - invalid arguments to clojure-experiments.spec/hello at (form-init8139173344950676957.clj:739).
+;; "ahoj" - failed: int? at: [:a]
+
+;; ... I have to call instrument again.
+(stest/instrument `hello)
+#_(hello "ahoj")
+;; Execution error (ClassCastException) at (REPL:1).
+#_(hello 1)
+;; Execution error - invalid arguments to clojure-experiments.spec/hello at (form-init8139173344950676957.clj:749).
+;; 1 - failed: string? at: [:a]
+
+;; This what is used in the wrapper function to check the spec
+;; notice it's the spec object - `get-spec` is only called at the time
+;; `stest/instrument` is called, not when the function (`hello`) is called
+(s/get-spec `hello)
+;; => #object[clojure.spec.alpha$fspec_impl$reify__2524 0x66e8bb73 "clojure.spec.alpha$fspec_impl$reify__2524@66e8bb73"]
+
+;; changing the spec changes what's in the registry
+(s/fdef hello
+  :args (s/cat :a int?))
+(s/get-spec `hello)
+;; => #object[clojure.spec.alpha$fspec_impl$reify__2524 0x4fdb130c "clojure.spec.alpha$fspec_impl$reify__2524@4fdb130c"]
+
+;; ... but doesn't change what's used by the spec `hello` wrapper 
+#_(hello 10)
+;; Execution error - invalid arguments to clojure-experiments.spec/hello at (form-init8139173344950676957.clj:766).
+;; 10 - failed: string? at: [:a]
+
