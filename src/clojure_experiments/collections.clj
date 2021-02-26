@@ -2,7 +2,8 @@
   (:require [clj-http.client :as http]
             [taoensso.timbre :as log]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [medley.core :as m]))
 
 ;;; apply concat vs flatten, etc.
 ;;; http://chouser.n01se.net/apply-concat/
@@ -498,3 +499,17 @@ db
 (reduce identity 13 myri)
 ;; => 13
 
+
+;; try medley.core/find-first and how it performs
+(m/find-first pos? (range -10000 2))
+;; => 1
+(comment
+  (require '[criterium.core :as crit])
+  (crit/quick-bench (m/find-first pos? (range -10000 2)))
+  ;; Execution time mean : 54.729040 µs
+
+  (crit/quick-bench (first (filter pos? (range -10000 2))))
+  ;; Execution time mean : 166.094125 µs
+
+
+  ,)
