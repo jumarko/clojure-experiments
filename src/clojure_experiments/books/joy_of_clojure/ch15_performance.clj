@@ -1,6 +1,6 @@
 (ns clojure-experiments.books.joy-of-clojure.ch15-performance
   "See also `clojure-experiments.collections/unfold`."
-  (:require [reducer  :as r]))
+  (:require [clojure.core.reducers  :as r]))
 
 
 ;;; Type hints
@@ -644,8 +644,6 @@ Double/MAX_VALUE
 
 
 ;; let's try reducers
-(require '[clojure.core.reducers :as r])
-
 (defn core-r-map [mapping-fn core-reducible]
   (r/reducer core-reducible (mapping mapping-fn)))
 
@@ -691,3 +689,62 @@ Double/MAX_VALUE
               (core-reducible-range 1e7 0 -1)))
 ;; => 5.0000005E13
 ;; "Elapsed time: 558.873644 msecs"
+
+
+
+;;; `clojure.core.reducers/fold`
+(defn core-f-map [mapping-fn core-reducible]
+  (r/folder core-reducible (mapping mapping-fn)))
+(defn core-f-filter [filter-pred core-reducible]
+  (r/folder core-reducible (filtering filter-pred)))
+
+(r/fold + (core-f-filter #(not= % 2)
+                         (core-f-map half [0 2 4 6 8])))
+;; 1 + 3 + 4
+;; => 8
+
+;; reducers have their own version of map and filter
+(r/fold + (r/filter #(not= % 2)
+                         (r/map half [0 2 4 6 8])))
+;; => 8
+
+;; r/fold doesn't take an initial value but instead calls 'combining-fn' with zero args
+(r/fold (fn
+          ([] (println "called") 100)
+          ([a b] (+ a b)))
+        (range 10))
+;; => 145
+;; above is the same as this:
+(r/fold (constantly 100)
+        (fn [a b] (+ a b))
+        (range 10))
+
+;; `r/monoid` can be used to be explicit about the initial value having the existing function
+;; - the monoid implementation is eactly as the two-arity arg fn shown above
+(r/fold (r/monoid + (constantly 100)) (range 10))
+;; => 145
+
+;; combining fn is the same as reducing fn for operations like +
+;; but it's different for producting vectors (conj vs into)
+;; ... this is incorrect
+(r/fold 4
+        (r/monoid conj (constantly []))
+        conj
+        (vec (range 10)))
+;; => [0 1 [2 3 4] [5 6 [7 8 9]]]
+
+;; ... and this is correct
+(r/fold 4
+        (r/monoid into (constantly []))
+        conj
+        (vec (range 10)))
+
+
+;; reducers performance
+(def big-vector (vec (range 0 1e7 2)))
+(comment
+  (require '[criterium.core :as crit])
+  (crit/quick-bench
+   (r/fold + (core-f-filter even? (core-f-map half big-vector))))
+  ;;              Execution time mean : 62.433853 ms
+  )
