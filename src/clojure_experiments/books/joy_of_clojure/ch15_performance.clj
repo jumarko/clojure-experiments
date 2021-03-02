@@ -715,8 +715,8 @@ Double/MAX_VALUE
         (range 10))
 ;; => 145
 ;; above is the same as this:
-(r/fold (constantly 100)
-        (fn [a b] (+ a b))
+(r/fold (constantly 100) ; combining fn
+        (fn [a b] (+ a b)) ; reducing fn
         (range 10))
 
 ;; `r/monoid` can be used to be explicit about the initial value having the existing function
