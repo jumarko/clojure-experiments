@@ -1,7 +1,12 @@
 (ns clojure-experiments.books.joy-of-clojure.ch16-thinking-programs
+  "See also https://github.com/swannodette/logic-tutorial"
   (:require [clojure-experiments.books.joy-of-clojure.ch05-collections :as ch05]
+            [clojure.core.logic :as logic]
+            [clojure.core.logic.pldb :as pldb]
             [clojure.set :as set]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.walk :as walk]))
+
 
 ;;; Sudoku solver (p. 395+)
 
@@ -213,4 +218,122 @@
 (satisfy '(1 2 3) '(1 ?something 3) {})
 ;; => {?something 2}
 
+(satisfy '(?x 2 3 (4 5 ?z))
+         '(1 2 ?y (4 5 6))
+         {})
+;; => {?x 1, ?y 3, ?z 6}
+
+;; satisfies when possible
+(satisfy '(?x 10000 3) '(1 2 ?y) {})
+;; => nil
+
+
+;;; let's define `subst` function that performs the substitution - bindings returned by `satisfy`
+(defn subst [term binds]
+  (walk/prewalk
+   (fn [expr]
+     (if (lvar? expr)
+       (or (binds expr) expr)
+       expr))
+   term))
+
+(subst '(1 ?x 3) '{?x 2})
+;; => (1 2 3)
+
+(subst '((((?x)))) '{?x 2})
+;; => ((((2))))
+
+(subst '{:a ?x
+         :b [1 ?x 3]}
+       '{?x 2})
+;; => {:a 2, :b [1 2 3]}
+
+;; with incomplete "knowledge"
+(subst '(1 ?x 3) {})
+;; => (1 ?x 3)
+(subst '(1 ?x 3) '{?x ?y})
+;; => (1 ?y 3)
+
+;;; Now define the last piece, 'meld' function, which combbines two seqs together
+(defn meld [term1 term2]
+  (->> {} ;; 'unification' combines two terms in an empty context
+       (satisfy term1 term2)
+       (subst term1)))
+
+(meld '(1 ?x 3) '(1 2 ?y))
+;; => (1 2 3)
+
+(meld '(1 ?x) '(?y (?y 2)))
+;; => (1 (1 2))
+
+
+;;; But simple unification doesn't solve many problems:
+
+;; e.g. here it  cannot see that ?y is one
+(satisfy '(1 ?x) '(?y (?y 2)) {})
+;; => {?y 1, ?x (?y 2)}
+
+
+;;; core.logic (p. 407)
+;;; See https://github.com/clojure/core.logic
+;;; and also https://github.com/clojure/core.unify
+;;; and https://github.com/swannodette/logic-tutorial
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; let's mimic our `satisfy` funtion with `logic/==`
+(logic/run* [answer]
+  (logic/== answer 5))
+;; => (5) ; the return values maps one for one with estabilished binding (only `answer` here)
+
+(logic/run* [val1 val2]
+  (logic/== {:a val1 :b 2}
+            {:a 1 :b val2}))
+;; => ([1 2]) ; val1 is 1, val2 is 2
+
+;; let's see how it works if the value is uknown
+(logic/run* [?x ?y]
+  (logic/== ?x ?y))
+;; => ([_0 _0]) ; _0 represents a logic variable
+
+;; what if unification fails?
+(logic/run* [?q]
+  (logic/== ?q 1)
+  (logic/== ?q 2))
+;; => ()
+
+;; `logic/conde` can be used to unify terms in multiple universes
+(logic/run*
+ [george m]
+ (logic/conde
+  [(logic/== george :born)]
+  [(logic/== george :unborn)]))
+;; => (:born :unborn)
+
+;;; Relations (p. 409)
+;; note `defrel` replaced by `pldb/db-rel` in newer core.logic releases: https://github.com/swannodette/logic-tutorial/pull/15/files
+(pldb/db-rel orbits orbital body)
+
+;; this new syntax using `pldb/db` uses representation as tuples [orbits :mercury: sun], etc.
+;; you could also use `pldb/db-fact`: https://github.com/swannodette/logic-tutorial#question--answer
+;; - `pldb/db-fact` accepts existing database of facts as the first argument
+(def orbitals
+  (pldb/db
+   [orbits :mercury :sun]
+   [orbits :venuse :sun]
+   [orbits :earth :sun]
+   [orbits :mars :sun]
+   [orbits :jupiter :sun]
+   [orbits :saturn :sun]
+   [orbits :uranus :sun]
+   [orbits :neptune :sun]))
+
+;; find all the planets that orbit anything
+;; notice usage of `logic/fresh` and `pldb/with-db`
+;; Note: there's also `pldb/with-dbs` - see https://github.com/swannodette/logic-tutorial for more
+(pldb/with-db orbitals
+  (logic/run* [q]
+    (logic/fresh [orbital body]
+      (orbits orbital body)
+      (logic/== q orbital))))
+;; => (:saturn :earth :uranus :neptune :venuse :mars :jupiter :mercury)
 
