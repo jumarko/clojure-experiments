@@ -209,6 +209,9 @@
 
                  ;; jme-clj - jMonkeyEngine wrapper for clojure: https://github.com/ertugrulcetin/jme-clj
                  [jme-clj "0.1.0"]
+
+                 ;; used in Joy of Clojure - Chapter 16
+                 [org.clojure/core.logic "1.0.0"]
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps

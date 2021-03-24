@@ -10,3 +10,14 @@
 (filter-index even? "abcdefg")
 ;; => (\a \c \e \g)
 
+
+;; using reduce-kv
+(defn filter-index
+  "Filters elements of given sequential collection by calling `pred` on corresponding index,
+  return only elements for which their index satisfies the predicate."
+  [pred coll]
+  (reduce-kv #(if (pred %2) (conj %1 %3) %1)
+             []
+             (vec coll)))
+(filter-index even? "abcdefg")
+;; => [\a \c \e \g]
