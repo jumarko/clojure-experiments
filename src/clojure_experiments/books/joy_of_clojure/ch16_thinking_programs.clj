@@ -314,7 +314,7 @@
 (pldb/db-rel orbits orbital body)
 
 ;; this new syntax using `pldb/db` uses representation as tuples [orbits :mercury: sun], etc.
-;; you could also use `pldb/db-fact`: https://github.com/swannodette/logic-tutorial#question--answer
+;; you could also use `pldb/db-fact` one-by-one: https://github.com/swannodette/logic-tutorial#question--answer
 ;; - `pldb/db-fact` accepts existing database of facts as the first argument
 (def orbitals
   (pldb/db
@@ -331,9 +331,73 @@
 ;; notice usage of `logic/fresh` and `pldb/with-db`
 ;; Note: there's also `pldb/with-dbs` - see https://github.com/swannodette/logic-tutorial for more
 (pldb/with-db orbitals
-  (logic/run* [q]
-    (logic/fresh [orbital body]
+  (logic/run* [q] ; logical variable used for query output
+    (logic/fresh [orbital body] ; logical variables used only in the local scope
       (orbits orbital body)
       (logic/== q orbital))))
 ;; => (:saturn :earth :uranus :neptune :venuse :mars :jupiter :mercury)
 
+;;; Subgoals
+(pldb/db-rel stars star)
+(def stars-db (pldb/db [stars :sun]))
+
+;; using `body` here is confusing because we used it to mean "star" in the `orbits` relation
+;; and now we are using it as "planet"
+(defn planeto [body]
+  (logic/fresh [star]
+               (stars star)
+               (orbits body star)))
+
+;; notice that we have to use `pldb/with-dbs`
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (planeto :earth)))
+;; => (_0) ; _0 means there's a match ...
+;; ... let's output true if it's a planet
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (planeto :earth)
+    (logic/== q true)))
+;; => (true)
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (planeto :sun)
+    (logic/== q true)))
+;; => ()
+
+;; let's distinguish between planets and satellites
+(defn satelliteo [body]
+  (logic/fresh [p]
+    (orbits body p)
+    (planeto p)))
+
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (satelliteo :sun)))
+;; => ()
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (satelliteo :earth)))
+;; => ()
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (satelliteo :earth)))
+
+(def orbitals (pldb/db-fact orbitals orbits :moon :earth))
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (satelliteo :moon)))
+;; => (_0)
+
+;; let's add more data points
+(def orbitals (pldb/db-facts orbitals
+                             [orbits :phobos :mars]
+                             [orbits :deimos :mars]
+                             [orbits :io :jupiter]
+                             [orbits :europa :jupiter]
+                             [orbits :callisto :jupiter]
+                             [orbits :ganymede :jupiter]))
+(pldb/with-dbs [orbitals stars-db]
+  (logic/run* [q]
+    (satelliteo :io)))
+;; => (_0)
