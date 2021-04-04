@@ -401,3 +401,167 @@
   (logic/run* [q]
     (satelliteo :io)))
 ;; => (_0)
+
+
+;;; Constraints
+
+;; core.logic provides `!=` operator for 'disqueality'
+(logic/run* [q]
+  (logic/fresh [x y]
+    (logic/== q [x y])
+    (logic/!= y "Java")))
+;; => (([_0 _1] :- (!= (_1 "Java"))))
+;; `(!= (_1 "Java"))` described the constraint that the second variable (y) cannot equal "Java"
+;; ... so we can make the unification succeed by Plugging in anything other than "Java"
+(logic/run* [q]
+  (logic/fresh [x y]
+    (logic/== [:pizza "Clojure"] [x y])
+    (logic/== q [x y])
+    (logic/!= y "Java")))
+;; => ([:pizza "Clojure"])
+
+
+;; simple constraints can be expressed via the dis-equality operator ...
+(logic/run* [q]
+  (logic/fresh [n]
+    (logic/!= 0 n)
+    (logic/== q n)))
+;; => ((_0 :- (!= (_0 0))))
+
+;; ... but how to exclude negative numbers?
+(require '[clojure.core.logic.fd :as fd])
+(take
+ 10
+ (logic/run* [q]
+   (logic/fresh [n]
+     (fd/in n (fd/interval 1 Integer/MAX_VALUE))
+     (logic/== q n))))
+;; => (1 2 3 4 5 6 7 8 9 10)
+
+;; you can use `fd/domain` to restrict the range
+(logic/run* [q]
+  (logic/fresh [n]
+    (fd/in n (fd/domain 0 1))
+    (logic/== q n)))
+;; => (0 1)
+
+;; Example of all possible combinations for tossing two consecutive coins:
+(logic/run* [q]
+  (let [coin (fd/domain 0 1)]
+    (logic/fresh [heads tails]
+      (fd/in heads 0 coin)
+      (fd/in tails 1 coin)
+      (logic/== q [heads tails]))))
+;; => ([0 0] [1 0] [0 1] [1 1])
+
+;; Notice that it works the same way when leaving out `0` and `1` from `fd/in` calls
+;; - maybe it was just a typo in the book?
+(logic/run* [q]
+  (let [coin (fd/domain 0 1)]
+    (logic/fresh [heads tails]
+      (fd/in heads coin)
+      (fd/in tails coin)
+      (logic/== q [heads tails]))))
+;; => ([0 0] [1 0] [0 1] [1 1])
+
+
+;;; Sudoku Solver - p.420
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rowify [board]
+  (->> board
+       (partition 9)
+       (mapv vec)))
+(rowify b1)
+;; => [[3 - - - - 5 - 1 -]
+;;     [- 7 - - - 6 - 3 -]
+;;     [1 - - - 9 - - - -]
+;;     [7 - 8 - - - - 9 -]
+;;     [9 - - 4 - 8 - - 2]
+;;     [- 6 - - - - 5 - 1]
+;;     [- - - - 4 - - - 6]
+;;     [- 4 - 7 - - - 2 -]
+;;     [- 2 - 6 - - - - 3]]
+
+(defn collify [rows]
+  (apply map vector rows))
+(-> b1 rowify collify)
+;; => ([3 - 1 7 9 - - - -]
+;;     [- 7 - - - 6 - 4 2]
+;;     [- - - 8 - - - - -]
+;;     [- - - - 4 - - 7 6]
+;;     [- - 9 - - - 4 - -]
+;;     [5 6 - - 8 - - - -]
+;;     [- - - - - 5 - - -]
+;;     [1 3 - 9 - - - 2 -]
+;;     [- - - - 2 1 6 - 3])
+
+(defn subgrid [rows]
+  (partition 9
+             (for [row (range 0 9 3)
+                   col (range 0 9 3)
+                   x (range row (+ row 3))
+                   y (range col (+ col 3))]
+               (get-in rows [x y]))))
+(-> b1 rowify subgrid)
+;; => ((3 - - - 7 - 1 - -)
+;;     (- - 5 - - 6 - 9 -)
+;;     (- 1 - - 3 - - - -)
+;;     (7 - 8 9 - - - 6 -)
+;;     (- - - 4 - 8 - - -)
+;;     (- 9 - - - 2 5 - 1)
+;;     (- - - - 4 - - 2 -)
+;;     (- 4 - 7 - - 6 - -)
+;;     (- - 6 - 2 - - - 3))
+
+
+(defn logic-board []
+  (repeatedly 81 logic/lvar))
+(logic-board)
+;; => (<lvar:27302> <lvar:27303> <lvar:27304> <lvar:27305> <lvar:27306> <lvar:27307> <lvar:27308> <lvar:27309> <lvar:27310> <lvar:27311> <lvar:27312> <lvar:27313> <lvar:27314> <lvar:27315> <lvar:27316> <lvar:27317> <lvar:27318> <lvar:27319> <lvar:27320> <lvar:27321> <lvar:27322> <lvar:27323> <lvar:27324> <lvar:27325> <lvar:27326> <lvar:27327> <lvar:27328> <lvar:27329> <lvar:27330> <lvar:27331> <lvar:27332> <lvar:27333> <lvar:27334> <lvar:27335> <lvar:27336> <lvar:27337> <lvar:27338> <lvar:27339> <lvar:27340> <lvar:27341> <lvar:27342> <lvar:27343> <lvar:27344> <lvar:27345> <lvar:27346> <lvar:27347> <lvar:27348> <lvar:27349> <lvar:27350> <lvar:27351> <lvar:27352> <lvar:27353> <lvar:27354> <lvar:27355> <lvar:27356> <lvar:27357> <lvar:27358> <lvar:27359> <lvar:27360> <lvar:27361> <lvar:27362> <lvar:27363> <lvar:27364> <lvar:27365> <lvar:27366> <lvar:27367> <lvar:27368> <lvar:27369> <lvar:27370> <lvar:27371> <lvar:27372> <lvar:27373> <lvar:27374> <lvar:27375> <lvar:27376> <lvar:27377> <lvar:27378> <lvar:27379> <lvar:27380> <lvar:27381> <lvar:27382>)
+
+(defn init [[lv & lvs]
+            [cell & cells]]
+  (if lv
+    (logic/fresh [] ; this is only to aggregate subgoals
+                 (if (= '- cell)
+                   logic/succeed
+                   (logic/== lv cell))
+                 (init lvs cells))
+    logic/succeed))
+;; this returns a function so it's opaque
+#_(init (logic-board) b1)
+
+(defn solve-logically [board]
+  (let [legal-nums (fd/interval 1 9)
+        lvars (logic-board)
+        rows (rowify lvars)
+        cols (collify rows)
+        grids (subgrid rows)]
+    (logic/run 1 [q]
+      (init lvars board)
+      (logic/everyg #(fd/in % legal-nums) lvars)
+      (logic/everyg fd/distinct cols)
+      (logic/everyg fd/distinct rows)
+      (logic/everyg fd/distinct grids)
+      (logic/== q lvars))))
+
+;; solve and print the result
+(-> b1
+    solve-logically
+    first
+    prep
+    print-board)
+;; -------------------------------------
+;; | 3   8   6 | 2   7   5 | 4   1   9 | 
+;; | 4   7   9 | 8   1   6 | 2   3   5 | 
+;; | 1   5   2 | 3   9   4 | 8   6   7 | 
+;; -------------------------------------
+;; | 7   3   8 | 5   2   1 | 6   9   4 | 
+;; | 9   1   5 | 4   6   8 | 3   7   2 | 
+;; | 2   6   4 | 9   3   7 | 5   8   1 | 
+;; -------------------------------------
+;; | 8   9   3 | 1   4   2 | 7   5   6 | 
+;; | 6   4   1 | 7   5   3 | 9   2   8 | 
+;; | 5   2   7 | 6   8   9 | 1   4   3 | 
+;; -------------------------------------
+
