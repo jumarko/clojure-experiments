@@ -72,7 +72,7 @@
 ;;; and never consumes more than given `max-n` elements
 
 ;; `rechunk` here: https://clojuredocs.org/clojure.core/chunk#example-5c9cebc3e4b0ca44402ef6ec
-;; TODO: check throttler: http://brunov.org/clojure/2014/05/14/throttler/
+;; todo: check throttler: http://brunov.org/clojure/2014/05/14/throttler/
 (defn re-chunk [n xs]
   (lazy-seq
    (when-let [s (seq (take n xs))]
@@ -81,9 +81,9 @@
        (chunk-cons (chunk cb) (re-chunk n (drop n xs)))))))
 
 (defn map-throttled
-  "Like `map` but never realizes more than `max-n` elements ahead of the consumer of the return value.
-  Useful for cases like an rate limited asynchronous HTTP API (e.g. StartQuery AWS CloudWatch Insights API).
-  Uses `re-chunk`."
+  "like `map` but never realizes more than `max-n` elements ahead of the consumer of the return value.
+  useful for cases like an rate limited asynchronous http api (e.g. startquery aws cloudwatch insights api).
+  uses `re-chunk`."
   [max-n f coll]
   (map f (re-chunk max-n coll)))
 
