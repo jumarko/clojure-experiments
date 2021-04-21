@@ -1,8 +1,11 @@
 (ns clojure-experiments.networking
-  (:require [clojure.java.io :as io]
-            [clj-http.client :as http])
-  )
-
+  (:require [clj-http.client :as http]
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [ring.util.codec :as codec]
+            [vcr-clj.cassettes :as vcr-cassettes]
+            [vcr-clj.cassettes.serialization :as vcr-serialization]
+            [vcr-clj.clj-http :as vcr-http]))
 
 ;; How to check TLS certificate expiration date with Clojure?
 ;; https://stackoverflow.com/questions/54612465/how-to-check-tls-certificate-expiration-date-with-clojure
@@ -31,7 +34,7 @@
 (comment
   (def httpf (future (do
                        (println (java.util.Date.) "started")
-                       (try (clj-http.client/get "http://10.0.1.71")
+                       (try (http/get "http://10.0.1.71")
                             (println (java.util.Date.) "finished")
                             (catch Exception e
                               (println (java.util.Date.) "Interrupted?")
@@ -58,3 +61,28 @@
 
 
   ,)
+
+;;; capture IO with vcr-clj: https://github.com/gfredericks/vcr-clj
+(comment
+
+ (vcr-http/with-cassette :record
+   (http/get "https://www.stats.govt.nz/assets/Uploads/Business-price-indexes/Business-price-indexes-September-2020-quarter/Download-data/business-price-indexes-september-2020-quarter-corrections-to-previously-published-statistics.csv"))
+ 
+    ;; check where the cassete file is stored:
+ (vcr-clj.cassettes/cassette-file :record)  
+;; => #object[java.io.File 0x2a586674 "/Users/jumar/workspace/clojure/clojure-experiments/cassettes/record.edn"]
+
+ (defn decode-body [base64-encoded-strings]
+   (-> base64-encoded-strings
+       vcr-serialization/maybe-join
+       codec/base64-decode
+       (String.)))
+
+ ;; 
+  (with-open [r (java.io.PushbackReader. (io/reader (vcr-cassettes/cassette-file :record)))]
+   (let [as-edn (edn/read {:readers  (assoc vcr-serialization/data-readers
+                                            'vcr-clj/input-stream decode-body)}
+                          r)
+         body (-> as-edn :calls (get 0) :return :body)]
+     (println body)))
+    ,)
