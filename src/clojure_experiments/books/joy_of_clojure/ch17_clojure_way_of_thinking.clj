@@ -1,7 +1,9 @@
 (ns clojure-experiments.books.joy-of-clojure.ch17-clojure-way-of-thinking
   "Chapter 17: Clojure changes the way you think"
   (:require [clojure.set :as ra]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.xml :as xml]))
+
 
 
 ;;; 17.1 Thinking in the domain
@@ -236,7 +238,6 @@
 ;; => 0.33
 
 
-
 ;;; Abstract factory pattern
 (def config
   '{:systems {:pump {:type :feeder :descr "Feeder system"}
@@ -282,3 +283,235 @@
 ;;     #clojure_experiments.books.joy_of_clojure.ch17_clojure_way_of_thinking.HiFiSim{:name :sim2, :threads 2})
 
 
+;;; Dependency Injection (p. 442 - 446)
+;;; We'll use the basis we established with the Abstract Factory pattern
+(def lofi {:type :sim :descr "Lowfi sim" :fidelity :low})
+(def hifi {:type :sim :descr "Hifi sim" :fidelity :high :threads 2})
+
+(construct :lofi lofi)
+;; => #clojure_experiments.books.joy_of_clojure.ch17_clojure_way_of_thinking.LowFiSim{:name :lofi}
+
+;; We'll now extend the idea of construction.
+;; Let's start by introducing a couple of protocols
+;; to decribe system-level and simulation capabilities
+
+(defprotocol Sys
+  (start! [sys])
+  (stop! [sys]))
+
+(defprotocol Sim
+  (handle [sim msg]))
+
+;; now build the system
+(defn build-system [name config]
+  (let [sys (construct name config)]
+    (start! sys)
+    sys))
+
+;; ... and we need something to implement the `Sys` protocol
+(extend-type LowFiSim
+  Sys
+  (start! [this]
+    (println "Started a lofi simulator."))
+  (stop! [this]
+    (println "Stopped a lofi simulator."))
+
+  Sim
+  (handle [this msg]
+    (* (:weight msg) 3.14)))
+
+;; now start the system
+(start! (construct :lofi lofi))
+;; => you'll see this printed in the REPL:
+;; Started a lofi simulator.
+
+;; ... you should see the same thing if you build the system
+(build-system :lofi lofi)
+;; Started a lofi simulator.
+;; => #clojure_experiments.books.joy_of_clojure.ch17_clojure_way_of_thinking.LowFiSim{:name :lofi}
+
+;; ... ask it to handle a message
+(handle (build-system :sim1 lofi) {:weight 42})
+;; => 131.88
+
+
+;; let's extend HiFiSim too
+(extend-type HiFiSim
+  Sys
+  (start! [this]
+    (println "Started a hifi simulator."))
+  (stop! [this]
+    (println "Stopped a hifi simulator."))
+
+  Sim
+  (handle [this msg]
+    (Thread/sleep 5000)
+    (* (:weight msg) 3.1415926535897932384626M)))
+
+(build-system :sim2 hifi)
+;; Started a hifi simulator.
+;; => #clojure_experiments.books.joy_of_clojure.ch17_clojure_way_of_thinking.HiFiSim{:name :sim2, :threads 2}
+
+(comment
+  (handle (build-system :sim2 hifi) {:weight 42})
+  ;; Started a hifi simulator.
+  ;; ... waiting 5 seconds
+  ;; => 131.9468914507713160154292M
+  ,)
+
+
+;; Let's use the low-fidelity model for an immediate answer
+;; and then wait for high-fidelity model to evantually replace it with a more precise answer
+(def excellent (promise))
+
+(defn simulate [answer fast slow opts]
+  ;; calculate hifi on another thread
+  ;; - accurate but expensive is delivered later
+  (future (deliver answer (handle slow opts)))
+  ;; calculate lofi immediatelly
+  ;; - cheap but less accurate answer is returned immediatelly
+  (handle fast opts))
+
+(simulate excellent
+          (build-system :sim1 lofi)
+          (build-system :sim2 hifi)
+          {:weight 42})
+;; low fidelity answer returned immediatelly
+;; => 131.88
+
+;; false if you evaluate this immediatelly after the previous expression
+(realized? excellent)
+;; => false
+;; wait at least 5 seconds for hifi to deliver a more precise answer
+(comment
+  @excellent
+  ;; => 131.9468914507713160154292M
+  ,)
+
+
+;; let's now create a mock implementation
+(defrecord MockSim [name])
+
+(def starts (atom 0))
+(def starts-per-instance (atom {}))
+
+(extend-type MockSim
+  Sys
+  (start! [this]
+    (if (= 1 (get (swap! starts-per-instance update this (fnil inc 0))
+                  this))
+      (println "Started a mock simulator.")
+      (throw (RuntimeException. "Called start! more than once."))))
+  (stop! [this]
+    (println "Stopped a mock simulator."))
+
+  Sim
+  (handle [_ _] 42))
+
+
+(defmethod construct [:mock nil]
+  [nom _]
+  (MockSim. nom))
+
+(def config {:type :mock :lib 'clojure-experiments.books.joy-of-clojure.ch17-clojure-way-of-thinking})
+
+(defn initialize [name cfg]
+  (let [lib (:lib cfg)]
+    ;; maybe `serialized-require` or `requiring-resolve` would be preferred for thread-safety
+    (require lib)
+    (build-system name cfg)))
+
+(comment
+  (handle (initialize :mock-sim config)
+          {})
+  ;;=> 42
+
+  ;; if you try again it fails even if it's another instace
+  ;; - unless you use `starts-per-instance` atom instaed
+  (handle (initialize :mock-sim2 config)
+          {})
+  ;;=> 42
+  (handle (initialize :mock-sim2 config)
+          {})
+  ;; Called start! more than once.
+
+  )
+
+
+;;; Error handling and debugging (p. 447)
+
+;; using dynamic binding for error handling
+
+(defn traverse [node f]
+  (when node
+    (f node)
+    (doseq [child (:content node)]
+      (traverse child f))))
+
+(traverse {:tag :flower :attrs {:name "Tanpopo"} :content []}
+          println)
+;; => nil
+
+(def DB
+  (->
+   "<zoo>
+      <pongo>
+        <animal>organutan</animal>
+      </pongo>
+      <panthera>
+        <animal>Spot</animal>
+        <animal>lion</animal>
+        <animal>Lopshire</animal>
+      </panthera>
+    </zoo>"
+   .getBytes
+   (java.io.ByteArrayInputStream.)
+   xml/parse))
+
+(traverse DB println)
+
+
+;; let's handle intruders like Sopt and Lopshire
+(defn ^:dynamic handle-weird-animal
+  [{[name] :content}]
+  (throw (Exception. (str name " must be 'dealt with'"))))
+
+;; but first we need a function to make the actual delegation
+(defmulti visit :tag)
+
+;; needed to deal with other tags like :zoo, etc.
+(defmethod visit :default [_])
+
+(defmethod visit :animal [{[name] :content :as animal}]
+  (case name
+    ;; Note: could be `cond` and use `#{"Spot" "Lopshire"}
+    "Spot" (handle-weird-animal animal)
+    "Lopshire" (handle-weird-animal animal)
+    (println name)))
+
+;; the default error handling
+(traverse DB visit)
+;; 1. Unhandled java.lang.Exception
+;;     Spot must be 'dealt with'
+
+;; custom error handling
+(binding [handle-weird-animal (fn [{[name] :content}] (println name "is harmless"))]
+  (traverse DB visit))
+
+
+;; we can be more sophisticated in error handling:
+(defmulti handle-weird (fn [{[name] :content}] name))
+(defmethod handle-weird "Spot" [_]
+  (println "Transporting Spot to the circus"))
+(defmethod handle-weird "Lopshire" [_]
+  (println "Signing Lopshire to a book deal."))
+
+;; notice it works across threads
+(future
+  (binding [handle-weird-animal handle-weird]
+    (traverse DB visit)))
+;; => prints:
+;; organutan
+;; Transporting Spot to the circus
+;; lion
+;; Signing Lopshire to a book deal.
