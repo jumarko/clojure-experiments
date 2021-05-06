@@ -16,3 +16,43 @@
 (comment 
   (.start (Thread. nil #(println (rec 50000)) "extended stack" 5000000))
   )
+
+
+;;; interruptions & InterruptedException
+
+(comment
+  
+
+  (def f (future (println "started")
+                 (try
+                   (Thread/sleep 10000)
+                   (catch InterruptedException ie
+                     (println "Interrupted.")))
+                 (println "finished")))
+  (future-cancel f)
+  ;;=> prints:
+  ;; started
+  ;; Interrupted.
+  ;; finished
+
+  ;; try to interrupt disk io
+  (do (def fio
+     (future 
+       (try
+         (println "slurping from the disk")
+         (slurp "/Users/jumar/workspace/clojure/clojure-rte/java_pid73938.hprof")
+         (println "slurped from the disk")
+         (catch InterruptedException ie
+           (println "Interrupted.")))))
+      (Thread/sleep 100)
+      (println "Interrupting...")
+      (future-cancel fio)
+      (println "Interrupted?"))
+  ;;=> prints:
+  ;; slurping from the disk
+  ;; Interrupting...
+  ;; Interrupted?
+  ;; slurped from the disk
+
+
+  ,)
