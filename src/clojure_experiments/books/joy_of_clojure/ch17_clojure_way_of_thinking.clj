@@ -2,7 +2,8 @@
   "Chapter 17: Clojure changes the way you think"
   (:require [clojure.set :as ra]
             [clojure.string :as str]
-            [clojure.xml :as xml]))
+            [clojure.xml :as xml]
+            [clojure-experiments.books.joy-of-clojure.ch08-macros :refer [contextual-eval]]))
 
 
 
@@ -515,3 +516,109 @@
 ;; Transporting Spot to the circus
 ;; lion
 ;; Signing Lopshire to a book deal.
+
+
+
+;;; 17.4.2 Debugging
+;;; Natural progression for Clojure newcomers when it comes to debugging
+;;; 1. (println)
+;;; 2. macros to make (1) easier
+;;; 3. Some variations on debugging as described in this section
+;;; 4. IDEs, monitoring & profiling tools
+
+(defn div [n d] (int (/ n d)))
+
+
+;; this fails...
+#_(div 10 0)
+
+;; ... so let's debug it
+
+;; we would like to have `break` macro that will pause the execution
+
+;; let's first override `clojure.main/repl` reader
+(defn readr [prompt exit-code]
+  (let [input (clojure.main/repl-read prompt exit-code)]
+    (if (= input ::tl)
+           exit-code
+           input)))
+
+;; now play
+(comment
+  ;; you will see stdin promtp and when you press enter this will return the form you entered
+  ;; type [1 2 3]
+  (readr #(print "invisible=> ") ::exit)
+;; => [1 2 3]
+
+  ;; type ::tl
+  (readr #(print "invisible=> ") ::exit)
+  ;; => :clojure-experiments.books.joy-of-clojure.ch17-clojure-way-of-thinking/exit
+
+  ,)
+
+
+;; overriding evaluator - :eval
+(defmacro local-context []
+  (let [symbols (keys &env)]
+    ;; instead of `(quote ~sym) the usual way is just `'sym ? would that work?
+    (zipmap (map (fn [sym] `'~sym)
+                 symbols)
+            symbols)))
+
+(local-context)
+;; => {}
+
+(let [a 1 b 2 c 3]
+  (let [b 200]
+    (local-context)))
+;; => {a 1, b 200, c 3}
+
+;; no we want to evaluate forms in the local context
+(defmacro break []
+  `(clojure.main/repl
+    :prompt #(print "debug=> ")
+    :read readr
+    :eval (partial contextual-eval (local-context))))
+
+(defn div [n d] (break) (int (/ n d)))
+
+(comment
+  
+  ;; type `(local-context)` then `::tl`
+  (div 10 0)
+
+  ,)
+
+;; try multiple breakpoints
+(defn keys-apply [f ks m]
+  (break)
+  (let [only (select-keys m ks)]
+    (break)
+    (zipmap (keys only) (map f (vals only)))))
+
+(comment
+  
+  ;; try to enter this:
+  ;; only
+  ;; ks
+  ;; ::tl
+  ;; only
+  ;; ::tl
+  (keys-apply inc [:a :b] {:a 1 :b 2 :c 3})
+
+  ,)
+
+;; finally let's use `break` in the body of a macro
+(defmacro awhen [expr & body]
+  (break)
+  `(let [~'it ~expr]
+     (if ~'it
+       (do (break) ~@body))))
+
+(comment
+
+  (awhen [1 2 3] (it 2))
+;; => 3
+
+  ,
+  )

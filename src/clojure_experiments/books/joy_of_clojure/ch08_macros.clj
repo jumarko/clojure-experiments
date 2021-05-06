@@ -29,6 +29,7 @@
 
 ;; contextual-eval -> local bindings
 ;; to mitigate issues with `eval` which uses global bindings
+;; This is also used in ch17 - section 17.4.2 (`break` macro)
 (defn contextual-eval [ctx expr]
   (eval
    `(let [~@(mapcat (fn [[k v]] [k `'~v])
