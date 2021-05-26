@@ -33,11 +33,11 @@
   (prof/start {})
 
   ;; or 
-  (prof/start {:event :alloc})
+  #_(prof/start {:event :alloc})
 
   (burn-cpu 10)
 
-  (prof/stop {})
+  (doto (prof/stop {:width 2400}) prn)
 ;; => Execution error (ExceptionInfo) at clj-async-profiler.core/stop (core.clj:262).
 ;;    Profiler is not active
   ;; => /private/tmp/clj-async-profiler/results/flamegraph-2019-03-10-12-12-46.svg
@@ -271,4 +271,5 @@
 ;; "Elapsed time: 51.049683 msecs"
 #_(time (foo2 100000000))
 ;; "Elapsed time: 47.310656 msecs"
+
 
