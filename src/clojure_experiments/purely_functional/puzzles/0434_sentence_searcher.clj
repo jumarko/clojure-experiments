@@ -9,8 +9,8 @@
         (str/split document #"[.?!]")))
 
 (defn contains-word? [sentence word]
-  (let [sentence-words (str/split sentence #"\s")]
-    ((set sentence-words) word)))
+  (let [sentence-words (str/split (str/lower-case sentence) #"\s")]
+    ((set sentence-words) (str/lower-case word))))
 
 (defn search [document word]
   (not-empty (filterv #(contains-word? % word)
@@ -22,5 +22,5 @@
 (search "I like to write. Do you like to write?" "like")
 ;; => ["I like to write" "Do you like to write"]
 
-(search "This is not my document. It has no two sentences." "no")
+(search "This is not my document. It has No two sentences." "no")
 ;; => ["It has no two sentences"]
