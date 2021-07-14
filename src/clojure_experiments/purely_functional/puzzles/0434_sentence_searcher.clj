@@ -13,8 +13,11 @@
     ((set sentence-words) word)))
 
 (defn search [document word]
-  (filterv #(contains-word? % word)
-           (sentences document)))
+  (not-empty (filterv #(contains-word? % word)
+                      (sentences document))))
+
+(search "This is my document." "Hello")
+;; => []
 
 (search "I like to write. Do you like to write?" "like")
 ;; => ["I like to write" "Do you like to write"]
