@@ -8,13 +8,16 @@
   (mapv str/trim
         (str/split document #"[.?!]")))
 
+(defn contains-word? [sentence word]
+  (let [sentence-words (str/split sentence #"\s")]
+    ((set sentence-words) word)))
+
 (defn search [document word]
-  ;; TODO: take word boundaries into account - e.g. 'no' shouldn't match 'not'
-  (filterv #(str/includes? (str/lower-case %) (str/lower-case word))
+  (filterv #(contains-word? % word)
            (sentences document)))
 
 (search "I like to write. Do you like to write?" "like")
 ;; => ["I like to write" "Do you like to write"]
 
-(search "This is my document. It has two sentences." "sentences")
-;; => ["It has two sentences"]
+(search "This is not my document. It has no two sentences." "no")
+;; => ["It has no two sentences"]
