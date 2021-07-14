@@ -3,10 +3,9 @@
   Solutions: https://gist.github.com/ericnormand/25e53eea786708b948d0c666c790580b"
   (:require [clojure.string :as str]))
 
-
 (defn sentences [document]
   (mapv str/trim
-        (str/split document #"[.?!]")))
+        (str/split document #"(?<=[.?!])")))
 
 (defn contains-word? [sentence word]
   (let [sentence-words (str/split (str/lower-case sentence) #"\s")]
@@ -20,7 +19,7 @@
 ;; => []
 
 (search "I like to write. Do you like to write?" "like")
-;; => ["I like to write" "Do you like to write"]
+;; => ["I like to write." "Do you like to write?"]
 
 (search "This is not my document. It has No two sentences." "no")
-;; => ["It has no two sentences"]
+;; => ["It has No two sentences."]
