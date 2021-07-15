@@ -16,7 +16,7 @@
                       (sentences document))))
 
 (search "This is my document." "Hello")
-;; => []
+;; => nil
 
 (search "I like to write. Do you like to write?" "like")
 ;; => ["I like to write." "Do you like to write?"]
