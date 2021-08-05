@@ -269,14 +269,34 @@
 
 ;; finally blocks vs interrupted threads => works just fine
 (comment
-  (def my-future
-    (future
-      (Thread/sleep 10000)
-      (println "Normally.")
-      (finally
-        (println "Finally!"))))
-  ;; finally still executed
-  (future-cancel my-future)
+  (do 
+    (def my-future
+      (future
+        (try 
+          (Thread/sleep 10000)
+          (println "Normally.")
+          (finally
+            (Thread/sleep 1000)
+            (println "Finally!")))))
+    ;; finally still executed
+    (future-cancel my-future)
+    ;; Notice that it's marked as "done" and "cancelled" immediatelly after the cancellation
+    ;; - but the thread running the task can still be doing other things indefinetely;
+    ;;   e.g. sleeping in the finally block as above
+    (println "cancelled?" (future-cancelled? my-future))
+    (println "done?" (future-done? my-future))
+    (println "cancelled")
+    (try @my-future (catch Exception e (println (.getMessage e))))
+    (println "dereferenced"))
+  ;; => you'll see this
+  ;; cancelled? true
+  ;; done? true
+  ;; cancelled
+  ;; nil
+  ;; dereferenced
+  ;;   <after a minute>
+  ;; Finally!
+
 
   (def my-thread (Thread.
                   (fn []
