@@ -212,6 +212,22 @@
 
                  ;; used in Joy of Clojure - Chapter 16
                  [org.clojure/core.logic "1.0.0"]
+
+                 ;; used in 'Clojure Inside Out' - Functional Composition: https://github.com/ctford/functional-composition/blob/master/project.clj
+                 [overtone "0.10.6"]
+                 ;; use later rrb-vector version to fix "Must hint overloaded method: toArray"
+                 ;; https://mvnrepository.com/artifact/org.clojure/core.rrb-vector
+                 [org.clojure/core.rrb-vector "0.1.2"]
+                 [leipzig "0.10.0"]
+
+                 ;; capture io for repeatable tests, etc. https://github.com/gfredericks/vcr-clj
+                 [com.gfredericks/vcr-clj "0.4.19"]
+
+                 ;; https://github.com/nubank/matcher-combinators/
+                 [nubank/matcher-combinators "3.1.4"]
+
+                 ;; https://github.com/noprompt/meander/
+                 [meander/epsilon "0.0.602"]
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
@@ -220,7 +236,7 @@
   ;; :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :java-source-paths ["src/java"]
-  :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+  :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
              "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
              "-Djdk.attach.allowAttachSelf=true"
              ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
