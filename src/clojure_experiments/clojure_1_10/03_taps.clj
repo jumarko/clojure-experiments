@@ -67,7 +67,3 @@
   (alter-var-root #'clojure.core/tapset (constantly (atom #{})))
   ,)
 
-
-
-
-
