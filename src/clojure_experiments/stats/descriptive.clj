@@ -1,5 +1,6 @@
 (ns clojure-experiments.stats.descriptive
-  "Little helpers for computing descriptive statistics (min, max, median, mean, percentiles, ...)."
+  "Little helpers for computing descriptive statistics (min, max, median, mean, percentiles, ...).
+  See also `clojure-experiments.stats.techml` - especially `ds/descriptive-stats`."
   (:require [clojure-experiments.stats.confidence-intervals :refer [confidence-interval]]
             [clojure.spec.alpha :as s]
             [medley.core :as m])

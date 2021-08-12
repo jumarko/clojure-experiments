@@ -19,7 +19,7 @@
                  [org.apache.poi/poi-ooxml "3.17"]
                  [org.clojure/core.async "1.2.603"]
                  [funcool/cats "2.1.0"]
-                 [buddy/buddy-hashers "1.3.0"]
+                 [buddy/buddy-hashers "1.8.1"]
                  [org.julienxx/clj-slack "0.5.5"]
                  ;; Does this conflict with oz because of aleph/sente conflict?
                  ;;   Syntax error (FileNotFoundException) compiling at (server.clj:1:1).
@@ -199,13 +199,11 @@
                  [org.clojure/core.memoize "1.0.236"]
 
                  ;; tech.ml.dataset requires higher smile-* libs versions than fastmath
-                 [techascent/tech.ml.dataset "2.0"]
-                 [com.github.haifengl/smile-core "2.4.0"]
-                 [com.github.haifengl/smile-netlib "2.4.0"]
-                 [com.github.haifengl/smile-io "2.4.0"]
-                 [com.github.haifengl/smile-math "2.4.0"]
-                 [com.github.haifengl/smile-graph "2.4.0"]
-                 [com.github.haifengl/smile-data "2.4.0"]
+                 [techascent/tech.ml.dataset "6.012"]
+                 ;; tmd needs higher version of encore too:
+                 [com.taoensso/encore "3.19.0"]
+                 ;; tablecloth provides a siple API for tmd: https://github.com/scicloj/tablecloth
+                 [scicloj/tablecloth "6.006"]
 
                  ;; jme-clj - jMonkeyEngine wrapper for clojure: https://github.com/ertugrulcetin/jme-clj
                  [jme-clj "0.1.0"]
@@ -239,6 +237,8 @@
   :jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
              "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
              "-Djdk.attach.allowAttachSelf=true"
+             ;; to make clj-memory-meter work with JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
+             "--illegal-access=permit"
              ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
              "--add-modules=jdk.hotspot.agent"
              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"

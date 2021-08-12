@@ -1,7 +1,8 @@
 (ns clojure-experiments.csv
+  "see `clojure-experiments.stats.techml` for more tech.ml.dataset related experiments"
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
-
+            ;; requires the `--illegal-access=permit` workaround on JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
             [clj-memory-meter.core :as mm]))
 
 ;;; See also
@@ -38,15 +39,21 @@
 
   (def csv-ds (csv/read-csv (slurp "https://open-covid-19.github.io/data/v2/latest/master.csv")))
   ;; don't be fooled by lazy seqs when measuring memory -> use vector
+  ;; UPDATE: doesn't work with JDK16 out of the box
   (mm/measure (vec csv-ds))
-  ;; => "23.1 MB"
+;; => "13.3 MB" (JDK 16!)
+  ;; => "23.1 MB" (JDK 11?)
   (mm/measure (vec (csv-data->maps csv-ds)))
-  ;; => "31.8 MB"
+;; => "22.5 MB" (JDK16!)
+  ;; => "31.8 MB" (JDK 11?)
 
-  (require '[tech.ml.dataset :as ds])
+  ;; can take a while to load
+  (require '[tech.v3.dataset :as ds])
+
   (def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
   (mm/measure ds)
-  ;; => "5.1 MB"  ;;
+  ;; => "6.8 MB" (JDK 16!)
+  ;; => "5.1 MB"  (JDK 11?)
 
   ;; dataset is logically a sequence of columens when treated like a sequence:
   (first ds)
@@ -54,4 +61,33 @@
 ;;    key
 ;;    [AD, AE, AF, AF_BAL, AF_BAM, AF_BDG, AF_BDS, AF_BGL, AF_DAY, AF_FRA, AF_FYB, AF_GHA, AF_GHO, AF_HEL, AF_HER, AF_JOW, AF_KAB, AF_KAN, AF_KAP, AF_KDZ, ...]
   ;;
+
+
   )
+
+;;; newer version of tech.ml.dataset
+;;; https://github.com/techascent/tech.ml.dataset#mini-walkthrough
+;;; => see `clojure-experiments.stats.techml` for more
+(comment
+
+  ;; can take a while to load
+  (require '[tech.v3.dataset :as ds])
+
+  (def csv-data (ds/->dataset "https://github.com/techascent/tech.ml.dataset/raw/master/test/data/stocks.csv"))
+  (ds/head csv-data)
+;; => https://github.com/techascent/tech.ml.dataset/raw/master/test/data/stocks.csv [5 3]:
+;;    | symbol |       date | price |
+;;    |--------|------------|------:|
+;;    |   MSFT | 2000-01-01 | 39.81 |
+;;    |   MSFT | 2000-02-01 | 36.35 |
+;;    |   MSFT | 2000-03-01 | 43.22 |
+;;    |   MSFT | 2000-04-01 | 28.37 |
+;;    |   MSFT | 2000-05-01 | 25.45 |
+
+
+  (def airports (ds/->dataset "https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat"
+                             {:header-row? false :file-type :csv}))
+
+  (ds/head airports)
+
+  ,)
