@@ -47,4 +47,27 @@
 
 
 
+;;; simple way to use taps via atom which can then be inspected with cider-inspect
+(def inspects (atom []))
+(defn record-val [x]
+  (swap! inspects conj x))
+(add-tap record-val)
+
+(defn my-f [x]
+  (tap> [#'my-f x]))
+
+(comment
+  (my-f 10)
+  (my-f 20))
+
+;; if you want to remove the tap
+(comment
+  (remove-tap record-val)
+  ;; remove all taps
+  (alter-var-root #'clojure.core/tapset (constantly (atom #{})))
+  ,)
+
+
+
+
 
