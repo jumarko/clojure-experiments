@@ -1,6 +1,5 @@
 (ns clojure-experiments.books.clojure-for-finance.ch02)
 
-
 ;;; p.17
 (defn generate-prices [lower-bound upper-bound]
   (filter (fn [x] (>= x lower-bound))
@@ -32,4 +31,3 @@
 ;;     {:time 2, :price 17.419139755105356}
 ;; ...
 ;;     {:time 24, :price 17.950735031439976})
-

@@ -316,7 +316,8 @@
                                   (-> day-data
                                       (update data-key
                                               (fn [durations]
-                                                (mapv (fn [job-data] (Double/parseDouble (get job-data duration-key)))
+                                                (mapv (fn [job-data]
+                                                        (Double/parseDouble (get job-data duration-key)))
                                                       durations)))
                                       (update :start-time str))]
                               (assoc with-durations-as-doubles
@@ -360,15 +361,13 @@
 
 
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
-
-
   (do
     (time (def multiple-days-data (get-all-data jobs-delay-query
                                                 delta-jobs-durations-query
                                                 other-jobs-durations-query
                                                 git-clones-query
                                                 (from-to (truncate-to-midnight (.minusDays (now)
-                                                                                           3))))))
+                                                                                           8))))))
   
       ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
       ;; (facet row, vconcat, layer, repeat row)
@@ -376,20 +375,25 @@
       (def multiple-days-data-histograms
         [:div
            ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
-         (for [{:keys [start-time end-time delays delta-durations other-durations clone-durations]} multiple-days-data]
+         (for [{:keys [start-time end-time delays delta-durations other-durations clone-durations]} multiple-days-data
+               :let [date-str (format "%s -- %s" start-time end-time)]]
            [:div
-            [:p [:b (format "%s -- %s" start-time end-time)]]
+            [:p [:b date-str]]
             [:div {:style {:display "flex" :flex-direction "col"}}
-             [:vega-lite (hist "Batch jobs delays in seconds" delays "delay_seconds" job-type-color)]
-               ;; default colors are hard to read - check https://stackoverflow.com/questions/58933759/vega-lite-set-color-from-data-whilst-retaining-a-legend
-             [:vega-lite (hist "Other jobs total durations in seconds" other-durations "duration_seconds" job-type-color)]
-  
-             [:vega-lite (hist "Delta jobs total durations in seconds" delta-durations "duration_seconds")]
-               ;; boxplot is confusing => don't show it
+
+             [:vega-lite (hist (format "Batch jobs delays in seconds (%s)" date-str) delays "delay_seconds" job-type-color)]
+
+             [:vega-lite (hist (format "Delta jobs total durations in seconds (%s)" date-str) delta-durations "duration_seconds")]
+             ;; boxplot is confusing => don't show it
              #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
                                           {:extent 10.0})]
+
+             ;; default colors are hard to read - check https://stackoverflow.com/questions/58933759/vega-lite-set-color-from-data-whilst-retaining-a-legend
+             [:vega-lite (hist (format "Other jobs total durations in seconds (%s)" date-str) other-durations "duration_seconds" job-type-color)]
                ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
-             [:vega-lite (hist "Git clones durations" clone-durations "duration_seconds" #_(color "repo_name"))]]
+
+             [:vega-lite (hist (format "Git clones durations (%s) date-str" clone-durations) "duration_seconds" #_(color "repo_name"))]]
+
             [:hr]])])
   
       (oz/view! multiple-days-data-histograms)))
