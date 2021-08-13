@@ -41,21 +41,22 @@
   ;; don't be fooled by lazy seqs when measuring memory -> use vector
   ;; UPDATE: doesn't work with JDK16 out of the box
   (mm/measure (vec csv-ds))
-  ;; => "13.3 MB" (JDK 16!)
-  ;; => "23.1 MB" (JDK 11?)
+  ;; => "27.8 MB" (JDK 11! - 13.8.2021)
+  ;; => "13.3 MB" (JDK 16! - 13.8.2021)
+  ;; => "23.1 MB" (JDK 11? - a long time ago)
   (mm/measure (vec (csv-data->maps csv-ds)))
-  ;; => "22.5 MB" (JDK16!)
-  ;; => "31.8 MB" (JDK 11?)
+  ;; => "36.9 MB" (JDK 11! - 13.8.2021)
+  ;; => "22.5 MB" (JDK16! - 13.8.2021)
+  ;; => "31.8 MB" (JDK 11? - a long time ago)
 
   ;; can take a while to load
   (require '[tech.v3.dataset :as ds])
 
-  (spit "covid.csv" (slurp "https://open-covid-19.github.io/data/v2/latest/master.csv"))
-  #_(def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
-  (def ds (ds/->dataset "covid.csv"))
+  (def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
   (mm/measure ds)
-  ;; => "6.8 MB" (JDK 16!)
-  ;; => "5.1 MB"  (JDK 11?)
+  ;; => "6.8 MB" (JDK 11 - 13.8.2021)
+  ;; => "6.8 MB" (JDK 16! - 13.8.2021)
+  ;; => "5.1 MB"  (JDK 11? - a long time ago)
 
   ;; "clone" makes it more memory efficient
   ;; (suggested by Chris Nuernberger)
