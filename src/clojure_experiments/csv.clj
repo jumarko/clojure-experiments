@@ -41,10 +41,10 @@
   ;; don't be fooled by lazy seqs when measuring memory -> use vector
   ;; UPDATE: doesn't work with JDK16 out of the box
   (mm/measure (vec csv-ds))
-;; => "13.3 MB" (JDK 16!)
+  ;; => "13.3 MB" (JDK 16!)
   ;; => "23.1 MB" (JDK 11?)
   (mm/measure (vec (csv-data->maps csv-ds)))
-;; => "22.5 MB" (JDK16!)
+  ;; => "22.5 MB" (JDK16!)
   ;; => "31.8 MB" (JDK 11?)
 
   ;; can take a while to load

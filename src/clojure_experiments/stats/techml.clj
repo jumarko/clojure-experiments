@@ -4,7 +4,7 @@
   https://github.com/techascent/tech.ml.dataset#mini-walkthrough
   https://github.com/scicloj/tablecloth
   "
-  (:require [tech.v3.dataset :as ds]
+  (:require [tech.v3.dataset :as ds] ; can take several seconds to load
             ;; requires the `--illegal-access=permit` workaround on JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
             [clj-memory-meter.core :as mm]
             [tablecloth.api :as tc]
@@ -61,18 +61,6 @@
       (tc/aggregate #(tf/mean (% :price)))
       (tc/order-by [:symbol :year])
       (tc/head 10))
-;; => _unnamed [10 3]:
-;;    |     :summary | :year | :symbol |
-;;    |-------------:|------:|---------|
-;;    |  21.74833333 |  2000 |    AAPL |
-;;    |  10.17583333 |  2001 |    AAPL |
-;;    |   9.40833333 |  2002 |    AAPL |
-;;    |   9.34750000 |  2003 |    AAPL |
-;;    |  18.72333333 |  2004 |    AAPL |
-;;    |  48.17166667 |  2005 |    AAPL |
-;;    |  72.04333333 |  2006 |    AAPL |
-;;    | 133.35333333 |  2007 |    AAPL |
-;;    | 138.48083333 |  2008 |    AAPL |
-;;    | 150.39333333 |  2009 |    AAPL |
+
   ,)
 
