@@ -50,10 +50,18 @@
   ;; can take a while to load
   (require '[tech.v3.dataset :as ds])
 
-  (def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
+  (spit "covid.csv" (slurp "https://open-covid-19.github.io/data/v2/latest/master.csv"))
+  #_(def ds (ds/->dataset "https://open-covid-19.github.io/data/v2/latest/master.csv"))
+  (def ds (ds/->dataset "covid.csv"))
   (mm/measure ds)
   ;; => "6.8 MB" (JDK 16!)
   ;; => "5.1 MB"  (JDK 11?)
+
+  ;; "clone" makes it more memory efficient
+  ;; (suggested by Chris Nuernberger)
+  ;; see also https://github.com/techascent/tech.ml.dataset/blob/master/topics/quick-reference.md#forcing-lazy-evaluation
+  (mm/measure (tech.v3.datatype/clone ds))
+;; => "3.7 MB"
 
   ;; dataset is logically a sequence of columens when treated like a sequence:
   (first ds)
