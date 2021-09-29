@@ -162,7 +162,7 @@
                  ;; Note: this is really needed https://logging.apache.org/log4j/2.x/maven-artifacts.html
                  ;; Otherwise you'd get "ERROR StatusLogger No Log4j 2 configuration file found. " 
                  [org.apache.logging.log4j/log4j-api "2.12.1"]
-                 [org.apache.logging.log4j/log4j-core"2.12.1"]
+                 [org.apache.logging.log4j/log4j-core "2.12.1"]
                  ;; also this slf4j bridge
                  [org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
                  ;; https://github.com/RickMoynihan/lein-tools-deps
@@ -226,6 +226,10 @@
 
                  ;; https://github.com/noprompt/meander/
                  [meander/epsilon "0.0.602"]
+
+                 ;; https://github.com/djblue/portal
+                 [djblue/portal "0.14.0"]
+
                  ]
 
   ;; https://github.com/RickMoynihan/lein-tools-deps
