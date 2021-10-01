@@ -87,6 +87,16 @@
 ;; (0 ...)
 
 
+;;; vectors destructuring, subvec, etc.
+
+;; when you destructure a vector you get a ...
+... sequence, not vector;
+;; so `conj` will add the element to the beginning!
+(let [[f & r] [1 2 3 4]]
+  (conj r 10))
+;; => (10 2 3 4)
+
+
 ;;; ghadi - index-by (on Slack)
 (defn index-by
   "Builds a map whose entries are the result of applying

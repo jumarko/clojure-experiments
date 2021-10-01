@@ -19,6 +19,7 @@
      :user (orr (.user info))}))
 
 ;; when-class macro copied from clojure.core because it's private
+;; UPDATE: see also https://github.com/jeff303/java-case
 (defmacro when-class [class-name & body]
   `(try
      (Class/forName ^String ~class-name)
