@@ -40,7 +40,9 @@
         datascript/datascript {:mvn/version "1.2.8"}
         lambdaisland/deep-diff {:mvn/version "0.0-47"}
         bocko/bocko {:mvn/version "1.0.0"}
-        metasoarous/oz {:mvn/version "1.6.0-alpha34"}
+        ;; oz alpha34 doesn't work?
+        ;; metasoarous/oz {:mvn/version "1.6.0-alpha33"}
+        metasoarous/oz {:mvn/version "1.6.0-alpha1"}
         aerial.hanami/aerial.hanami {:mvn/version "0.12.7"}
         org.clojure/java.data {:mvn/version "1.0.86"}
         fn-fx/fn-fx-javafx {:mvn/version "0.5.0-SNAPSHOT"}
