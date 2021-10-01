@@ -193,6 +193,8 @@
         :clone-durations (poll-results clone-id)})
      started-queries)))
 
+;; TODO: if jobs are retried, then this may shown a significant outliers (false positives)
+;; - unlike with batch jobs, I don't know how to fix it easily since host_ip and logStream is likely the same...
 (def jobs-delay-query
   {:group-name "codescene-web-prod-application"
    :query "fields @timestamp, @message
@@ -204,6 +206,8 @@
         by job_id, job_type, batch_job_id
   | sort delay_seconds desc
   | limit 10000"})
+;; to copy-paste the query for CloudWatch Insights console
+#_(clojure.java.shell/sh "pbcopy" :in (:query jobs-delay-query))
 
 (def delta-jobs-durations-query
   {:group-name "codescene-web-prod-application"
@@ -370,13 +374,15 @@
 
 
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
+  ;; TODO: if jobs are retried, then this may shown a significant outliers (false positives)
+  ;; - unlike with batch jobs, I don't know how to fix it easily since host_ip and logStream is likely the same...
   (do
     (time (def multiple-days-data (get-all-data jobs-delay-query
                                                 delta-jobs-durations-query
                                                 other-jobs-durations-query
                                                 git-clones-query
                                                 (from-to (truncate-to-midnight (.minusDays (now)
-                                                                                           4))))))
+                                                                                           3))))))
   
       ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
       ;; (facet row, vconcat, layer, repeat row)
@@ -393,10 +399,12 @@
 
              [:vega-lite (hist (format "Batch jobs delays in seconds (%s)" date-str) delays "delay_seconds" job-type-color)]
 
-             [:vega-lite (hist (format "Delta jobs total durations in seconds (%s)" date-str) delta-durations "duration_seconds")]
+             [:vega-lite (hist (format "Delta jobs total durations in seconds (%s)" date-str) delta-durations "duration_seconds" job-type-color)]
+
              ;; boxplot is confusing => don't show it
-             #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds"
-                                          {:extent 10.0})]
+             #_[:vega-lite (my-oz/boxplot delta-durations "duration_seconds" {:extent 10.0})]
+
+             [:vega-lite (hist (format "X-Ray jobs total durations in seconds (%s)" date-str) (filterv #(= ":run-xray" (get % "job_type")) other-durations) "duration_seconds" job-type-color)]
 
              ;; default colors are hard to read - check https://stackoverflow.com/questions/58933759/vega-lite-set-color-from-data-whilst-retaining-a-legend
              [:vega-lite (hist (format "Other jobs total durations in seconds (%s)" date-str) other-durations "duration_seconds" job-type-color)]
@@ -411,21 +419,18 @@
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
 
+
   ;; See `clojure-experiments.stats.descriptive/selected-keys`
+  ;; [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum :count]
 
   ;; git clones
   (describe-durations-per-day multiple-days-data :clone-durations)
   ;;=> 
-  [{:start-time "2021-09-23T00:00Z", :clone-durations-stats [0 1 3 19 39 1014 13 39 11976 902]}
-   {:start-time "2021-09-24T00:00Z", :clone-durations-stats [0 1 4 15 38 304 11 19 9793 825]}
-   {:start-time "2021-09-25T00:00Z", :clone-durations-stats [0 1 2 9 43 302 11 28 2636 221]}
-   {:start-time "2021-09-26T00:00Z", :clone-durations-stats [0 1 3 10 44 277 12 26 2736 226]}
-   {:start-time "2021-09-27T00:00Z", :clone-durations-stats [0 1 3 11 34 333 11 21 8286 745]}
-   {:start-time "2021-09-28T00:00Z", :clone-durations-stats [0 1 3 16 44 773 13 33 13389 962]}
-   {:start-time "2021-09-29T00:00Z", :clone-durations-stats [0 1 4 21 43 6217 19 193 20166 1038]}
-   {:start-time "2021-09-30T00:00Z", :clone-durations-stats [0 1 3 18 74 12066 41 570 34720 835]}
-   {:start-time "2021-10-01T00:00Z", :clone-durations-stats [0 1 3 10 33 154 9 15 2577 270]}]
-
+  [{:start-time "2021-09-27T00:00Z", :clone-durations-stats [0 1 2 6 30 324 7 16 7857 1063]}
+   {:start-time "2021-09-28T00:00Z", :clone-durations-stats [0 1 2 8 36 252 9 19 12169 1250]}
+   {:start-time "2021-09-29T00:00Z", :clone-durations-stats [0 1 3 9 36 305 9 18 13662 1385]}
+   {:start-time "2021-09-30T00:00Z", :clone-durations-stats [0 1 1 5 30 259 6 13 8332 1246]}
+   {:start-time "2021-10-01T00:00Z", :clone-durations-stats [0 1 1 6 26 154 6 11 3438 537]}]
 
 
    [{:start-time "2021-03-31T00:00Z", :clone-durations-stats [0 2 5 9 37 295 10 19 6331 589]}
