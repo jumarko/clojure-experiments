@@ -247,19 +247,28 @@
 
 ;; could be useful to use Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 (defn hist
+  "Shows two histograms stacked vertically (one under another).
+  The bottom one has 'symlog' scale for easier interpretation of outliers (such as a long git clone)"
   ([data field-name]
    (hist nil data field-name))
   ([chart-title data field-name]
    (hist chart-title data field-name nil))
   ([chart-title data field-name opts]
-   (my-oz/histogram data
-                    field-name
-                    (merge {:step 10
-                            #_#_:scale "symlog"
-                            :width 1200
-                            :height 600}
-                           (when chart-title {:title chart-title})
-                           opts))))
+   {:vconcat [(my-oz/histogram data
+                               field-name
+                               (merge {:step 10
+                                       :width 1200
+                                       :height 600}
+                                      (when chart-title {:title chart-title})
+                                      opts))
+              (my-oz/histogram data
+                               field-name
+                               (merge {:step 10
+                                       :scale "symlog"
+                                       :width 1200
+                                       :height 600}
+                                      (when chart-title {:title (str "[SYMLOG SCALE]: " chart-title)})
+                                      opts))]}))
 
 ;; E.g. distinguishing multiple job types (delta, full analysis, x-ray, project delete)
 ;; via color: https://vega.github.io/vega-lite/docs/bar.html#stack
@@ -393,7 +402,7 @@
              [:vega-lite (hist (format "Other jobs total durations in seconds (%s)" date-str) other-durations "duration_seconds" job-type-color)]
                ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
 
-             [:vega-lite (hist (format "Git clones durations (%s)" date-str) clone-durations "duration_seconds" #_(color "repo_name"))]]
+             [:vega-lite (hist (format "Git clones durations (%s)" date-str) clone-durations "duration_seconds" (color "repository"))]]
 
             [:hr]])])
 
