@@ -7,13 +7,13 @@
   - Cloudwatch Insights query syntax: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
   - aws-api: https://github.com/cognitect-labsuaws-api"
   (:require [clojure-experiments.concurrency :refer [map-throttled]]
-            [clojure.set :as set]
             [cognitect.aws.client.api :as aws]
             [cognitect.aws.credentials :as credentials]
             [clojure-experiments.visualizations.oz :as my-oz]
             [oz.core :as oz]
             [clojure.spec.alpha :as s]
-            [clojure-experiments.stats.descriptive :as stat])
+            [clojure-experiments.stats.descriptive :as stat]
+            [clojure.core.protocols :as p])
   (:import (org.apache.commons.lang3 StringUtils)))
 
 (def logs (aws/client {:api :logs
@@ -392,21 +392,134 @@
              [:vega-lite (hist (format "Other jobs total durations in seconds (%s)" date-str) other-durations "duration_seconds" job-type-color)]
                ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
 
-             [:vega-lite (hist (format "Git clones durations (%s) date-str" clone-durations) "duration_seconds" #_(color "repo_name"))]]
+             [:vega-lite (hist (format "Git clones durations (%s)" date-str) clone-durations "duration_seconds" #_(color "repo_name"))]]
 
             [:hr]])])
-  
+
       (oz/view! multiple-days-data-histograms)))
-  
+
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
+
+  ;; See `clojure-experiments.stats.descriptive/selected-keys`
+
+  ;; git clones
+  (describe-durations-per-day multiple-days-data :clone-durations)
+  ;;=> 
+  [{:start-time "2021-09-23T00:00Z", :clone-durations-stats [0 1 3 19 39 1014 13 39 11976 902]}
+   {:start-time "2021-09-24T00:00Z", :clone-durations-stats [0 1 4 15 38 304 11 19 9793 825]}
+   {:start-time "2021-09-25T00:00Z", :clone-durations-stats [0 1 2 9 43 302 11 28 2636 221]}
+   {:start-time "2021-09-26T00:00Z", :clone-durations-stats [0 1 3 10 44 277 12 26 2736 226]}
+   {:start-time "2021-09-27T00:00Z", :clone-durations-stats [0 1 3 11 34 333 11 21 8286 745]}
+   {:start-time "2021-09-28T00:00Z", :clone-durations-stats [0 1 3 16 44 773 13 33 13389 962]}
+   {:start-time "2021-09-29T00:00Z", :clone-durations-stats [0 1 4 21 43 6217 19 193 20166 1038]}
+   {:start-time "2021-09-30T00:00Z", :clone-durations-stats [0 1 3 18 74 12066 41 570 34720 835]}
+   {:start-time "2021-10-01T00:00Z", :clone-durations-stats [0 1 3 10 33 154 9 15 2577 270]}]
+
+
+
+   [{:start-time "2021-03-31T00:00Z", :clone-durations-stats [0 2 5 9 37 295 10 19 6331 589]}
+    {:start-time "2021-04-01T00:00Z", :clone-durations-stats [0 2 4 8 34 299 9 17 6004 633]}
+    {:start-time "2021-04-02T00:00Z", :clone-durations-stats [0 1 5 8 29 276 8 19 3817 437]}
+    {:start-time "2021-04-03T00:00Z", :clone-durations-stats [0 0 3 11 44 305 13 33 1690 127]}
+    {:start-time "2021-04-04T00:00Z", :clone-durations-stats [0 1 4 8 54 266 13 32 1833 140]}
+    {:start-time "2021-04-05T00:00Z", :clone-durations-stats [0 1 5 9 35 297 10 20 5179 477]}
+    {:start-time "2021-04-06T00:00Z", :clone-durations-stats [0 2 5 9 31 350 9 18 5794 615]}
+    {:start-time "2021-04-07T00:00Z", :clone-durations-stats [0 2 6 9 35 304 11 19 7113 639]}
+    {:start-time "2021-04-08T00:00Z", :clone-durations-stats [0 1 5 8 125 191 15 36 1310 83]}]
+
+
+   [{:start-time "2021-01-05T00:00Z", :clone-durations-stats [1 3 6 17 332 40818 118 1809 60445 510]}
+    {:start-time "2021-01-06T00:00Z", :clone-durations-stats [1 3 6 25 169 85407 242 4182 101325 417]}
+    {:start-time "2021-01-07T00:00Z", :clone-durations-stats [1 3 6 21 60 82945 229 4105 93835 408]}
+    {:start-time "2021-01-08T00:00Z", :clone-durations-stats [1 3 5 19 101 79614 218 3941 89062 408]}
+    {:start-time "2021-01-09T00:00Z", :clone-durations-stats [1 2 4 19 83 81928 726 7605 84279 116]}
+    {:start-time "2021-01-10T00:00Z", :clone-durations-stats [1 2 3 14 100 81528 626 7015 84571 135]}
+
+   [{:start-time "2021-01-06T00:00Z", :clone-durations-stats [1 3 6 25 169 85407 242 4182 101325 417]}
+    {:start-time "2021-01-07T00:00Z", :clone-durations-stats [1 3 6 21 60 82945 229 4105 93835 408]}
+    {:start-time "2021-01-08T00:00Z", :clone-durations-stats [1 3 5 19 101 79614 218 3941 89062 408]}
+    {:start-time "2021-01-09T00:00Z", :clone-durations-stats [1 2 4 19 83 81928 726 7605 84279 116]}
+    {:start-time "2021-01-10T00:00Z", :clone-durations-stats [1 2 3 14 100 81528 626 7015 84571 135]}
+    {:start-time "2021-01-11T00:00Z", :clone-durations-stats [0 3 7 26 139 51540 255 3442 57336 224]}]
+  ;; updated 11.1.2021 after the whole day is complete?
+      {:start-time "2021-01-11T00:00Z", :clone-durations-stats [1 4 6 17 136 55988 145 2629 65712 453]}
+      {:start-time "2021-01-12T00:00Z", :clone-durations-stats [1 3 6 9 39 676 12 35 6859 538]}
+      {:start-time "2021-01-13T00:00Z", :clone-durations-stats [0 5 8 31 43 57 16 15 2835 167]}]
+      {:start-time "2021-01-13T00:00Z", :clone-durations-stats [1 5 7 18 41 142 14 16 6090 423]}
+      {:start-time "2021-01-14T00:00Z", :clone-durations-stats [1 3 6 11 40 372 12 24 5155 399]}
+      {:start-time "2021-01-15T00:00Z", :clone-durations-stats [1 3 6 11 41 334 12 21 7151 562]}
+      {:start-time "2021-01-16T00:00Z", :clone-durations-stats [1 2 3 8 75 351 14 39 1638 110]}
+      {:start-time "2021-01-17T00:00Z", :clone-durations-stats [1 2 5 11 63 340 17 40 1737 99]}
+      {:start-time "2021-01-18T00:00Z", :clone-durations-stats [1 3 6 12 41 468 13 26 6211 465]}
+      {:start-time "2021-01-19T00:00Z", :clone-durations-stats [1 4 6 12 42 463 13 24 7799 571]}
+
+  (map vector [:min :perc25 :median :perc75 :perc95 :max :mean :standard-deviation :sum :count]
+       [1 5 7 15 46 16397 52 776 23582 446])
+;; => ([:min 1] [:perc25 5] [:median 7] [:perc75 15] [:perc95 46] [:max 16397] [:mean 52] [:standard-deviation 776] [:sum 23582] [:count 446])
+;; => ([:min 1] [:perc25 5] [:median 7] [:perc75 12] [:perc95 37] [:max 348] [:mean 14] [:standard-deviation 22] [:sum 5662] [:count 403])
+
+;; => [{:start-time "2020-12-15T00:00Z", :clone-durations-stats [1 5 7 12 37 348 14 22 5662 403]}
+;;     {:start-time "2020-12-16T00:00Z", :clone-durations-stats [1 5 7 15 46 16397 52 776 23582 446]}
+;;     {:start-time "2020-12-17T00:00Z", :clone-durations-stats [0 5 7 25 91 47781 130 2244 59263 453]}
+;;     {:start-time "2020-12-18T00:00Z", :clone-durations-stats [1 4 6 8 33 355 10 20 4743 461]}
+;;     {:start-time "2020-12-19T00:00Z", :clone-durations-stats [1 2 3 8 55 385 14 41 1525 108]}
+;;     {:start-time "2020-12-20T00:00Z", :clone-durations-stats [1 2 6 17 65 330 17 36 1885 110]}
+;;     {:start-time "2020-12-21T00:00Z", :clone-durations-stats [1 5 6 11 36 504 13 28 6487 469]}
+;;     {:start-time "2020-12-22T00:00Z", :clone-durations-stats [1 5 6 10 33 348 10 20 5839 535]}
+;;     {:start-time "2020-12-23T00:00Z", :clone-durations-stats [0 4 6 10 34 359 11 22 4977 418]}
+;;     {:start-time "2020-12-24T00:00Z", :clone-durations-stats [1 4 6 11 44 287 14 25 2656 187]}
+;;     {:start-time "2020-12-25T00:00Z", :clone-durations-stats [1 2 7 23 57 296 17 31 2317 132]}
+;;     {:start-time "2020-12-26T00:00Z", :clone-durations-stats [1 2 5 9 65 324 15 38 1515 99]}
+;;     {:start-time "2020-12-27T00:00Z", :clone-durations-stats [1 2 3 11 82 304 16 39 1306 80]}
+;;     {:start-time "2020-12-28T00:00Z", :clone-durations-stats [1 3 5 9 40 345 12 27 3109 245]}
+;;     {:start-time "2020-12-29T00:00Z", :clone-durations-stats [1 3 6 11 38 317 13 23 3686 282]}
+;;     {:start-time "2020-12-30T00:00Z", :clone-durations-stats [0 3 7 18 55 519 18 44 4974 263]}
+;;     {:start-time "2020-12-31T00:00Z", :clone-durations-stats [0 2 5 13 81 1154 33 139 4776 141]}
+;;     {:start-time "2021-01-01T00:00Z", :clone-durations-stats [1 2 6 12 46 296 14 30 1927 137]}
+;;     {:start-time "2021-01-02T00:00Z", :clone-durations-stats [1 2 5 15 84 353 19 46 1438 74]}
+;;     {:start-time "2021-01-03T00:00Z", :clone-durations-stats [1 2 4 8 54 323 14 36 1511 107]}
+;;     {:start-time "2021-01-04T00:00Z", :clone-durations-stats [1 3 6 10 40 627 19 66 8159 424]}
+;;     {:start-time "2021-01-05T00:00Z", :clone-durations-stats [1 3 6 17 332 40818 118 1809 60445 510]}
+;;     {:start-time "2021-01-06T00:00Z", :clone-durations-stats [1 3 6 25 169 85407 242 4182 101325 417]}
+;;     {:start-time "2021-01-07T00:00Z", :clone-durations-stats [1 3 6 21 60 82945 229 4105 93835 408]}
+;;     {:start-time "2021-01-08T00:00Z", :clone-durations-stats [1 3 5 19 101 79614 218 3941 89062 408]}
+;;     {:start-time "2021-01-09T00:00Z", :clone-durations-stats [1 2 4 19 83 81928 726 7605 84279 116]}
+;;     {:start-time "2021-01-10T00:00Z", :clone-durations-stats [1 2 3 14 100 81528 626 7015 84571 135]}
+  ;; incomplete (today)
+;;     {:start-time "2021-01-11T00:00Z", :clone-durations-stats [0 3 7 26 139 51540 255 3442 57336 224]}]
 
   ;; Calculate mean/median and 95% confidence interval
 
 
+  (describe-durations-per-day multiple-days-data :delays "delay_seconds")
+;; => [{:start-time "2020-12-01T00:00Z", :delays-stats [0 10 14 88 533 753 98 166 48054 488]}
+;;     {:start-time "2020-12-02T00:00Z", :delays-stats [0 10 14 53 450 8540 88 384 50126 565]}
+;;     {:start-time "2020-12-03T00:00Z", :delays-stats [0 10 14 53 351 745 66 123 34954 523]}
+;;     {:start-time "2020-12-04T00:00Z", :delays-stats [4 11 17 100 488 701 93 148 44246 473]}
+;;     {:start-time "2020-12-05T00:00Z", :delays-stats [0 11 49 119 537 668 97 145 11562 119]}
+;;     {:start-time "2020-12-06T00:00Z", :delays-stats [5 12 50 124 405 584 92 125 9960 108]}
+;;     {:start-time "2020-12-07T00:00Z", :delays-stats [4 10 14 70 342 1096 75 148 38566 513]}
+;;     {:start-time "2020-12-08T00:00Z", :delays-stats [0 12 31 120 546 985 108 171 45685 420]}
+;;     {:start-time "2020-12-09T00:00Z", :delays-stats [0 9 14 106 503 782 95 159 54254 571]}
+;;     {:start-time "2020-12-10T00:00Z", :delays-stats [0 11 16 103 456 767 90 147 44030 487]}
+;;     {:start-time "2020-12-11T00:00Z", :delays-stats [0 11 19 215 595 780 141 195 66802 471]}
+;;     {:start-time "2020-12-12T00:00Z", :delays-stats [0 11 40 194 638 699 147 195 20205 137]}
+;;     {:start-time "2020-12-13T00:00Z", :delays-stats [4 11 82 219 626 750 155 201 18841 121]}
+;;     {:start-time "2020-12-14T00:00Z", :delays-stats [4 11 40 254 719 1874 181 284 88711 488]}
+;;     {:start-time "2020-12-15T00:00Z", :delays-stats [3 12 48 239 671 1955 178 281 74698 418]}
+;;     {:start-time "2020-12-16T00:00Z", :delays-stats [4 12 57 276 613 783 169 202 77955 459]}
+;;     {:start-time "2020-12-17T00:00Z", :delays-stats [3 12 100 316 660 830 190 215 89168 469]}
+;;     {:start-time "2020-12-18T00:00Z", :delays-stats [2 10 38 174 599 1078 138 199 65631 474]}
+;;     {:start-time "2020-12-19T00:00Z", :delays-stats [5 13 47 143 633 780 133 186 14380 108]}
+;;     {:start-time "2020-12-20T00:00Z", :delays-stats [0 12 50 134 516 577 110 144 13058 118]}
+;;     {:start-time "2020-12-21T00:00Z", :delays-stats [0 11 45 242 609 854 155 204 75533 487]}
+;;     {:start-time "2020-12-22T00:00Z", :delays-stats [0 11 48 369 619 782 190 223 38975 205]}]
 
   ;; first check batch job delays - the last field is count
   (describe-durations-per-day multiple-days-data :delays "delay_seconds")
+
+
 ;; => [{:start-time "2020-08-08T00:00Z", :delays-stats [5 12 27 63 573 1587 90 206 8606 95]}
 ;;     {:start-time "2020-08-09T00:00Z", :delays-stats [6 12 27 36 318 1586 72 188 6963 96]}
 ;;     {:start-time "2020-08-10T00:00Z", :delays-stats [0 10 14 70 465 1109 88 162 29611 335]}
@@ -427,8 +540,25 @@
   ;; Much older:
 ;; => {:min 0.0, :perc95 837.6999999999998, :mean 252.4925839188132, :standard-deviation 276.7040042324224, :median 121.5, :max 2572.0, :perc25 103.0, :perc75 266.25, :sum 646886.0}
 
-  (describe-durations-per-day multiple-days-data :delta-durations)
+
   ;; [min p25 median p75 p95 max avg stdev sum count]
+  (describe-durations-per-day multiple-days-data :delta-durations)
+;; => [{:start-time "2021-03-31T00:00Z",
+;;      :delta-durations-stats [21 44 75 142 272 3585 115 202 47934 414]}
+;;     {:start-time "2021-04-01T00:00Z",
+;;      :delta-durations-stats [19 44 74 134 278 7956 134 402 64201 478]}
+;;     {:start-time "2021-04-02T00:00Z",
+;;      :delta-durations-stats [23 42 76 141 291 1069 111 123 30152 271]}
+;;     {:start-time "2021-04-03T00:00Z",
+;;      :delta-durations-stats [28 65 117 236 1823 1853 275 478 6619 24]}
+;;     {:start-time "2021-04-04T00:00Z", :delta-durations-stats [35 50 105 151 216 222 106 58 2561 24]}
+;;     {:start-time "2021-04-05T00:00Z",
+;;      :delta-durations-stats [23 45 78 129 254 1436 118 163 41069 348]}
+;;     {:start-time "2021-04-06T00:00Z",
+;;      :delta-durations-stats [22 45 70 130 275 1224 117 163 53455 455]}
+;;     {:start-time "2021-04-07T00:00Z",
+;;      :delta-durations-stats [22 44 71 139 918 1162 148 233 72035 485]}
+;;     {:start-time "2021-04-08T00:00Z", :delta-durations-stats [42 55 82 193 690 877 152 167 3802 25]}]
 
 ;; => [{:start-time "2020-08-10T00:00Z",
 ;;      :delta-durations-stats [0 102 119 334 975 1564 266 291 69631 261]}
