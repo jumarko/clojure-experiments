@@ -267,7 +267,7 @@
                                        :scale "symlog"
                                        :width 1200
                                        :height 600}
-                                      (when chart-title {:title (str "[SYMLOG SCALE]: " chart-title)})
+                                      (when chart-title {:title (str "[LOG scale - Y axis]: " chart-title)})
                                       opts))]}))
 
 ;; E.g. distinguishing multiple job types (delta, full analysis, x-ray, project delete)
