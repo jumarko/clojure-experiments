@@ -237,11 +237,11 @@
   {:group-name "/aws/batch/job"
    :query "fields @timestamp, @message
   | filter (@message like /(Cloning|Successfully cloned)/ and @logStream like /codescene-prod/)
-  | parse /^.*\\(:(?<job_type>[^ ]+) #(?<job_id>\\d+)\\) - (Cloning|Successfully cloned) (?<repo_url>\\S+) to (?<dir>\\S+)$/
+  | parse /^(?<date>\\S+) (?<time>\\S+) ip-(?<host_ip>[^\\.]+)\\.(\\S+) .*\\(:(?<job_type>[^ ]+) #(?<job_id>\\d+)\\) - (Cloning|Successfully cloned) https:\\/\\/[^\\/]+\\/(?<repository>\\S+) to (?<dir>\\S+)$/
   | stats earliest(@timestamp) as clone_start,
         latest(@timestamp) as clone_finished,
         (clone_finished - clone_start)/1000 as duration_seconds
-        by job_type, job_id, repo_name
+        by job_type, job_id, host_ip, repository, @logStream
   | sort duration_seconds desc
   | limit 10000"})
 
@@ -357,7 +357,7 @@
                                     {:start-time (date-time 2020 6 4) :end-time (date-time 2020 6 5)}))
   (Thread/sleep 5000)
   (def clones (get-query-results clones-query-id))
-  (oz/view! (hist clones "duration_seconds" (color "repo_name")))
+  (oz/view! (hist clones "duration_seconds" (color "repository")))
 
 
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
@@ -367,10 +367,11 @@
                                                 other-jobs-durations-query
                                                 git-clones-query
                                                 (from-to (truncate-to-midnight (.minusDays (now)
-                                                                                           8))))))
+                                                                                           4))))))
   
       ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
       ;; (facet row, vconcat, layer, repeat row)
+    ;; TODO: support interval selection and zooming: https://vega.github.io/vega-lite-v2/docs/selection.html#scale-domains
     (do
       (def multiple-days-data-histograms
         [:div
