@@ -1,4 +1,4 @@
-(ns clojure-experiments.transducers
+(ns clojure-experiments.transducers.transducers
   (:require [clojure.core.async :refer [>! <! <!!] :as async]
             [clojure.string :as str]
             [clojure.java.io :as io]
@@ -755,3 +755,18 @@
 (transduce xf conj iris-data)
 
 
+;;; transducers, `sequence`, and lazy seqs
+(defn prn-inc [n] (prn n) (inc n))
+
+(def xs (sequence (map prn-inc) [1 2 3 4 5]))
+;; prints 1!
+
+;; compare to real lazy seq which doesn't print anything
+(def xs-lazy (map prn-inc [1 2 3 4 5]))
+
+;; RIch: lazy in input consumption, not output production: https://youtu.be/4KqUvG8HPYo?t=2368
+;; so try this => it still realizes at least one element (the first chunk of 32 items in this case)
+;; this will print 0 .. 31
+(def xs-seq (sequence (map inc) (map prn-inc (range 128))))
+;; this will print 32 .. 63 !
+(first  xs-seq)
