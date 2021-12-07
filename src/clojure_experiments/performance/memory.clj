@@ -1,6 +1,9 @@
 (ns clojure-experiments.performance.memory
   (:require [clj-memory-meter.core :as mm]
-            [cljol.dig9 :as cljol]
+            ;; TODO: Use JOL directly
+            #_[cljol.dig9 :as cljol]
+            ;; Cannot make it work with JDK 17? https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
+            ;; - it does work for me
             [jvm-alloc-rate-meter.core :as ameter])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
@@ -77,18 +80,59 @@
   ;; 1000        32     32000   clojure.lang.LongRange$LongChunk
   ;; 2001               96024   (total)
 
+  (println (.toFootprint (GraphLayout/parseInstance (object-array [(vec (range 10))]))))
 
+
+  (.totalSize (GraphLayout/parseInstance (object-array [(vec (range 1000))])))
+;; => 29480
+
+  (.totalSize (GraphLayout/parseInstance (object-array [(zipmap (range 1000) (range 1000))])))
+;; => 96456
 
   (println (.toFootprint (GraphLayout/parseInstance (into-array [(vec (range 1000))]))))
   ;; clojure.lang.PersistentVector@53f51c6fd footprint:
   ;; COUNT       AVG       SUM   DESCRIPTION
-  ;; 33       141      4656   [Ljava.lang.Object;
-  ;;                           1        40        40   clojure.lang.PersistentVector
-  ;;                           32        24       768   clojure.lang.PersistentVector$Node
-  ;;                           1000        24     24000   java.lang.Long
-  ;;                           1        16        16   java.util.concurrent.atomic.AtomicReference
-  ;;                           1067               29480   (total)
+  ;;    33       141      4656   [Ljava.lang.Object;
+  ;;     1        40        40   clojure.lang.PersistentVector
+  ;;    32        24       768   clojure.lang.PersistentVector$Node
+  ;;  1000        24     24000   java.lang.Long
+  ;;     1        16        16   java.util.concurrent.atomic.AtomicReference
+  ;;  1067               29480   (total)
 
+  (println (.toFootprint (GraphLayout/parseInstance (into-array [(apply vector-of :long (range 1000))]))))
+  ;; clojure.core.Vec@e7f16b7d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;         32       266      8512   [J
+  ;;          1       144       144   [Ljava.lang.Object;
+  ;;          1        16        16   clojure.core$reify__8329
+  ;;          1        40        40   clojure.core.Vec
+  ;;         32        24       768   clojure.core.VecNode
+  ;;         67                9480   (total)
+
+  (println (.toFootprint (GraphLayout/parseInstance (into-array [(long-array (range 1000))]))))
+  ;; [J@28749eead footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1      8016      8016   [J
+  ;;          1                8016   (total)
+
+  (println (.toFootprint (GraphLayout/parseInstance (into-array [{:name "Juraj" :age 36 :hobbies ["programming" "climbing" "JVM"]}]))))
+  ;; clojure.lang.PersistentArrayMap@54b45797d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          8        25       200   [B
+  ;;          3        72       216   [Ljava.lang.Object;
+  ;;          3        24        72   clojure.lang.Keyword
+  ;;          1        32        32   clojure.lang.PersistentArrayMap
+  ;;          1        40        40   clojure.lang.PersistentVector
+  ;;          1        24        24   clojure.lang.PersistentVector$Node
+  ;;          3        32        96   clojure.lang.Symbol
+  ;;          1        24        24   java.lang.Long
+  ;;          8        24       192   java.lang.String
+  ;;          1        16        16   java.util.concurrent.atomic.AtomicReference
+  ;;         30                 912   (total)
+
+  ;; not very useful
+  (.toImage (GraphLayout/parseInstance (object-array [{:name "Juraj" :age 36 :hobbies ["programming" "climbing" "JVM"]}]))
+            "object-layout")
 
 ;; end
   )
@@ -222,4 +266,6 @@
 ;; => (\3 \1 \6 \0 \4 \7 \6 \8 \7 \3 \8 \6 \6 \8 \9 \8 \7 \3 \4 \4)
 
   ,)
+
+
 
