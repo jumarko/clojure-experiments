@@ -272,4 +272,44 @@
 #_(time (foo2 100000000))
 ;; "Elapsed time: 47.310656 msecs"
 
+;; WARNING: THIS CAN BE VERY IMPRECISE - especially for measuring single function invocation
+;; - see https://github.com/clojure-goes-fast/jvm-alloc-rate-meter/blob/master/src/jvm_alloc_rate_meter/MeterThread.java
+;; => consider my allocated-bytes function instead
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(comment
+  (require '[jvm-alloc-rate-meter.core :as am])
+  (def am (am/start-alloc-rate-meter #(println "Rate is:" (/ % 1e6) "MB/sec")))
+  ;; do your stuff
+  ,,,
+  ;; stop it
+  (am)
+
+  ;; compare to this
+  ;; https://stackoverflow.com/questions/61539760/benchmarking-jvm-memory-consumption-similarly-to-how-it-is-done-by-the-os
+  (defn allocated-bytes [f]
+    (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)
+          thread-id (.getId (Thread/currentThread))
+          start (.getThreadAllocatedBytes thread-mbean thread-id)]
+      (f)
+      (- (.getThreadAllocatedBytes thread-mbean thread-id)
+         start)))
+
+
+  (def ahoj (vec (range 1000000)))
+
+  (require '[clj-memory-meter.core :as mm])
+  (mm/measure ahoj)
+  ;; => "28.1 MiB"
+
+  (allocated-bytes #(vec (range 1000000)))
+  ;; => 29425440
+
+  (require '[jvm-alloc-rate-meter.core :as am])
+  ;; this will likely print about 120 MB/s !!!
+  (def am (am/start-alloc-rate-meter #(println "Rate is:" (/ % 1e6) "MB/sec")))
+  (def ahoj (vec (range 1000000)))
+  (am)
+
+  ,)
 
