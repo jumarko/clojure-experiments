@@ -82,3 +82,17 @@
                           (println x)
                           (if (odd? (+ x y)) 2 3))))))))))))))
 ;; => 2
+
+;; alternative `better-cond` usage
+(comment 
+  ;; Note that this doesn't compile
+  (better/cond
+    (odd? a) 1
+    :let [a (quot a 2)]
+    :when-let [x (fn-which-may-return-falsey a)]
+    :when-some [b (fn-which-may-return-nil x)]
+    :when (pos? x)
+    :do (println x)
+    (odd? (+ x y)) 2
+    3)
+  ,)
