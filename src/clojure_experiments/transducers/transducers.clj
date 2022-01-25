@@ -96,6 +96,7 @@
 (defn -mapping [f]
   (fn [acc v]
     (conj acc (f v))))
+;; now we can easily do `reduce` outside of `-mapping`
 (reduce (-mapping inc)
         []
         data)
@@ -130,6 +131,12 @@
         0
         data)
 
+;; This is a very basic but useful example to better understand reducing functions
+((rfn +) 42 1)
+;; => 42
+((rfn +) 42 2)
+;; => 45
+
 ;;; Transducers episode 2
 ;;; https://www.youtube.com/watch?v=3E5dbAKIS_E
 (def rfn (comp (-mapping int)
@@ -144,6 +151,8 @@
 (str (reduce (rfn string-rf)
              (StringBuilder.)
              "Hello World"))
+;; => "Imm!sme"
+
 ;; But now we're complecting construction of `StringBuilder`
 ;; with transformation `string-rf` and building the output with `str`
 ;; => Rich came with great idea to solve this problem with 3-arity function!
@@ -182,6 +191,10 @@
 
 
 (transduce xform string-rf "Hello World")
+;; => "Imm!sme"
+ ;; or set initial value explicitly
+(transduce xform string-rf (StringBuilder. "Really? ")  "Hello World")
+;; => "Really? Imm!sme"
 
 ;; One cool thing that we can do with this stuff is to use transient vector!
 (defn vec-trans
@@ -189,7 +202,7 @@
   ([acc] (persistent! acc))
   ([acc v] (conj! acc v)))
 (transduce xform vec-trans "Hello World")
-
+;; => [\I \m \m \! \s \m \e]
 
 
 ;;; Transducers - Episode 3 - IReduce
@@ -770,3 +783,27 @@
 (def xs-seq (sequence (map inc) (map prn-inc (range 128))))
 ;; this will print 32 .. 63 !
 (first  xs-seq)
+
+
+;;; Structure and interpretation of Clojure transducers (Ben Sless)
+;;; https://us02web.zoom.us/rec/play/oGN_UKl5HMZx1iJlf17UNUYQlpz07IRrqKG5pAQjnMYUdX0FaxypgVhH-Jd0HqrXhRWbCu-hDM0XCp39.uDgcPVJHub-aa2ic?_x_zm_rhtaid=64&_x_zm_rtaid=MIG7P4RyQxSOL3betDuEKg.1638726852765.5ecb139bb477c574fb7111b9adb1796e&autoplay=true&continueMode=true&startTime=1636998074000
+
+(def xs [[1 2 3] [4 5 6] [7 8 9]])
+(def ys '[[a b c] [d e f] [g h i]])
+(def zs (mapv (partial mapv keyword) '[[a b c] [d e f] [g h i]]))
+(time (count (concat
+         (apply concat xs)
+         (apply concat ys)
+         (apply concat zs))))
+"Elapsed time: 0.071068 msecs"
+
+(defn caduction [xs] (->Eduction clojure.core/cat xs))
+(def incr (fn [^long x _] (unchecked-inc x)))
+(defn -count [xs] (reduce incr 0 xs))
+
+(time (-count (caduction
+               [(caduction xs)
+                (caduction ys)
+                (caduction zs)])))
+;; it's usually somewhere between 10 and 20 msecs
+;; "Elapsed time: 0.108906 msecs"

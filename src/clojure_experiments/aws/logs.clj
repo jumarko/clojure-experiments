@@ -13,7 +13,8 @@
             [oz.core :as oz]
             [clojure.spec.alpha :as s]
             [clojure-experiments.stats.descriptive :as stat]
-            [clojure.core.protocols :as p])
+            [clojure.core.protocols :as p]
+            [cyrik.omni-trace :as o])
   (:import (org.apache.commons.lang3 StringUtils)))
 
 (def logs (aws/client {:api :logs
@@ -376,8 +377,10 @@
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
   ;; TODO: if jobs are retried, then this may shown a significant outliers (false positives)
   ;; - unlike with batch jobs, I don't know how to fix it easily since host_ip and logStream is likely the same...
+  (require '[cyrik.omni-trace :as o])
+
   (do
-    (time (def multiple-days-data (get-all-data jobs-delay-query
+    (time (def multiple-days-data (o/run-traced 'clojure-experiments.aws.logs/get-all-data jobs-delay-query
                                                 delta-jobs-durations-query
                                                 other-jobs-durations-query
                                                 git-clones-query
@@ -415,6 +418,13 @@
             [:hr]])])
 
       (oz/view! multiple-days-data-histograms)))
+
+  ;; show traced functions just for fun
+  (oz/view! (assoc (o/rooted-flamegraph 'clojure-experiments.aws.logs/get-all-data)
+                   :width 2000
+                   :height 1200)
+            :mode :vega)
+
 
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends

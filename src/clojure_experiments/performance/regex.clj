@@ -17,5 +17,12 @@
 (defn regex-test2 []
   (first (mapv
     (fn [x] (re-find my-regex x))
-    (repeat 1000000 "ahoj"))))
+   (repeat 1000000 "ahoj"))))
 (time (regex-test2 ))
+
+
+(re-matches #"[a-z&&[^m-p]]" "a")
+;; => "a"
+
+(re-matches #"[a-z&&[^m-p]]" "m")
+;; => nil
