@@ -1,6 +1,10 @@
-{:deps {org.clojure/clojure {:mvn/version "1.11.0-alpha2"}
+{:deps {org.clojure/clojure {:mvn/version "1.11.0-alpha4"}
         org.clojure/test.check {:mvn/version "1.1.0"}
         com.gfredericks/test.chuck {:mvn/version "0.2.12"}
+        medley/medley {:mvn/version "1.3.0"}
+        ring/ring-core {:mvn/version "1.9.5"}
+        ring/ring-json {:mvn/version "0.5.1"}
+        compojure/compojure {:mv/version "1.6.2"}
         org.apache.pdfbox/pdfbox {:mvn/version "3.0.0-RC1"}
         net.java.dev.jna/jna {:mvn/version "5.9.0"}
         org.flatland/useful {:mvn/version "0.11.6"}
@@ -89,14 +93,21 @@
         com.gfredericks/vcr-clj {:mvn/version "0.4.19"}
         nubank/matcher-combinators {:mvn/version "3.3.1"}
         meander/epsilon {:mvn/version "0.0.650"}
-        djblue/portal {:mvn/version "0.15.1"}}
+        djblue/portal {:mvn/version "0.21.2"}
+        org.clojars.cyrik/omni-trace {:mvn/version "v0.2.5"}
+        expound/expound {:mvn/version "0.8.10"}
+        ;; html parsing - see also my project 'reality-watcher'
+        hickory/hickory {:mvn/version "0.7.1"}
+        }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
 
  :aliases
+ ;; this is also in /Users/jumar/.clojure/deps.edn
  {:dev
-  {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
+  {:jvm-opts ["-Xmx1g"
+              "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
               "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
               "-Djdk.attach.allowAttachSelf=true"
               ;; to make clj-memory-meter work with JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
@@ -108,7 +119,5 @@
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
-              ;; just as an example of overriding default configuration values
-              "-Dconf=my-config.edn"
               ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
               "-XX:+ShowCodeDetailsInExceptionMessages"]}}}

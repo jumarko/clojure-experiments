@@ -20,7 +20,8 @@
     )
 
 
-  (let [ (-> (MonitoredHost/getMonitoredHost snil) .activeVms)]
+  (let [
+        active-vms (-> (MonitoredHost/getMonitoredHost snil) .activeVms)]
     (prn active-vms))
 ;; end
   )
@@ -50,6 +51,8 @@
   (def system-dict (-> (VM/getVM) .getSystemDictionary))
 
 
+  (VM/initialize nil true)
+  (VM/getVM)
 
   ;; end
   )
