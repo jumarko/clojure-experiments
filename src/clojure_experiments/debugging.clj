@@ -5,7 +5,7 @@
 
 (defn baz [z]
   (let [zz (+ 10 z)
-        zzs (repeat zz)]
+        zzs (repeat zz z)]
     (mapv inc zzs)))
 
 (defn bar [y]
