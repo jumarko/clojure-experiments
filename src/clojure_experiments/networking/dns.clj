@@ -21,7 +21,7 @@
 
 
 ;; I'm really puzzled by this negative cache 10 seconds!
-;; the properties ar enull and I cannot see anywhere in JDK 8 or 17 code that 10 seconds would be used
+;; the properties are null and I cannot see anywhere in JDK 8 or 17 code that 10 seconds would be used
 (System/getProperty "networkaddress.cache.negative.ttl")
 ;; => nil
 (System/getProperty "sun.net.inetaddr.negative.ttl")
