@@ -45,6 +45,7 @@
 ;;; https://vega.github.io/vega-lite/docs/bin.html
 ;;; Histogram + color: https://youtu.be/9uaHRWj04D4?t=439
 ;;; - also https://vega.github.io/vega-lite/docs/bar.html#stack
+;;; Interval selections and Scale domains: https://vega.github.io/vega-lite-v2/docs/selection.html#scale-domains
 (defn histogram [values
                  field
                  {:keys [step scale width height title x-title y-title color]
@@ -68,6 +69,39 @@
                color (assoc :color color))
    :width width
    :height height})
+
+;; TODO: https://vega.github.io/vega-lite-v2/docs/selection.html#scale-domains
+;; https://vega.github.io/vega-lite-v2/docs/bind.html
+(defn scaled-histogram [values
+                 field
+                 {:keys [step scale width height title x-title y-title color]
+                  :or {step 50
+                       ;; see Scale: https://vega.github.io/vega-lite/docs/scale.html
+                       scale "linear" ; pow, sqrt, symlog, log, time, utc
+                       width 1000
+                       height 500}}]
+  (let [encoding (cond->
+                  {:x (cond-> {:field field
+                               :type "quantitative"
+                               :bin {:step step}}
+                        x-title (assoc-in [:axis :title] x-title))
+                   :y (cond-> {:aggregate "count"
+                               :type "quantitative"
+                               :scale {:type scale}}
+                        y-title (assoc-in [:axis :title] y-title))}
+                   color (assoc :color color))
+        common-props {:mark "bar"
+                      :encoding encoding
+                      :width width
+                      :height height}
+        selection-name "select interval"
+        selection {selection-name {:type "interval"}}
+        scale-selection {:scale {:domain {:selection selection-name}}}]
+    {:title (or title "")
+     :data {:values values}
+     :vconcat [(assoc common-props :selection selection)
+               (assoc-in common-props [:encoding :x] scale-selection)]}))
+
 
 (defn boxplot
   "https://vega.github.io/vega-lite/docs/boxplot.html."
