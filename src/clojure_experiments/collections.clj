@@ -522,4 +522,37 @@ db
   ;; Execution time mean : 166.094125 µs
 
 
+  (time (dotimes [i 1000] (some #(when (> % 9999) %) (range 100000))))
+  "Elapsed time: 543.587147 msecs"
+
+  (time (dotimes [i 1000] (medley.core/find-first #(> % 9999) (range 100000))))
+  "Elapsed time: 112.694697 msecs"
+
   ,)
+
+(comment
+(type (range 100000))
+;; => clojure.lang.LongRange
+
+(realized? (range 100000))
+;; Execution error (ClassCastException) at expt.core/eval2272 (form-init18423738793199381558.clj:1).
+;; class clojure.lang.LongRange cannot be cast to class clojure.lang.IPending
+ , )
+
+
+;; doall
+(comment
+
+  (time (def aa (doall {:a (range 10000000)})))
+  "Elapsed time: 0.207636 msecs"
+
+  (time (def aa (doall {:a (doall (range 10000000))})))
+  "Elapsed time: 6975.04873 msecs"
+
+  ,)
+
+
+(def fib-seq-cat
+  (lazy-cat [0 1] (map #(doto [%1 %2] (println " call") (fn [x] (apply + x))) (rest fib-seq-cat) fib-seq-cat)))
+
+(println (take 30 fib-seq-cat))
