@@ -33,6 +33,12 @@
 
   (import '(sun.jvm.hotspot.oops InstanceKlass Method))
 
+
+  ;; Note about HotSpot Serviceability Agent:
+  ;; It only works out of process- suspends the JVM and it's quite slow
+  ;; See https://stackoverflow.com/questions/61821224/how-to-access-jvm-internal-data-structures-using-the-hotspot-dynamic-attach-mech
+  ;; 
+
   ;; VM: http://www.javamagazine.mozaicreader.com/JanFeb2017#&pageSet=32&page=0
   (import '(sun.jvm.hotspot HotSpotAgent))
   (import '(sun.jvm.hotspot.runtime VM))

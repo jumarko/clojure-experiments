@@ -106,9 +106,7 @@
   ;; 6 threads: "Elapsed time: 3441.50413 msecs"
 
 
-  ;; end
-  )
-;; => nil
+  ,)
 
 
 ;;; remove item from a vector
