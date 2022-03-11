@@ -539,7 +539,6 @@ db
 ;; class clojure.lang.LongRange cannot be cast to class clojure.lang.IPending
  , )
 
-
 ;; doall
 (comment
 
@@ -556,3 +555,23 @@ db
   (lazy-cat [0 1] (map #(doto [%1 %2] (println " call") (fn [x] (apply + x))) (rest fib-seq-cat) fib-seq-cat)))
 
 (println (take 30 fib-seq-cat))
+
+
+
+;;; hiredman on slack: https://clojurians.slack.com/archives/C053AK3F9/p1646955466210419?thread_ts=1646951652.261039&cid=C053AK3F9
+(for [m [{:id "a",
+          :colors
+          [{:name "blue", :sizes [{:id 1} {:id 2}]}
+           {:name "green", :sizes [{:id 3} {:id 4}]}]}
+         {:id "b",
+          :colors
+          [{:name "black", :sizes [{:id 4} {:id 6}]}
+           {:name "white", :sizes [{:id 7} {:id 8}]}]}]
+      [k v] m
+      :when (= k :colors)
+      m' v
+      [k' v'] m'
+      :when (= k' :sizes)
+      m'' v']
+  m'')
+;; => ({:id 1} {:id 2} {:id 3} {:id 4} {:id 4} {:id 6} {:id 7} {:id 8})
