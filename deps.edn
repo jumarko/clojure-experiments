@@ -106,7 +106,7 @@
  :aliases
  ;; this is also in /Users/jumar/.clojure/deps.edn
  {:dev
-  {:jvm-opts ["-Xmx1g"
+  {:jvm-opts [#_"-Xmx1g" "-Xmx256m"
               "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
               "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
               "-Djdk.attach.allowAttachSelf=true"
