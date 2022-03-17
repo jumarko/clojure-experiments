@@ -154,3 +154,6 @@
 (->> s (interpose 5) (partition-all 2))
 ;;to this:
 (->> s (eduction (interpose 5) (partition-all 2)))
+;; not possible with sequence
+;;      Don't know how to create ISeq from: clojure.core$partition_all$fn__8597
+#_(->> s (sequence (interpose 5) (partition-all 2)))
