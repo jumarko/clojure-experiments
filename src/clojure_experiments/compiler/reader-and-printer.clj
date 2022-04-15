@@ -18,8 +18,10 @@
     (apply pr more)))
 (def m {:a "one" :b "two"})
 (my-print m);; => nil
+;; this reads one and two as symbols, not strings
 (= m (read-string (with-out-str (my-print m))))
 ;; => false
+;; ... here they are proper strings
 (= m (read-string (pr-str m)))
 ;; => true
 
@@ -64,6 +66,12 @@
 ;; #=(clojure.lang.PersistentTreeSet/create [6 7 8 9])
 ;; #=(var clojure.core/rest)
 
+(read-string "#=(java.util.ArrayList. [8 9]))")
+;; => [8 9]
+(type (read-string "#=(java.util.ArrayList. [8 9]))"))
+;; => java.util.ArrayList
+(type (read-string "[8 9])"))
+;; => clojure.lang.PersistentVector
 
 ;; Compare to this
 (dorun
@@ -89,3 +97,25 @@
 ;; #"ethel"
 ;; #{6 7 8 9}
 ;; #'clojure.core/rest
+
+
+
+;;; Print and read in Clojure: https://www.proofbyexample.com/print-and-read-in-clojure.html
+;;; print-dup example of org.joda.time.DateTime
+;;; Note that print-method has an implementation for java.lang.Object, which is why it is able to print anything.
+;;;   print-dup, on the other hand has fewer stock methods, and will throw when you try to print something it doesn’t explicitly know about.
+
+#_(binding [*print-dup* true] (pr-str (org.joda.time.DateTime.)))
+;; IllegalArgumentException No method in multimethod 'print-dup' for dispatch value:
+;; class org.joda.time.DateTime  clojure.lang.MultiFn.getFn (MultiFn.java:160)
+
+;; Make it possible to print joda DateTime instances; required for caching.
+(defmethod print-dup org.joda.time.DateTime
+  [dt out]
+  (.write out (str "#=" `(org.joda.time.DateTime. ~(.getMillis dt)))))
+
+(binding [*print-dup* true] (pr-str (org.joda.time.DateTime.)))
+;; => "#=(org.joda.time.DateTime. 1649324290242)"
+(read-string "#=(org.joda.time.DateTime. 1649324290242)")
+;; => #object[org.joda.time.DateTime 0x1c8e91f "2022-04-07T11:38:10.242+02:00"]
+
