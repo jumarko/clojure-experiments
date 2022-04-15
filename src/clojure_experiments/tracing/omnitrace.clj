@@ -1,6 +1,7 @@
 (ns clojure-experiments.tracing.omnitrace
   "https://github.com/Cyrik/omni-trace"
-  (:require
+  ;; this leads to circular dependency error in aws logs?!
+  #_(:require
    [cyrik.omni-trace :as o]))
 
 
