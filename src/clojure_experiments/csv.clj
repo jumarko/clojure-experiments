@@ -3,7 +3,8 @@
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             ;; requires the `--illegal-access=permit` workaround on JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
-            [clj-memory-meter.core :as mm]))
+            [clj-memory-meter.core :as mm]
+            [charred.api :as charred]))
 
 ;;; See also
 ;;; - semantic.csv: https://github.com/jumarko/semantic-csv, http://metasoarous.com/blog/presenting-semantic-csv
@@ -26,6 +27,30 @@
             (map keyword) ;; Drop if you want string keys instead
             repeat)
        (rest csv-data)))
+
+
+;;; Charred - blazing-fast CSV & JSON parsing library with minimal dependencies
+;;; https://github.com/cnuernber/charred
+;; new JSON & CSV parsing library with zero dependencies and very fast: https://clojurians.slack.com/archives/C06MAR553/p1649789577454649
+;; chrisn: Introducing Charred - fast json/csv encode and decode. This library finalizes my research into csv and json parsing and is a complete drop-in replacement for clojure.data.csv and clojure.data.json. Same API, much better (5-10x) performance. This library gets as good performance for those tasks as anything on the JVM and avoids the jackson hairball entirely.
+;; * You can find my previous post on fast csv parsing for the reasons why the system is fast or just read the source code. All the files are pretty short. I moved the code from dtype-next into a stand-alone library and added encoding (writing) to the mix so you don't need any other dependencies. Finally this library has the same conformance suite as the libraries it replaces so you can feel at least somewhat confident it will handle your data with respect.
+;;     * This is the same story as the fast CSV parser in the same library - don't use pushback reader and write tight loops in java.  In any case, here is a profile project.
+;; * Former announcement about CSV parsing: https://clojurians.slack.com/archives/C06MAR553/p1648830782525509
+;;     * By my tests in jdk-17 read() if a 1.7GB file for a pushback reader is 51sec vs 500ms for a tight loop reading into a character array.
+;;     * fancy methods of reading character data from a file, such as memory mapping it and even potentially io_uring on linux are unlikely to get any faster for CSV parsing specifically unless you know your data doesn't have quoted sections.
+;;     * At the end of the day - don't use csv.  Use arrow or parquet if you need any performance at all as a parquet file of a 1.7GB test csv set was ~240MB
+
+;; maybe try this: "https://vega.github.io/vega/data/cars.json"
+(comment
+
+  (def parsed-json (charred/read-json (io/file "resources/cars.json")))
+
+  (def parsed-csv (charred/read-csv (slurp "https://open-covid-19.github.io/data/v2/latest/master.csv")))
+
+  )
+
+
+
 
 ;;; - tech.ml.dataset: https://github.com/techascent/tech.ml.dataset
 ;;;
