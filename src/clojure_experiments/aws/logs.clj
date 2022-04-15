@@ -12,9 +12,7 @@
             [clojure-experiments.visualizations.oz :as my-oz]
             [oz.core :as oz]
             [clojure.spec.alpha :as s]
-            [clojure-experiments.stats.descriptive :as stat]
-            [clojure.core.protocols :as p]
-            [cyrik.omni-trace :as o])
+            [clojure-experiments.stats.descriptive :as stat])
   (:import (org.apache.commons.lang3 StringUtils)))
 
 (def logs (aws/client {:api :logs
@@ -377,23 +375,22 @@
   ;;; show multiple days data at once via Hiccup: https://github.com/metasoarous/oz#hiccup
   ;; TODO: if jobs are retried, then this may shown a significant outliers (false positives)
   ;; - unlike with batch jobs, I don't know how to fix it easily since host_ip and logStream is likely the same...
-  (require '[cyrik.omni-trace :as o])
 
   (do
-    (time (def multiple-days-data (o/run-traced 'clojure-experiments.aws.logs/get-all-data jobs-delay-query
+    (time (def multiple-days-data (get-all-data jobs-delay-query
                                                 delta-jobs-durations-query
                                                 other-jobs-durations-query
                                                 git-clones-query
                                                 (from-to (truncate-to-midnight (.minusDays (now)
                                                                                            3))))))
   
-      ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
-      ;; (facet row, vconcat, layer, repeat row)
-    ;; TODO: support interval selection and zooming: https://vega.github.io/vega-lite-v2/docs/selection.html#scale-domains
+        ;; TODO: use Vega Lite's combinators: https://youtu.be/9uaHRWj04D4?t=572
+        ;; (facet row, vconcat, layer, repeat row)
+      ;; TODO: support interval selection and zooming: https://vega.github.io/vega-lite-v2/docs/selection.html#scale-domains
     (do
       (def multiple-days-data-histograms
         [:div
-           ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
+         ;; this must be a lazy seq, not a vector otherwise an 'Invalid arity' error is thrown in oz.js
          (for [{:keys [start-time end-time delays delta-durations other-durations clone-durations]} multiple-days-data
                :let [date-str (format "%s -- %s" start-time end-time)]]
            [:div
@@ -411,7 +408,7 @@
 
              ;; default colors are hard to read - check https://stackoverflow.com/questions/58933759/vega-lite-set-color-from-data-whilst-retaining-a-legend
              [:vega-lite (hist (format "Other jobs total durations in seconds (%s)" date-str) other-durations "duration_seconds" job-type-color)]
-               ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
+             ;; TODO: having many different repos make the chart less readable and bigger -> perhaps use separate visualization?
 
              [:vega-lite (hist (format "Git clones durations (%s)" date-str) clone-durations "duration_seconds" (color "repository"))]]
 
@@ -419,12 +416,15 @@
 
       (oz/view! multiple-days-data-histograms)))
 
-  ;; show traced functions just for fun
-  (oz/view! (assoc (o/rooted-flamegraph 'clojure-experiments.aws.logs/get-all-data)
-                   :width 2000
-                   :height 1200)
-            :mode :vega)
 
+  ;; would be interesting to see this in portal but this doesn't work for some reason...
+  ;; see also https://github.com/scicloj/visual-tools-experiments/blob/main/portal-nrepl-1/src/example.clj
+  (tap> (-> multiple-days-data-histograms
+       second
+       first
+       (nth 2)
+       (nth 2)
+       (assoc 0 :portal.viewer/vega-lite)))
 
   ;;; descriptive statistics for all delta durations
   ;;; TODO: it would be useful to remove weekends
