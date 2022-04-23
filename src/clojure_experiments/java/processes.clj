@@ -1,7 +1,9 @@
 (ns clojure-experiments.java.processes
   "Experiments with OS processes.
   See `ProcessHandle` javadoc: https://docs.oracle.com/javase/9/docs/api/java/lang/ProcessHandle.html"
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.java.shell :as sh]
+            [signal.handler :as signal]))
 
 (defn process-info
   "Accepts an instance of java.lang.ProcessHandle 
@@ -61,3 +63,122 @@
   ,)
 
 
+;;; Signal handling
+;;; https://github.com/pyr/signal
+
+;; How to install SIGCHLD handler
+;; - this signal could be useful for asynchronouse reaping of zombies
+;;   (see The Linux Programming Interface p. 555-557)
+(comment
+  (signal/with-handler :chld
+    (println (java.util.Date.) "Sigchld received")))
+
+
+;;; Creating sub-processes
+(comment
+  (time (sh/sh "/usr/local/bin/git" "clone" "https://jumarko:abc@github.com/jumarko/poptavka3"))
+
+  ;; the sub-processes won't be interrupted - instead, it continues until it's done
+  ;; If you also evaluate `signal/with-handler :chld` call above,
+  ;; you will see 'Sigchld received' printed after 10 seconds
+  (time (let [sleeping-future (future (println "future started")
+                                 (sh/sh "sleep" "10")
+                                 (println "future done"))]
+     (Thread/sleep 3000)
+     (println "Interrupting the waiting process")
+     (future-cancel sleeping-future)
+     (println "future canceled")))
+
+
+  ;; this simply doesn't show up as zombie at all
+  (time (my-sh "/usr/bin/git" "clone" "https://jumarko:abc@github.com/jumarko/poptavka3"))
+
+  ;; but maybe this??
+  (time (my-sh "sleep" "10"))
+
+  ;; if you don't have ssh key, this should fail although it's a valid clone url
+  (time (sh/sh "git" "clone" "git@github.com:jumarko/poptavka.git "))
+
+
+  (require '[clojure.java.io :refer (as-file copy)])
+  (import '(java.io ByteArrayOutputStream StringWriter)
+           '(java.nio.charset Charset))
+
+  ;;; all of this is copied from `clojure.java.shell`
+  ;;; the only reason is to inject Thread/sleep in the `my-sh` function
+(def ^:dynamic *sh-dir* nil)
+(def ^:dynamic *sh-env* nil)
+
+(defmacro with-sh-dir
+  "Sets the directory for use with sh, see sh for details."
+  {:added "1.2"}
+  [dir & forms]
+  `(binding [*sh-dir* ~dir]
+     ~@forms))
+
+(defmacro with-sh-env
+  "Sets the environment for use with sh, see sh for details."
+  {:added "1.2"}
+  [env & forms]
+  `(binding [*sh-env* ~env]
+     ~@forms))
+
+(defn- parse-args
+  [args]
+  (let [default-encoding "UTF-8" ;; see sh doc string
+        default-opts {:out-enc default-encoding :in-enc default-encoding :dir *sh-dir* :env *sh-env*}
+        [cmd opts] (split-with string? args)]
+    [cmd (merge default-opts (apply hash-map opts))]))
+
+(defn- ^"[Ljava.lang.String;" as-env-strings 
+  "Helper so that callers can pass a Clojure map for the :env to sh."
+  [arg]
+  (cond
+   (nil? arg) nil
+   (map? arg) (into-array String (map (fn [[k v]] (str (name k) "=" v)) arg))
+   true arg))
+
+(defn- stream-to-bytes
+  [in]
+  (with-open [bout (ByteArrayOutputStream.)]
+    (copy in bout)
+    (.toByteArray bout)))
+
+(defn- stream-to-string
+  ([in] (stream-to-string in (.name (Charset/defaultCharset))))
+  ([in enc]
+     (with-open [bout (StringWriter.)]
+       (copy in bout :encoding enc)
+       (.toString bout))))
+
+(defn- stream-to-enc
+  [stream enc]
+  (if (= enc :bytes)
+    (stream-to-bytes stream)
+    (stream-to-string stream enc)))
+
+(defn my-sh
+  [& args]
+  (let [[cmd opts] (parse-args args)
+        proc (.exec (Runtime/getRuntime) 
+               ^"[Ljava.lang.String;" (into-array cmd)
+               (as-env-strings (:env opts))
+               (as-file (:dir opts)))
+        {:keys [in in-enc out-enc]} opts]
+    (if in
+      (future
+        (with-open [os (.getOutputStream proc)]
+          (copy in os :encoding in-enc)))
+      (.close (.getOutputStream proc)))
+
+    (Thread/sleep 30000)
+
+    (with-open [stdout (.getInputStream proc)
+                stderr (.getErrorStream proc)]
+      (let [out (future (stream-to-enc stdout out-enc))
+            err (future (stream-to-string stderr))
+            exit-code (.waitFor proc)]
+        {:exit exit-code :out @out :err @err}))))
+
+
+  .)

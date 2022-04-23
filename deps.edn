@@ -108,6 +108,8 @@
         meta-csv/meta-csv {:mvn/version "0.1.0"}
         com.github.seancorfield/next.jdbc  {:mvn/version "1.2.659"}
         dk.ative/docjure {:mvn/version "1.16.0"}
+        ;; signal handling
+        spootnik/signal {:mvn/version "0.2.4"}
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
