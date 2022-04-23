@@ -80,21 +80,28 @@
 
   ;; the sub-processes won't be interrupted - instead, it continues until it's done
   ;; If you also evaluate `signal/with-handler :chld` call above,
-  ;; you will see 'Sigchld received' printed after 10 seconds
+  ;; you will see 'Sigchld received' printed after 5 seconds
   (time (let [sleeping-future (future (println "future started")
-                                 (sh/sh "sleep" "10")
+                                 (sh/sh "sleep" "5")
                                  (println "future done"))]
      (Thread/sleep 3000)
      (println "Interrupting the waiting process")
      (future-cancel sleeping-future)
      (println "future canceled")))
 
+  ;; this is to test some larger output - the file is 98 KB
+  ;; you will notice, that here the subprocess is blocked until
+  ;; we read enough data from the pipe (after the 10-second sleep in `my-sh` is over)
+  ;; - this is because max pipe buffer size is 64 kB
+  ;; https://unix.stackexchange.com/a/11954/63528
+  (my-sh "cat" "resources/cars.json")
+
 
   ;; this simply doesn't show up as zombie at all
   (time (my-sh "/usr/bin/git" "clone" "https://jumarko:abc@github.com/jumarko/poptavka3"))
 
   ;; but maybe this??
-  (time (my-sh "sleep" "10"))
+  (time (my-sh "sleep" "5"))
 
   ;; if you don't have ssh key, this should fail although it's a valid clone url
   (time (sh/sh "git" "clone" "git@github.com:jumarko/poptavka.git "))
@@ -171,7 +178,7 @@
           (copy in os :encoding in-enc)))
       (.close (.getOutputStream proc)))
 
-    (Thread/sleep 30000)
+    (Thread/sleep 10000)
 
     (with-open [stdout (.getInputStream proc)
                 stderr (.getErrorStream proc)]
