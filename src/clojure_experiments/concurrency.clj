@@ -272,9 +272,13 @@
   (do 
     (def my-future
       (future
-        (try 
+        (try
           (Thread/sleep 10000)
           (println "Normally.")
+          (catch Exception e
+            (println "Catching...")
+            (Thread/sleep 2000)
+            (println "Catched."))
           (finally
             (Thread/sleep 1000)
             (println "Finally!")))))
@@ -288,13 +292,16 @@
     (println "cancelled")
     (try @my-future (catch Exception e (println (.getMessage e))))
     (println "dereferenced"))
-  ;; => you'll see this
+  ;; => you'll immediately see this:
+  ;; Catching...
   ;; cancelled? true
   ;; done? true
   ;; cancelled
   ;; nil
   ;; dereferenced
-  ;;   <after a minute>
+  ;; <after 2 seconds>
+  ;; Catched.
+  ;; <after 10 seconds>
   ;; Finally!
 
 
