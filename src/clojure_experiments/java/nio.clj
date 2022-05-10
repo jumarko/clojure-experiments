@@ -1,6 +1,9 @@
 (ns clojure-experiments.java.nio
   "Experiments with new Java IO - java.nio.
-  In particular java.nio.file.* - Path, Files, etc."
+  In particular java.nio.file.* - Path, Files, etc.
+
+  See also `clojure-experiments.files`."
+  (:require [babashka.fs :as fs])
   (:import
    (java.io File)
    (java.nio.file Files FileStore FileSystem FileSystems Path Paths)
@@ -74,3 +77,8 @@
 ;;     {:name "keybase-redirector", :space [0.0 0.0 0.0]}
 ;;     {:name "/dev/disk2s1", :space [0.3238029479980469 0.03251266479492188 0.03251266479492188]}]
   )
+
+
+;;; babashka/fs: https://github.com/babashka/fs
+
+

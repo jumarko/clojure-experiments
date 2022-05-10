@@ -1,5 +1,6 @@
 (ns clojure-experiments.files
   "Various File IO examples.
+  See also `clojure-experiments.java.nio`.
   See
   - https://docs.oracle.com/javase/8/docs/api/java/util/jar/JarEntry.html
   - https://stackoverflow.com/questions/23139331/how-to-get-list-of-classpath-resources-in-nested-jar"
