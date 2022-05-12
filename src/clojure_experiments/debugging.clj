@@ -57,11 +57,16 @@
 
   (fs-api/instrument-forms-for-namespaces #{"clojure.string"} {})
 
-
+  ;; you can instrument multiple namespaces with a prefix - e.g. clojure.java.
+  ;; matches clojure.java.io, clojure.java.shell, clojure.java.browse, clojure.java.javadoc
+  ;; BUT  this isn't very smart because it will overwhelm the system
+  ;; - clojure.java.io/file is called a lot!
+  (comment 
+    (fs-api/instrument-forms-for-namespaces #{"clojure.java."} {})
+    (require '[clojure.java.javadoc :as javadoc])
+    #rtrace (javadoc/javadoc String)
+    .)
 
   .)
-
-
-
 
 
