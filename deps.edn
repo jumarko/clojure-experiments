@@ -112,6 +112,9 @@
         spootnik/signal {:mvn/version "0.2.4"}
         ;; use java.nio from Clojure: https://github.com/babashka/fs
         babashka/fs {:mvn/version "0.1.6"}
+        ;; flow-storm-debugger: https://github.com/jpmonettas/flow-storm-debugger/
+        com.github.jpmonettas/flow-storm-dbg {:mvn/version "2.0.38"}
+        com.github.jpmonettas/flow-storm-inst {:mvn/version "2.0.38"}
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
