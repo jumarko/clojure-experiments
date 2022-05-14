@@ -3,6 +3,7 @@
   See also http://cr.openjdk.java.net/~rpressler/loom/loom/sol1_part1.html#right-sizing-threads
 
   This requires JDK 19 with `--enable-preview`."
+  (:require [clojure.core.async :as async])
   (:import (java.util.concurrent Executors)))
 
 ;; see https://download.java.net/java/early_access/loom/docs/api/java.base/java/lang/Thread.html
@@ -68,3 +69,42 @@
   (future-cancel watchdog)
 
   .)
+
+
+;;; Sean Corfield's experiment with core.async - using virtual threads for blocking operations
+;;; https://clojurians.slack.com/archives/C8NUSGWG6/p1652487349607519?thread_ts=1652433406.842079&cid=C8NUSGWG6
+
+(defonce ^:private go-factory! (thread-factory "go-pool-"))
+
+(defmacro go! [& body]
+  `(let [c# (async/chan)
+         t# (.newThread go-factory!
+                        ^:once
+                        (fn* []
+                             (try
+                               (async/>!! c# (do ~@body))
+                               (finally
+                                 (async/close! c#)))))]
+     (.start t#)
+     c#))
+
+(defmacro go-loop! [binding & body]
+  `(go! (loop ~binding ~@body)))
+
+(comment
+
+  ;; simple way to inspect channels values
+  (defn record-val [x]
+    (prn "Tapped: " x))
+  (add-tap record-val)
+
+  (let [c (async/chan)]
+    (go-loop! [ns (range 10)]
+              (when (seq ns)
+                (async/>!! c (first ns))
+                (recur (rest ns))))
+    (go-loop! []
+              (tap> (async/<!! c))
+              (recur)))
+
+  )
