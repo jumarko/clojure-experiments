@@ -12,6 +12,12 @@
 (serialize {:a 1 :b [1 2 3]})
 ;; => "#=(clojure.lang.PersistentArrayMap/create {:a 1, :b [1 2 3]})"
 
+;; notice that java.sql.Timestamp is special in this regard
+;; and serializaing and deserializing it again will return java.util.Date
+;; see https://ask.clojure.org/index.php/11898/printing-and-reading-date-types
+(type (deserialize (serialize (java.sql.Timestamp. 1))))
+;; => java.util.Date
+
 
 (defn my-print [& more]
   (binding [*print-readably* nil]
@@ -29,8 +35,11 @@
 (read-string "[a b #=(* 3 4)]")
 ;; => [a b 12]
 ;; but #= can be prohibited:
-(binding [*read-eval* false]
+#_(binding [*read-eval* false]
   (read-string "#=(java.lang.System/exit 0)"))
+;; 1. Unhandled java.lang.RuntimeException
+;; EvalReader not allowed when *read-eval* is false.
+
 
 
 ;;; Serializing Clojure objects: https://groups.google.com/g/clojure/c/5wRBTPNu8qo [2008 discussion with a couple of comments from Rich Hickey]
