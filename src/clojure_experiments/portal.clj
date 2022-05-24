@@ -11,6 +11,9 @@
   ;; This opens a standalone chrome app window
   ;; You can inspect it (right click -> Inspect) to see the URL, etc.
   (def portal (p/open)) ; by saviing it in a var we can use it from the REPL https://github.com/djblue/portal#portal-atom
+  ;; you can use the Electron version - run /Applications/portal.app first!
+  (def portal (p/open {:launcher :electron}))
+
   (add-tap #'p/submit)
 
   ;; explore data
