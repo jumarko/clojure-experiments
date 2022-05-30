@@ -64,3 +64,11 @@
   (cons fst (lazy-seq (fib-seq op snd (op fst snd)))))
 (take 10 (fib-seq * 1 2))
 ;; => (1 2 2 4 8 32 256 8192 2097152 17179869184)
+
+;; when we move `cons` inside `lazy-seq` it's a bit less lazy
+(comment
+  (defn fib-seq [op fst snd]
+    (lazy-seq (cons fst (fib-seq op snd (op fst snd)))))
+  (take 9 (fib-seq * 1 2))
+  ;; => (1 2 2 4 8 32 256 8192 2097152)
+  .)
