@@ -90,7 +90,7 @@
 ;;; vectors destructuring, subvec, etc.
 
 ;; when you destructure a vector you get a ...
-... sequence, not vector;
+;;; ... sequence, not vector;
 ;; so `conj` will add the element to the beginning!
 (let [[f & r] [1 2 3 4]]
   (conj r 10))
@@ -369,50 +369,6 @@ db
        [(range 3) (range 5) (range 6)]))
 ;; => [[(0 1 2) (0 1 2 3 4) (0 1 2 3 4 5)] ((1 2) (1 2 3 4) (1 2 3 4 5)) ((2) (2 3 4) (2 3 4 5)) (nil (3 4) (3 4 5)) (nil (4) (4 5)) (nil nil (5)) (nil nil nil)]
 
-;; https://clojure.atlassian.net/browse/CLJ-2555.patch
-(defn iteration
-  "creates a seqable/reducible given step!,
-   a function of some (opaque continuation data) k
-
-   step! - fn of k/nil to (opaque) 'ret'
-
-   :some? - fn of ret -> truthy, indicating there is a value
-           will not call vf/kf nor continue when false
-   :vf - fn of ret -> v, the values produced by the iteration
-   :kf - fn of ret -> next-k or nil (will not continue)
-   :initk - the first value passed to step!
-
-   vf, kf default to identity, some? defaults to some?, initk defaults to nil
-
-   it is presumed that step! with non-initk is unreproducible/non-idempotent
-   if step! with initk is unreproducible, it is on the consumer to not consume twice"
-  {:added "1.11"}
-  [step! & {:keys [vf kf some? initk]
-            :or {vf identity
-                 kf identity
-                 some? some?
-                 initk nil}}]
-  (reify
-    clojure.lang.Seqable
-    (seq [_]
-      ((fn next [ret]
-         (when (some? ret)
-           (cons (vf ret)
-                 (when-some [k (kf ret)]
-                   (lazy-seq (next (step! k)))))))
-       (step! initk)))
-    clojure.lang.IReduceInit
-    (reduce [_ rf init]
-      (loop [acc init
-             ret (step! initk)]
-        (if (some? ret)
-          (let [acc (rf acc (vf ret))]
-            (if (reduced? acc)
-              @acc
-              (if-some [k (kf ret)]
-                (recur acc (step! k))
-                acc)))
-          acc)))))
 
 ;; "paginated API" test case
 (let [items 12 pgsize 5
@@ -554,7 +510,7 @@ db
 (def fib-seq-cat
   (lazy-cat [0 1] (map #(doto [%1 %2] (println " call") (fn [x] (apply + x))) (rest fib-seq-cat) fib-seq-cat)))
 
-(println (take 30 fib-seq-cat))
+(println (take 5 fib-seq-cat))
 
 
 
@@ -586,3 +542,27 @@ db
 ;; 1. Unhandled java.lang.ClassCastException
 ;; class clojure.lang.LazySeq cannot be cast to class clojure.lang.Reversible (clojure.lang.LazySeq
 ;; core.clj: 1596  clojure.core/rseq
+
+
+
+;;; nice Clojure snippet by delaguardo: https://clojurians.slack.com/archives/C053AK3F9/p1653402630575309?thread_ts=1653401044.690169&cid=C053AK3F9
+(let [data [{:x 1 :foo 42}
+            {:x 1 :bar 43}
+            {:x 2 :foo 999}]]
+  (->> data
+       (group-by :x)
+       (vals)
+       (map #(reduce into %))))
+;; => ({:x 1, :foo 42, :bar 43} {:x 2, :foo 999})
+;; ... I'm wondering whether `merge` gives me the same result...
+;; - it could but need to use `apply merge`
+(let [data [{:x 1 :foo 42}
+            {:x 1 :bar 43}
+            {:x 2 :foo 999}]]
+  (->> data
+       (group-by :x)
+       (vals)
+       (map #(apply merge %))))
+;; => ({:x 1, :foo 42, :bar 43} {:x 2, :foo 999})
+
+
