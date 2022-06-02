@@ -1,4 +1,4 @@
-(ns clojure-experiments.macros
+(ns clojure-experiments.macros.macros
   (:require [clojure.data :as data]))
 
 ;;; Simple experiment with macros and the difference between compile-time and runtime
@@ -17,6 +17,18 @@
 ;; otherwise the new version of `name-it` compiled inside the function
 ;; won't be reflected and nothing is printed when the function is called
 (name-name-it)
+
+;;; and maybe we can demonstrate it with a single macro?
+;; when you just compile this macro, nothing happens yet
+(defmacro stuff [x]
+  (println "Compiling..." x)
+  `(println "Executing..." ~x))
+;; Compile time: every time you compile this function you get "Compiling... y" printed
+;; that means the macro is actually _expanded_ before the function body is compiled.
+(defn do-stuff [y]
+  (stuff y))
+;; Runtime: this prints "Executing... Hello"
+(do-stuff "Hello")
 
 
 ;;; See Jeff Terrell's blog post:
