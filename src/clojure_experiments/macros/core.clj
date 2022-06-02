@@ -1,4 +1,23 @@
-(ns clojure-experiments.macros)
+(ns clojure-experiments.macros
+  (:require [clojure.data :as data]))
+
+;;; Simple experiment with macros and the difference between compile-time and runtime
+;;; The first version of `name-it` macro is too naive and it calls println without quoting the form.
+;;; Which means that println is executed in compile-time.
+(defmacro name-it [x f]
+  (println "Hello"))
+;; with the macro above, we get "Hello" printed every time we compile this function!
+(defn name-name-it []
+  (name-it myhello identity))
+
+;; ... so we need to actually quote the form:
+(defmacro name-it [x f]
+  `(println "I'm making a symbol name for you"))
+;; .. and remember to compile `name-name-it` again
+;; otherwise the new version of `name-it` compiled inside the function
+;; won't be reflected and nothing is printed when the function is called
+(name-name-it)
+
 
 ;;; See Jeff Terrell's blog post:
 ;;; A Few Tips for Writing Macros in Clojure: http://blog.altometrics.com/2016/04/a-few-tips-for-writing-macros-in-clojure/
