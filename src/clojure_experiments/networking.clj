@@ -10,7 +10,8 @@
    [vcr-clj.clj-http :as vcr-http])
   (:import
    org.apache.http.impl.cookie.RFC6265CookieSpecProvider
-   org.apache.http.protocol.BasicHttpContext))
+   org.apache.http.protocol.BasicHttpContext
+   org.apache.commons.net.util.SubnetUtils))
 
 ;; How to check TLS certificate expiration date with Clojure?
 ;; https://stackoverflow.com/questions/54612465/how-to-check-tls-certificate-expiration-date-with-clojure
@@ -111,3 +112,16 @@
             {:cookie-spec cookie-spec})
 
   .)
+
+
+;;; IP address ranges, CIDR notation
+
+
+;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
+;; https://commons.apache.org/proper/commons-net/apidocs/index.html
+(.isInRange (.getInfo (SubnetUtils. "13.64.0.0/16"))
+            "13.64.254.255")
+;; => true
+(.isInRange (.getInfo (SubnetUtils. "13.64.0.0/16"))
+            "13.65.0.1")
+;; => false
