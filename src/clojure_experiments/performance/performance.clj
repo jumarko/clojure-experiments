@@ -42,7 +42,9 @@
   ;; "Elapsed time: 159.988287 msecs"
 
 
-  (time (prof/profile {:width 2400 :return-file true}
+  (time (prof/profile {:width 2400 :return-file true
+                       ;; try wall-clock profiling to get more accurate picture: https://github.com/jvm-profiling-tools/async-profiler#wall-clock-profiling
+                       #_#_:event :wall}
                       (print "waiting for cpu: ")
                       (time (burn-cpu 1))
 
