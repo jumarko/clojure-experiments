@@ -346,6 +346,9 @@
 ;; "Elapsed time: 27.574799 msecs"
 
 ;; Let's try "unchecked math" as the final optimization
+;; - UPDATE: with clojure 1.11 and CLJ-2670 (use Math.*Exact methods)
+;;   the difference is basically non-existent - the default checked math is as fast as unchecked!
+;;   In both cases, it is about 6 milliseconds (measured 21.6.2022)
 (set! *unchecked-math* true)
 (defn factorial-d [^long original-x]
   ;; acc here is primitive because it's defined with a literal number
