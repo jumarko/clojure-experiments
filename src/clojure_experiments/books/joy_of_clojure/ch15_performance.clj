@@ -343,7 +343,7 @@
     (if (>= 1 x) acc (recur (dec x) (* x acc)))))
 (time (dotimes [_ 1e5]
         (factorial-c 20)))
-;; "Elapsed time: 27.574799 msecs"
+;; "Elapsed time: 27.574799 msecs" ; OUTDATED!
 
 ;; Let's try "unchecked math" as the final optimization
 ;; - UPDATE: with clojure 1.11 and CLJ-2670 (use Math.*Exact methods)
