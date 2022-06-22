@@ -343,7 +343,10 @@
     (if (>= 1 x) acc (recur (dec x) (* x acc)))))
 (time (dotimes [_ 1e5]
         (factorial-c 20)))
-;; "Elapsed time: 27.574799 msecs" ; OUTDATED!
+;; OUTDATED! see https://clojure.atlassian.net/browse/CLJ-2670
+;; - with Clojure 1.11, all but the very first run are about 7 msecs!
+;; - with Clojure 1.10.3 they are about 25 msecs!
+;; "Elapsed time: 27.574799 msecs"
 
 ;; Let's try "unchecked math" as the final optimization
 ;; - UPDATE: with clojure 1.11 and CLJ-2670 (use Math.*Exact methods)
