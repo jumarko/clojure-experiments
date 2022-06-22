@@ -3,8 +3,7 @@
             [clj-java-decompiler.core :as decompiler :refer [decompile disassemble]]
             [no.disassemble :as nd]
             [criterium.core :as crit]
-            [clj-java-decompiler.core :refer [decompile disassemble] :as decompiler]
-            ))
+            [clj-java-decompiler.core :refer [decompile disassemble] :as decompiler]))
 
 ;;; Boxed math
 
@@ -28,6 +27,39 @@
     (while (< (/ (- (System/nanoTime) start) 1e9) secs)
       (test-sum)
       (test-div))))
+
+;; Let's demonstrate how CPU profiling can yield a misleading profile
+;; in terms of where the real bottleneck is.
+;; Here, CPU-expensive operations consume about 2 seconds
+;; while Network IO about 10 seconds
+(comment
+
+  (defn- network-call []
+    (apply str (take 15 (slurp "https://idnes.cz"))))
+
+  ;; it's about 150 msecs on my machine/network in Brno, CZ
+  (time (network-call ))
+  ;; "Elapsed time: 159.988287 msecs"
+
+
+  (time (prof/profile {:width 2400 :return-file true
+                       ;; try wall-clock profiling to get more accurate picture: https://github.com/jvm-profiling-tools/async-profiler#wall-clock-profiling
+                       #_#_:event :wall}
+                      (print "waiting for cpu: ")
+                      (time (burn-cpu 1))
+
+                      (print "waiting for Network IO: ")
+                      (time (dotimes [_ 50] (network-call)))
+
+                      (print "waiting for cpu: ")
+                      (time (burn-cpu 1))))
+  ;; waiting for cpu: "Elapsed time: 1001.41616 msecs"
+  ;; waiting for Network IO: "Elapsed time: 10125.600056 msecs"
+  ;; waiting for cpu: "Elapsed time: 1001.359411 msecs"
+  ;; "Elapsed time: 12708.13256 msecs"
+  .)
+
+
 (comment
 
   (prof/start {})
@@ -64,11 +96,14 @@
 ;;; http://clojure-goes-fast.com/blog/clj-async-profiler-040/
 (comment
   ;; division will be slowest because of Ratios
-  (prof/profile {:width 2400}
+  (prof/profile {:width 2400 :return-file true}
    (dotimes [_ 10] (reduce + (range 10000000)))
    (dotimes [_ 10] (reduce / (range 10000000)))
    (dotimes [_ 10] (reduce * (range 10000000))))
 
+  (prof/profile {:width 2400 :return-file true}
+                (Thread/sleep 200))
+  
 
   ;; profile external process
   (def pid 64735)
