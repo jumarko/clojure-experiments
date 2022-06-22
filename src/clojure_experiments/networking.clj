@@ -2,6 +2,7 @@
   (:require
    [clj-http.client :as http]
    [clj-http.cookies :as http-cookies]
+   [clojure.data.json :as json]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [ring.util.codec :as codec]
@@ -9,9 +10,8 @@
    [vcr-clj.cassettes.serialization :as vcr-serialization]
    [vcr-clj.clj-http :as vcr-http])
   (:import
-   org.apache.http.impl.cookie.RFC6265CookieSpecProvider
-   org.apache.http.protocol.BasicHttpContext
-   org.apache.commons.net.util.SubnetUtils))
+   (org.apache.commons.net.util SubnetUtils)
+   (org.apache.http.impl.cookie RFC6265CookieSpecProvider)))
 
 ;; How to check TLS certificate expiration date with Clojure?
 ;; https://stackoverflow.com/questions/54612465/how-to-check-tls-certificate-expiration-date-with-clojure
@@ -119,9 +119,37 @@
 
 ;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
 ;; https://commons.apache.org/proper/commons-net/apidocs/index.html
+;; Note: it does NOT support IPv6: https://issues.apache.org/jira/browse/NET-405
 (.isInRange (.getInfo (SubnetUtils. "13.64.0.0/16"))
             "13.64.254.255")
 ;; => true
 (.isInRange (.getInfo (SubnetUtils. "13.64.0.0/16"))
             "13.65.0.1")
 ;; => false
+
+
+(defn- ipv6-format?
+  "Poor man's ipv6 format detection because SubnetUtils doesn't support it."
+  [ip-address]
+  (re-find #"(:|[a-fA-F])" ip-address))
+
+(defn ipv4-in-range? [cidr-range ip-address]
+  ;; Alternatively, we could validate that they are both IPv4 addresses
+  ;; - see https://www.techiedelight.com/validate-ip-address-java/
+  (when-not (or (ipv6-format? cidr-range)
+                (ipv6-format? ip-address))
+    (.isInRange (.getInfo (SubnetUtils. cidr-range))
+                ip-address)))
+(ipv4-in-range? "13.64.0.0/16" "13.64.254.255")
+;; => true
+
+(defn github-action-ip? [ip-address]
+  (let [actions-ip-ranges (get (json/read-json (slurp "https://api.github.com/meta"))
+                               :actions)]
+    (filter #(ipv4-in-range? % ip-address) actions-ip-ranges)))
+
+(time (github-action-ip? "20.122.150.98"))
+;; => ("20.122.0.0/16")
+(ipv4-in-range? "20.122.0.0/16" "20.122.150.98")
+;; => true
+
