@@ -329,3 +329,14 @@
   ;; blocked until the delay is "realized" in the future above
   (realized? myd))
 
+
+;;; `with-local-vars`
+;;; Check some resources:
+;;; - with-local-vars vs. let https://groups.google.com/g/clojure/c/j_FyAasCHXY
+;;; - Clojure with-local-vars in closure: https://stackoverflow.com/questions/42040754/clojure-with-local-vars-in-closure
+(with-local-vars
+  [x y
+   y x
+   z 10]
+  (list (var-get x) (var-get y) (var-get z)))
+;; => (#<Var: --unnamed--> #<Var: --unnamed--> 10)
