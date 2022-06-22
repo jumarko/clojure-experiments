@@ -27,6 +27,10 @@
 
 ;;; flow-storm-debugger: https://github.com/jpmonettas/flow-storm-debugger/
 ;;; Intro video: https://www.youtube.com/watch?v=YnpQMrkj4v8
+;;; 
+;;; FlowStorm 2.2 new features demo: https://www.reddit.com/r/Clojure/comments/v9z7ob/flowstorm_22_new_features_demo/
+;;; - https://www.youtube.com/watch?v=cnLwRzxrKDk
+
 (comment
   ;; will run the debbuger GUI and get everything ready
   (fs-api/local-connect)

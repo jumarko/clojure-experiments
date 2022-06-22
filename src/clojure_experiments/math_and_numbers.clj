@@ -1,5 +1,6 @@
 (ns clojure-experiments.math-and-numbers
-  (:require [clojure.math.numeric-tower :as m]))
+  (:require [clojure.math :as math]
+            [clojure.math.numeric-tower :as m]))
 
 ;; interesting example used for demonstrating JVM failure
 ;; in apangin's talk "JVM crash dump analysis": https://www.youtube.com/watch?v=jd6dJa7tSNU
@@ -92,4 +93,47 @@
 ;; => 1494.99
 (* (float 1.89) 791)
 ;; => 1494.9899886846542
+
+
+
+;;; NaNs are neither `=` nor `not=` !!!
+;;; https://nextjournal.com/littleli/floating-numbers-and-equivalence
+(= ##NaN ##NaN)
+;; => false
+
+;; This was surprising!
+(not= ##NaN ##NaN)
+;; => false
+
+(not (= ##NaN ##NaN))
+;; => true
+
+;; it's because of boxing
+;; we can fix it by using primitive hint ^double
+(defn double-not= [^double a ^double b] 
+  (not (= a b)))
+(double-not= ##NaN ##NaN)
+;; => true
+
+;; But why `=` works as expected but `not=` doesn't?
+;; The answer is inlining!
+;; consider this function which is the same as `=` but passing `=`
+;; to `partial` prevents it from being inlined to the caller's site
+;; - this means NaNs get boxed and it no longer works as expected (returning false)
+;; because these two NaNs are the same object
+((partial = ) ##NaN ##NaN)
+;; => true
+(identical? ##NaN ##NaN)
+;; => true
+
+;; But observe that when you get NaN as the result of a computation
+;; they won't be identical typically
+(math/sqrt -2)
+;; => ##NaN
+(identical? (math/sqrt -2) (math/sqrt -2))
+;; => false
+;; ... and thus `not=` works again!!
+(not= (math/sqrt -2) (math/sqrt -2))
+;; => true
+
 
