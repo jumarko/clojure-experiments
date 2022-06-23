@@ -127,3 +127,51 @@
     (odd? (+ x y)) 2
     3)
   ,)
+
+
+;;; on slack: https://clojurians.slack.com/archives/C053AK3F9/p1655979353819919
+;;; ---------
+;;; Why do I need gensym outside of the quoted form, rather than using auto-gensym # syntax?
+;;; I would expect both version to result in [1 2] but the first one seems to fail to scope the let binding as I'd like.
+;;; (Obvs these macros are simplified to the point that they don't need to be macros - the conditional logic in the real version isn't relevant here)
+;;; ----
+;;; Nice tip from delaguardo!! defmacro itself is a macro so you can expand the declaration of recursive-macro-1  to debug
+(defmacro recursive-macro-1 [[x & more :as xs] acc]
+  (if (seq xs)
+    `(let [x# ~x] ; DOES NOT WORK as expected!
+       (recursive-macro-1 ~more (conj ~acc x#)))
+    acc))
+
+(defmacro recursive-macro-2 [[x & more :as xs] acc]
+  (if (seq xs)
+    (let [gx (gensym 'x)]
+      `(let [~gx ~x]
+         (recursive-macro-2 ~more (conj ~acc ~gx))))
+    acc))
+
+
+(comment
+  (recursive-macro-1 [1 2] []) ;; => [2 2]
+  (recursive-macro-2 [1 2] []) ;; => [1 2]
+  )
+
+;; auto-gensym
+(let [x__10885__auto__ 1]
+  (recursive-macro-1 (2) (conj [] x__10885__auto__)))
+;; macroexpand-all
+(let*
+    [x__10885__auto__ 1]
+  (let*
+      [x__10885__auto__ 2]
+    (conj (conj [] x__10885__auto__) x__10885__auto__)))
+
+;; gensym
+(let [x11094 1]
+  (recursive-macro-2 (2) (conj [] x11094)))
+;; macroexpand-all
+(let* [x11095 1]
+  (let* [x11096 2] (conj (conj [] x11095) x11096)))
+
+;; so recursive-macro-1 throws away all the elements but the last one!
+(recursive-macro-1 [1 2 3 4 5] [])
+;; => [5 5 5 5 5]
