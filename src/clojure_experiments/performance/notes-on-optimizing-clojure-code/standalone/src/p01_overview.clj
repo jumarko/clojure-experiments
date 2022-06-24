@@ -6,8 +6,8 @@
   "
   (:require
    [clojure.set :as set]
-   [clojure.string :as string]
-   (:gen-class)))
+   [clojure.string :as string])
+  (:gen-class))
 
 ;;; His initial submission: https://cuddly-octo-palm-tree.com/posts/2022-01-16-opt-clj-1/#:~:text=slow%2C%20keep%20going.-,A%20concrete%20example,-To%20make%20things
 (defn parse
@@ -47,14 +47,14 @@
 
 (defn -main
   [& args]
-  (let [input (-> (slurp "src/clojure_experiments/performance/notes-on-optimizing-clojure-code/day12.txt")
+  (let [input (-> (slurp (first args))
                   (string/split-lines)
                   parse)]
-    (part2 input)))
+    (time (part2 input))))
 
 (comment
 
-  (time (-main))
-  ;; "Elapsed time: 1266.318248 msecs"
+  (-main "src/clojure_experiments/performance/notes-on-optimizing-clojure-code/day12.txt")
+  ;; "Elapsed time: 1309.803488 msecs"
 
   .)
