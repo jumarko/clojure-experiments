@@ -105,7 +105,7 @@
         ;; blazing fast JSON & CSV parsing: https://github.com/cnuernber/charred
         com.cnuernber/charred {:mvn/version "1.000"}
         ;; clerk - notebooks: https://github.com/nextjournal/clerk
-        io.github.nextjournal/clerk {:mvn/version "0.5.346"}
+        io.github.nextjournal/clerk {:mvn/version "0.8.451"}
         ;; meta-csv, next.jdbc, and docjure are used in data-science notebook: https://github.com/nextjournal/clerk-demo/blob/main/notebooks/data_science.clj
         meta-csv/meta-csv {:mvn/version "0.1.0"}
         com.github.seancorfield/next.jdbc  {:mvn/version "1.2.659"}
