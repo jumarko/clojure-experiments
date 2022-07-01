@@ -7,6 +7,9 @@
             [jvm-alloc-rate-meter.core :as ameter])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
+(defn print-memory-layout
+  [obj]
+  (print (.toFootprint (GraphLayout/parseInstance (into-array [obj])))))
 
 ;;; Excercising memory throughput as in the 'Optimizing Java' book - p.39
 (comment
@@ -80,7 +83,7 @@
   ;; 1000        32     32000   clojure.lang.LongRange$LongChunk
   ;; 2001               96024   (total)
 
-  (println (.toFootprint (GraphLayout/parseInstance (object-array [(vec (range 10))]))))
+  (print-memory-layout (vec (range 10)))
 
 
   (.totalSize (GraphLayout/parseInstance (object-array [(vec (range 1000))])))
@@ -89,7 +92,7 @@
   (.totalSize (GraphLayout/parseInstance (object-array [(zipmap (range 1000) (range 1000))])))
 ;; => 96456
 
-  (println (.toFootprint (GraphLayout/parseInstance (into-array [(vec (range 1000))]))))
+  (print-memory-layout (vec (range 1000)))
   ;; clojure.lang.PersistentVector@53f51c6fd footprint:
   ;; COUNT       AVG       SUM   DESCRIPTION
   ;;    33       141      4656   [Ljava.lang.Object;
@@ -99,7 +102,7 @@
   ;;     1        16        16   java.util.concurrent.atomic.AtomicReference
   ;;  1067               29480   (total)
 
-  (println (.toFootprint (GraphLayout/parseInstance (into-array [(apply vector-of :long (range 1000))]))))
+  (print-memory-layout (apply vector-of :long (range 1000)))
   ;; clojure.core.Vec@e7f16b7d footprint:
   ;;      COUNT       AVG       SUM   DESCRIPTION
   ;;         32       266      8512   [J
@@ -109,13 +112,13 @@
   ;;         32        24       768   clojure.core.VecNode
   ;;         67                9480   (total)
 
-  (println (.toFootprint (GraphLayout/parseInstance (into-array [(long-array (range 1000))]))))
+  (print-memory-layout (long-array (range 1000)))
   ;; [J@28749eead footprint:
   ;;      COUNT       AVG       SUM   DESCRIPTION
   ;;          1      8016      8016   [J
   ;;          1                8016   (total)
 
-  (println (.toFootprint (GraphLayout/parseInstance (into-array [{:name "Juraj" :age 36 :hobbies ["programming" "climbing" "JVM"]}]))))
+  (print-memory-layout {:name "Juraj" :age 36 :hobbies ["programming" "climbing" "JVM"]})
   ;; clojure.lang.PersistentArrayMap@54b45797d footprint:
   ;;      COUNT       AVG       SUM   DESCRIPTION
   ;;          8        25       200   [B
@@ -268,4 +271,132 @@
   ,)
 
 
+
+;;; memory layout for deftype - with Long and long
+;;; https://www.reddit.com/r/Clojure/comments/vmul4a/help_with_jvm_memory_optimization/
+(def max-val-size 100)
+(deftype SomeType [a])
+
+(defn coll-of-size
+  ([size] (coll-of-size size 100))
+  ([size max-val-size]
+   (let [coll (java.util.ArrayList.)]
+     (dotimes [_ size]
+       (.add coll (->SomeType (long (rand-int max-val-size)))))
+     coll)))
+
+(comment
+
+  ;; Event this varies from run to run!! (notice different total size)
+  (print-memory-layout (coll-of-size 100))
+;;   java.util.ArrayList@475cdf82d footprint:
+;;      COUNT       AVG       SUM   DESCRIPTION
+;;          1       456       456   [Ljava.lang.Object;
+;;        100        16      1600   clojure_experiments.performance.memory.SomeType
+;;         62        24      1488   java.lang.Long
+;;          1        24        24   java.util.ArrayList
+;;        164                3568   (total)
+
+;; java.util.ArrayList@7bb5ec44d footprint:
+;;      COUNT       AVG       SUM   DESCRIPTION
+;;          1       456       456   [Ljava.lang.Object;
+;;        100        16      1600   clojure_experiments.performance.memory.SomeType
+;;         65        24      1560   java.lang.Long
+;;          1        24        24   java.util.ArrayList
+;;        167                3640   (total)
+
+;; java.util.ArrayList@6b81390cd footprint:
+;;      COUNT       AVG       SUM   DESCRIPTION
+;;          1       456       456   [Ljava.lang.Object;
+;;        100        16      1600   clojure_experiments.performance.memory.SomeType
+;;         67        24      1608   java.lang.Long
+;;          1        24        24   java.util.ArrayList
+;;        169                3688   (total)
+
+;; java.util.ArrayList@349a4b74d footprint:
+;;      COUNT       AVG       SUM   DESCRIPTION
+;;          1       456       456   [Ljava.lang.Object;
+;;        100        16      1600   clojure_experiments.performance.memory.SomeType
+;;         64        24      1536   java.lang.Long
+;;          1        24        24   java.util.ArrayList
+;;        166                3616   (total)
+
+
+  ;; doesn't work with JDK 17 (breaks module encapsulation: see https://stackoverflow.com/questions/69753263/unable-to-make-field-final-transient-java-lang-class-java-util-enumset-elementty)
+  #_(mm/measure coll :bytes true)
+
+
+  ;; with type hint (primitives) it looks consistent
+  (deftype SomeType [^long a])
+  (print-memory-layout (coll-of-size 100))
+  ;; java.util.ArrayList@5d379a6ed footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1       456       456   [Ljava.lang.Object;
+  ;;        100        24      2400   clojure_experiments.performance.memory.SomeType
+  ;;          1        24        24   java.util.ArrayList
+  ;;        102                2880   (total)
+
+  ;; now try 1 million of items - primitives, surprisingly, occupy more space!!!
+  (print-memory-layout (coll-of-size 1000000))
+  ;; java.util.ArrayList@46beede9d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1   4861968   4861968   [Ljava.lang.Object;
+  ;;    1000000        24  24000000   clojure_experiments.performance.memory.SomeType
+  ;;          1        24        24   java.util.ArrayList
+  ;;    1000002            28861992   (total) ; ~28 MB vs ~20MB for Longs!!!
+
+  ;; allocated-bytes reports quite a bit more than 28MB
+  (allocated-bytes (fn [] (coll-of-size 1000000)))
+  ;; => 62608176
+
+  ;; ... and back to Longs -> it now stays stable!
+  (deftype SomeType [a])
+  (print-memory-layout (coll-of-size 1000000))
+  ;; java.util.ArrayList@4790011d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1   4861968   4861968   [Ljava.lang.Object;
+  ;;    1000000        16  16000000   clojure_experiments.performance.memory.SomeType
+  ;;        100        24      2400   java.lang.Long
+  ;;          1        24        24   java.util.ArrayList
+  ;;    1000102            20864392   (total) ; just ~20MB vs ~28MB for primitive longs!!!
+
+  ;; also allocated-bytes reports less than before
+  (allocated-bytes (fn [] (coll-of-size 1000000)))
+  ;; => 54608176
+
+
+  ;; => so it's the integer caching that helps for java.lang.Long case
+  ;; there the instances are cached - you see we only got 2400 java.lang.Long instances
+  ;; but in the primitive case, every time occupies 8 more bytes (notice how SomeType size increased from 16 to 24 bytes)
+
+
+  ;; Now, if we increase max-val-size we got more natural results
+  (deftype SomeType [^long a])
+  (print-memory-layout (coll-of-size 1000000 10000))
+  ;; java.util.ArrayList@6cfd8b34d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1   4861968   4861968   [Ljava.lang.Object;
+  ;;    1000000        24  24000000   clojure_experiments.performance.memory.SomeType
+  ;;          1        24        24   java.util.ArrayList
+  ;;    1000002            28861992   (total)
+
+  (allocated-bytes (fn [] (coll-of-size 1000000 10000)))
+  ;; => 86301384
+
+  (deftype SomeType [a])
+  (print-memory-layout (coll-of-size 1000000 10000))
+  ;; java.util.ArrayList@5c45001d footprint:
+  ;;      COUNT       AVG       SUM   DESCRIPTION
+  ;;          1   4861968   4861968   [Ljava.lang.Object;
+  ;;    1000000        16  16000000   clojure_experiments.performance.memory.SomeType
+  ;;     987317        24  23695608   java.lang.Long
+  ;;          1        24        24   java.util.ArrayList
+  ;;    1987319            44557600   (total)
+
+  ;; BUT allocated-bytes still reports more for primitives than for Longs!
+  (allocated-bytes (fn [] (coll-of-size 1000000 10000)))
+  ;; => 78306424
+
+
+  .)
 
