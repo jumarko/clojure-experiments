@@ -566,3 +566,15 @@ db
 ;; => ({:x 1, :foo 42, :bar 43} {:x 2, :foo 999})
 
 
+
+
+(def ^:private old-trend [{:date "2020-02-19" :value :no-conflict}
+                          {:date "2020-02-20" :value :oldest-duplicate}
+                          {:date "2020-02-20" :value :newer-duplicate}])
+
+(medley.core/distinct-by :date old-trend)
+;; => ({:date "2020-02-19", :value :no-conflict}
+;; =>  {:date "2020-02-20", :value :oldest-duplicate})
+
+
+(map last (partition-by :date old-trend))

@@ -918,42 +918,6 @@ d-m
 #_(alias 'superx 'not.exist) ;=> no namespace found
 
 
-;;; Profile with tufte: https://github.com/ptaoussanis/tufte#how-does-tufte-compare-to-hugoduncancriterium
-
-(require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
-(comment
-  ;; We'll request to send `profile` stats to `println`:
-  (tufte/add-basic-println-handler! {})
-
-;;; Let's define a couple dummy fns to simulate doing some expensive work
-  (defn get-x [] (Thread/sleep 500)             "x val")
-  (defn get-y [] (Thread/sleep (rand-int 1000)) "y val")
-
-  ;; How do these fns perform? Let's check:
-  (profile ; Profile any `p` forms called during body execution
-   {} ; Profiling options; we'll use the defaults for now
-   (dotimes [_ 5]
-     (p :get-x (get-x))
-     (p :get-y (get-y)))))
-
-
-(comment 
-
-  (defmacro protocol [name & body]
-    `(defn [command]
-       (condp = command
-         body)))
-
-  (protocol cmds
-            "LIST" (list-handler)
-            "EXIT" (exit-handler))
-
-  (defn cmds [command]
-    (condp = command
-      "LIST" (list-handler)
-      "EXIT" (exit-handler))))
-
-
 
 ;;; https://stackoverflow.com/questions/50663848/converting-string-to-nested-map-in-clojure
 (def my-file "1|apple|sweet
