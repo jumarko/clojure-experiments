@@ -121,6 +121,11 @@
         ;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
         ;; https://commons.apache.org/proper/commons-net/apidocs/index.html
         commons-net/commons-net {:mvn/version "3.8.0"}
+
+        ;; loopr macro: https://aphyr.com/posts/360-loopr-a-loop-reduction-macro-for-clojure
+        ;; https://github.com/aphyr/dom-top/blob/04d0a688262a3671880e83ce0f35882bd8fa2ff9/src/dom_top/core.clj#L665
+        dom-top/dom-top {:mvn/version "1.0.7"}
+
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
