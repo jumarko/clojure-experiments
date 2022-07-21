@@ -115,8 +115,8 @@
         ;; use java.nio from Clojure: https://github.com/babashka/fs
         babashka/fs {:mvn/version "0.1.6"}
         ;; flow-storm-debugger: https://github.com/jpmonettas/flow-storm-debugger/
-        com.github.jpmonettas/flow-storm-dbg {:mvn/version "2.2.68"}
-        com.github.jpmonettas/flow-storm-inst {:mvn/version "2.2.68"}
+        com.github.jpmonettas/flow-storm-dbg {:mvn/version "2.2.114"}
+        com.github.jpmonettas/flow-storm-inst {:mvn/version "2.2.114"}
 
         ;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
         ;; https://commons.apache.org/proper/commons-net/apidocs/index.html
