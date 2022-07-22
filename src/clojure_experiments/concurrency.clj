@@ -108,13 +108,29 @@
   ;;
   )
 
-
-
-
 ;;; bindings
 ;;; See
 ;;; - https://stackoverflow.com/questions/20139463/clojure-binding-vs-with-redefs
 (def ^:dynamic *a* nil)
+
+;; you can rebound functions e.g. - but still they have to be declared as dynamic
+(defn ^:dynamic my-dynamic-f [a b]
+  (+ a b))
+
+(defn with-logging [f]
+  (fn [& args]
+    (println "args:" args)
+    (let [ret (apply f args)]
+      (println "ret:" ret))))
+
+(defn call-it [a b]
+  (println "Call it!")
+  (my-dynamic-f a b))
+
+(binding [my-dynamic-f (with-logging my-dynamic-f)]
+  (call-it 10 20))
+
+
 
 (comment
   
