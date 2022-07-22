@@ -1,10 +1,32 @@
 (ns clojure-experiments.java.classloading)
 
+
+;;; Classpath is a lie: https://lambdaisland.com/blog/2021-08-25-classpath-is-a-lie
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn classloader-chain [cl]
+  (take-while some? (iterate #(.getParent %) cl)))
+;; Note: There is actually one more ClassLoader, the BootLoader,
+;; but it’s built-in to the virtual machine, you don’t get to see it. It’s represented by nil.
+(classloader-chain (clojure.lang.RT/baseLoader))
+;; => (#object[clojure.lang.DynamicClassLoader 0x78e5472a "clojure.lang.DynamicClassLoader@78e5472a"]
+;;     ... MANY MORE ...
+;;     #object[clojure.lang.DynamicClassLoader 0x2823bbe4 "clojure.lang.DynamicClassLoader@2823bbe4"]
+;;     #object[jdk.internal.loader.ClassLoaders$AppClassLoader 0x251a69d7 "jdk.internal.loader.ClassLoaders$AppClassLoader@251a69d7"]
+;;     #object[jdk.internal.loader.ClassLoaders$PlatformClassLoader 0x6ae4ae54 "jdk.internal.loader.ClassLoaders$PlatformClassLoader@6ae4ae54"]);; => 
+(classloader-chain (.getClassLoader clojure_experiments.java.classloading$classloader_chain))
+
+
+
+
 ;;; Once upon a class: https://danielsz.github.io/blog/2021-05-12T13_24.html
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (->> (.. java.lang.Thread currentThread getContextClassLoader)
      (iterate #(.getParent %))
      (take-while identity))
-
+;; => (#object[clojure.lang.DynamicClassLoader 0x1684af83 "clojure.lang.DynamicClassLoader@1684af83"]
+;;     ...
+;;     #object[jdk.internal.loader.ClassLoaders$AppClassLoader 0x251a69d7 "jdk.internal.loader.ClassLoaders$AppClassLoader@251a69d7"]
+;;     #object[jdk.internal.loader.ClassLoaders$PlatformClassLoader 0x6ae4ae54 "jdk.internal.loader.ClassLoaders$PlatformClassLoader@6ae4ae54"])
 
 ;; - When you create foo at the REPL, Clojure’s compiler emits bytecode for consumption by DynamicClassLoader. It will create a new class with the defineClass method before linking it.
 ;; - Once a class loader links a class, it is final. Attempting to link a new definition of the class does nothing.

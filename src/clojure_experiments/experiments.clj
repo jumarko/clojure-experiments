@@ -2,6 +2,7 @@
   "Single namespace for all my REPL experiments.
   This might be split up later if I find it useful."
   (:require [clj-java-decompiler.core :refer [decompile]]
+            [clojure.data :as data]
             [clojure.datafy :as d]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
@@ -488,7 +489,7 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
                :proxy-host "proxy.example.com",
                :proxy-port 3128,
                :proxy-pass "password"})
-(clojure.data/diff expected actual)
+(data/diff expected actual)
 
 
 
@@ -1186,3 +1187,4 @@ d-m
 ;; see https://savo.rocks/posts/a-random-job-interview-challenge-in-clojure/
 (mapv (juxt (comp str first) count) (partition-by identity "aaaabbbcca"))
 ;; => (["a" 4] ["b" 3] ["c" 2] ["a" 1])
+
