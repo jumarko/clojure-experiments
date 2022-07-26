@@ -32,7 +32,7 @@
         me.raynes/conch {:mvn/version "0.8.0"}
         tupelo/tupelo {:mvn/version "21.09.07"}
         com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.1"}
-        com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}
+        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.0"}
         com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "0.1.1"}
         com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.1.3"}
         com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "0.1.4"}
@@ -126,6 +126,11 @@
         ;; https://github.com/aphyr/dom-top/blob/04d0a688262a3671880e83ce0f35882bd8fa2ff9/src/dom_top/core.clj#L665
         dom-top/dom-top {:mvn/version "1.0.7"}
 
+        ;; classpath is a lie: https://lambdaisland.com/blog/2021-08-25-classpath-is-a-lie
+        ;; https://github.com/lambdaisland/classpath
+        ;; classloader-chain, classpath-chan, and `update-classpath!` are interesting functions
+        ;; in the lambdaisland.classpath ns
+        com.lambdaisland/classpath {:mvn/version "0.0.27"}
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
