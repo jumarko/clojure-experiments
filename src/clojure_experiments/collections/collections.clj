@@ -1,4 +1,4 @@
-(ns clojure-experiments.collections
+(ns clojure-experiments.collections.collections
   (:require [clj-http.client :as http]
             [taoensso.timbre :as log]
             [clojure.java.io :as io]
@@ -578,3 +578,15 @@ db
 
 
 (map last (partition-by :date old-trend))
+
+
+;; update-vals doesn't work well with sorted maps
+(update-vals (sorted-map 1 10 2 20) inc)
+;; => {1 11, 2 21}
+(type (update-vals (sorted-map 1 10 2 20) inc))
+;; => clojure.lang.PersistentArrayMap
+(type (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90))
+;; => clojure.lang.PersistentTreeMap
+(type (update-vals (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90) inc))
+;; => clojure.lang.PersistentHashMap
+
