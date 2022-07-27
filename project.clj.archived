@@ -255,6 +255,8 @@
              ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
              "-XX:+ShowCodeDetailsInExceptionMessages"]
   :main ^:skip-aot clojure-experiments.core
+  ;; example of how to add project's git commit sha to uberjar's manifest
+  :manifest {"git-commit-sha" ~(fn [_project] (:out (clojure.java.shell/sh "git" "rev-list" "head" "-1")))}
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
              ;; notice sources for development!
