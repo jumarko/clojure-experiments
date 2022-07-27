@@ -585,8 +585,16 @@ db
 ;; => {1 11, 2 21}
 (type (update-vals (sorted-map 1 10 2 20) inc))
 ;; => clojure.lang.PersistentArrayMap
+
+(sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90)
+;; => {1 10, 2 20, 3 30, 4 40, 5 50, 6 60, 7 70, 8 80, 9 90}
 (type (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90))
 ;; => clojure.lang.PersistentTreeMap
+(update-vals (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90) inc)
+;; => {7 71, 1 11, 4 41, 6 61, 3 31, 2 21, 9 91, 5 51, 8 81}
 (type (update-vals (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90) inc))
 ;; => clojure.lang.PersistentHashMap
 
+(update-keys (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90) inc)
+
+(transient (sorted-map 1 10 2 20))
