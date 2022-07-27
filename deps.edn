@@ -131,6 +131,11 @@
         ;; classloader-chain, classpath-chan, and `update-classpath!` are interesting functions
         ;; in the lambdaisland.classpath ns
         com.lambdaisland/classpath {:mvn/version "0.0.27"}
+
+        ;; Ben Sless - tools.jvm: https://github.com/bsless/tools.jvm
+        ;; things like finding current process pid, show classpath, and attach VisualVM
+        io.github.bsless/tools.jvm {:mvn/version "0.0.15"}
+
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
