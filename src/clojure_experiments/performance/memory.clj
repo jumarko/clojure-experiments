@@ -322,8 +322,40 @@
 ;;        166                3616   (total)
 
 
-  ;; doesn't work with JDK 17 (breaks module encapsulation: see https://stackoverflow.com/questions/69753263/unable-to-make-field-final-transient-java-lang-class-java-util-enumset-elementty)
-  #_(mm/measure coll :bytes true)
+  ;; doesn't work with JDK 17 (breaks module encapsulation:
+  ;; - https://github.com/clojure-goes-fast/clj-memory-meter/issues/8#issuecomment-1196407536
+  ;; - https://stackoverflow.com/questions/69753263/unable-to-make-field-final-transient-java-lang-class-java-util-enumset-elementty)
+  #_(mm/measure (coll-of-size 100) :bytes true)
+
+  ;; ... still broken even in clj-memory-meter 0.2.0: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8#issuecomment-1196407536
+  #_(mm/measure (coll-of-size 100) :bytes true)
+;;   1. Caused by java.lang.reflect.InaccessibleObjectException
+;;    Unable to make field transient java.lang.Object[] java.util.ArrayList.elementData accessible:
+;;    module java.base does not "opens java.util" to unnamed module @29ff01df
+
+;;      AccessibleObject.java:  387  java.lang.reflect.AccessibleObject/throwInaccessibleObjectException
+;;      AccessibleObject.java:  363  java.lang.reflect.AccessibleObject/checkCanSetAccessible
+;;      AccessibleObject.java:  311  java.lang.reflect.AccessibleObject/checkCanSetAccessible
+;;                 Field.java:  180  java.lang.reflect.Field/checkCanSetAccessible
+;;                 Field.java:  174  java.lang.reflect.Field/setAccessible
+;;       MemoryMeterBase.java:  273  org.github.jamm.MemoryMeterBase/declaredClassFields0
+;;       MemoryMeterBase.java:   15  org.github.jamm.MemoryMeterBase/access$000
+;;       MemoryMeterBase.java:   24  org.github.jamm.MemoryMeterBase$1/computeValue
+;;       MemoryMeterBase.java:   20  org.github.jamm.MemoryMeterBase$1/computeValue
+;;            ClassValue.java:  229  java.lang.ClassValue/getFromHashMap
+;;            ClassValue.java:  211  java.lang.ClassValue/getFromBackup
+;;            ClassValue.java:  117  java.lang.ClassValue/get
+;;       MemoryMeterBase.java:  246  org.github.jamm.MemoryMeterBase/declaredClassFields
+;;       MemoryMeterBase.java:  145  org.github.jamm.MemoryMeterBase/measureDeep
+;; DirectMethodHandleAccessor.java:  104  jdk.internal.reflect.DirectMethodHandleAccessor/invoke
+;;                Method.java:  578  java.lang.reflect.Method/invoke
+;;             Reflector.java:  167  clojure.lang.Reflector/invokeMatchingMethod
+;;             Reflector.java:  102  clojure.lang.Reflector/invokeInstanceMethod
+;;                   core.clj:  166  clj-memory-meter.core/measure
+;;                   core.clj:  150  clj-memory-meter.core/measure
+;;                RestFn.java:  439  clojure.lang.RestFn/invoke
+;;                       REPL:  330  clojure-experiments.performance.memory/eval22393
+
 
 
   ;; with type hint (primitives) it looks consistent
