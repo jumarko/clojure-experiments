@@ -80,8 +80,20 @@
 ;;; debugging macro that can save the local context
 (defmacro locals []
   (let [ks (keys &env)]
-    `(do
+    `(let [ls# (zipmap '~ks [~@ks])]
        (println "====================== DEBUG locals =======================")
-       (clojure.pprint/pprint (zipmap '~ks [~@ks]))
+       (clojure.pprint/pprint ls#)
        (println "====================== END DEBUG locals =======================")
-       (def my-locals (zipmap '~ks [~@ks])))))
+       (def my-locals ls#))))
+
+(defn my-function [x y z]
+  (let [ a (* x y z)
+        b (inc a)
+        c (/ b 10)]
+    (locals)
+    (->> (range b)
+         (map inc)
+         (filter odd?))))
+(my-function 3 4 5)
+my-locals
+;; => {x 3, y 4, z 5, a 60, b 61, c 61/10}
