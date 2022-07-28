@@ -178,10 +178,12 @@
 
 
 ;; debugging macro that can save the local context
+;; see `clojure-experiments.debugging/locals`
 (defmacro locals []
   (let [ks (keys &env)]
-    `(do
+    `(let [ls# (zipmap '~ks [~@ks])]
        (println "====================== DEBUG locals =======================")
-       (clojure.pprint/pprint (zipmap '~ks [~@ks]))
+       (clojure.pprint/pprint ls#)
        (println "====================== END DEBUG locals =======================")
-       (def my-locals (zipmap '~ks [~@ks])))))
+       (def my-locals ls#))))
+

@@ -250,7 +250,7 @@
 
                        ;; https://github.com/vvvvalvalval/scope-capture - capture locals in global vars for easier debugging
                        ;; I don't use this anymore
-                       ;; [vvvvalvalval/scope-capture "0.3.2"]
+                       ;; [vvvvalvalval/scope-capture "0.3.3"]
 
                        ;; spec-provider to infer specs from examples: https://github.com/stathissideris/spec-provider
                        ;; I don't really use this
