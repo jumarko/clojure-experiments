@@ -175,3 +175,13 @@
 ;; so recursive-macro-1 throws away all the elements but the last one!
 (recursive-macro-1 [1 2 3 4 5] [])
 ;; => [5 5 5 5 5]
+
+
+;; debugging macro that can save the local context
+(defmacro locals []
+  (let [ks (keys &env)]
+    `(do
+       (println "====================== DEBUG locals =======================")
+       (clojure.pprint/pprint (zipmap '~ks [~@ks]))
+       (println "====================== END DEBUG locals =======================")
+       (def my-locals (zipmap '~ks [~@ks])))))

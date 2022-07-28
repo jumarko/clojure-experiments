@@ -961,6 +961,14 @@ d-m
         (map (juxt (comp keyword name)
                    identity))
         (keys &env)))
+;; my version
+(defmacro locals []
+  (let [ks (keys &env)]
+    `(do
+       (println "====================== DEBUG locals =======================")
+       (clojure.pprint/pprint (zipmap '~ks [~@ks]))
+       (println "====================== END DEBUG locals =======================")
+       (def my-locals (zipmap '~ks [~@ks])))))
 
 (defn foo [x]
   (let [y (+ x x)]
