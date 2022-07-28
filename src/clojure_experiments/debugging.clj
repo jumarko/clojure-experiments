@@ -35,6 +35,7 @@
   ;; will run the debbuger GUI and get everything ready
   (fs-api/local-connect)
 
+
   #rtrace (reduce + (map inc (range 10)))
 
   #rtrace (foo 3)
@@ -44,6 +45,8 @@
   #trace
   (defn factorial [n]
     (if (zero? n) 1 (* n (factorial (dec n)))))
+
+  
 
   #rtrace
   (->> (range)
@@ -74,3 +77,11 @@
   .)
 
 
+;;; debugging macro that can save the local context
+(defmacro locals []
+  (let [ks (keys &env)]
+    `(do
+       (println "====================== DEBUG locals =======================")
+       (clojure.pprint/pprint (zipmap '~ks [~@ks]))
+       (println "====================== END DEBUG locals =======================")
+       (def my-locals (zipmap '~ks [~@ks])))))
