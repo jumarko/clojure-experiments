@@ -597,4 +597,5 @@ db
 
 (update-keys (sorted-map 1 10 2 20 3 30 4 40 5 50 6 60 7 70 8 80 9 90) inc)
 
-(transient (sorted-map 1 10 2 20))
+;; sorted-map cannot be made transient
+#_(transient (sorted-map 1 10 2 20))
