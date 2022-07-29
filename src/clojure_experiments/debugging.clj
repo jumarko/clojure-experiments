@@ -46,7 +46,6 @@
   (defn factorial [n]
     (if (zero? n) 1 (* n (factorial (dec n)))))
 
-  
 
   #rtrace
   (->> (range)
@@ -87,7 +86,7 @@
        (def my-locals ls#))))
 
 (defn my-function [x y z]
-  (let [ a (* x y z)
+  (let [a (* x y z)
         b (inc a)
         c (/ b 10)]
     (locals)
@@ -97,3 +96,26 @@
 (my-function 3 4 5)
 my-locals
 ;; => {x 3, y 4, z 5, a 60, b 61, c 61/10}
+
+;; nested functions?
+(defn my-function [x y z]
+  (let [a (* x y z)
+        b (inc a)
+        c (/ b 10)
+        myf (fn my-nested-function [m n]
+              (locals))
+        res (myf 100 200)]
+    (->> (range b)
+         (map inc)
+         (filter odd?))))
+(my-function 3 4 5)
+my-locals
+;; => {x 3,
+;;     a 60,
+;;     my-nested-function #function[clojure-experiments.debugging/my-function/my-nested-function--28259],
+;;     y 4,
+;;     n 200,
+;;     m 100,
+;;     c 61/10,
+;;     z 5,
+;;     b 61}
