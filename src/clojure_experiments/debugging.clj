@@ -83,7 +83,8 @@
        (println "====================== DEBUG locals =======================")
        (clojure.pprint/pprint ls#)
        (println "====================== END DEBUG locals =======================")
-       (def my-locals ls#))))
+       (def my-locals (with-meta ls#
+                        {:created (java.util.Date.)})))))
 
 (defn my-function [x y z]
   (let [a (* x y z)
@@ -119,3 +120,112 @@ my-locals
 ;;     c 61/10,
 ;;     z 5,
 ;;     b 61}
+
+
+;; TODO: expand-locals macro
+;; - what's wrong?
+
+;; first attempt
+(defmacro expand-locals [bindings-map & body]
+  `(let [~@(mapcat identity bindings-map)]
+     ~@body))
+;; this works - notice not quoting project-id inside the map
+(expand-locals {project-id 100}
+               project-id)
+;; => 100
+
+;; ... BUT this doesn't work - I have to quote because it's defined before the macro invocation
+(def mylocals {'project-id 100})
+#_(expand-locals my-locals (do project-id))
+;; 1. Caused by java.lang.IllegalArgumentException
+;;    Don't know how to create ISeq from: clojure.lang.Symbol
+
+;; transform the body instead?
+(defmacro expand-locals [bindings-map & body]
+  (walk/postwalk
+   (fn [form] (if (simple-symbol? form)
+                `(get ~bindings-map '~form '~form)
+                form))
+   body))
+;; => it's all just a mess and I don't know how to make it work.
+
+
+;; perhaps `eval` is really the best answer?
+(defmacro expand-locals [bindings-map & body]
+  `(let [~@(mapcat identity (eval bindings-map))]
+     ~@body))
+;; doesn't work
+#_(expand-locals my-locals
+               project-id)
+;; => 100
+(expand-locals {'project-id 100}
+               project-id)
+;; => 100
+
+;; From slack: supporting a var isn't hard (but supporting local scope lookup is harder)
+;; https://clojurians.slack.com/archives/C03S1KBA2/p1659527382940809?thread_ts=1659523935.962109&cid=C03S1KBA2
+
+(defmacro expand-locals [bindings-map & body]
+  `(let [~@(if (symbol? bindings-map)
+             (mapcat identity (deref (ns-resolve *ns* bindings-map)))
+             (mapcat identity bindings-map))]
+     ~@body))
+;; doesn't work
+#_(expand-locals my-locals project-id)
+;; => 100
+(expand-locals {project-id 100}
+               project-id)
+;; => 100
+
+;; Final attempt - dynamic lookup of values from the var.
+;; This works even with non-readable stuff like Hickari connection pool stored in a request map
+(require 'clojure.walk)
+(def my-locals {'project-id 100})
+(defmacro expand-locals [bindings-var-sym & body]
+  (let [bindings (deref (ns-resolve *ns* bindings-var-sym))]
+    (->> body
+         (clojure.walk/postwalk
+          (fn [form] (if (and (simple-symbol? form)
+                              (contains? bindings form))
+                       `(get ~bindings-var-sym '~form)
+                       form)))
+         (mapcat identity))))
+(expand-locals my-locals
+               (let [a 1]
+                 (str "b/" project-id "/" a)))
+;; => "b/100/1"
+
+(defmacro exl
+  "shorter version of `expand-locals` using hardcoded symbol 'my-locals."
+  [& body]
+  (->> body
+       (clojure.walk/postwalk
+        (fn [form] (if (and (simple-symbol? form)
+                            (contains? my-locals form))
+                     `(get my-locals '~form)
+                     form)))
+       (mapcat identity)))
+(exl project-id)
+;; => 100
+
+
+
+;; but it should be possible to simply generate the let bindings
+;; using similar approach!
+(defmacro expand-locals [bindings-var-sym & body]
+  (let [bindings (deref (ns-resolve *ns* bindings-var-sym))]
+    `(let [~@(mapcat (fn [[sym _]]
+                       [sym `(get ~bindings-var-sym '~sym)])
+                     bindings)]
+       ~@body)))
+(expand-locals my-locals
+               (let [a 1]
+                 (str "b/" project-id "/" a)))
+;; => "b/100/1"
+
+;; TIP: macroexpand-all call to `exl` to get the full let* form
+;; so you can _edit_ the bindings
+(defmacro exl [& body]
+`(expand-locals my-locals ~@body))
+(exl project-id)
+;; => 100
