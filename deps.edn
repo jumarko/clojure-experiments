@@ -136,11 +136,16 @@
         ;; things like finding current process pid, show classpath, and attach VisualVM
         io.github.bsless/tools.jvm {:mvn/version "0.0.15"}
 
+        ;;; Various data serialization formats
+        ;;;
         ;; https://github.com/Datomic/fressian
         ;; examples: https://github.com/Datomic/fressian/blob/master/examples/org/fressian/Examples.java
         ;; faster than edn and transit
         ;; clojure wrapper: https://github.com/clojure/data.fressian
         org.clojure/data.fressian {:mvn/version "1.0.0"}
+        ;; compare to transit: https://github.com/cognitect/transit-clj
+        com.cognitect/transit-clj {:mvn/version "1.0.329"}
+
 
         }
 
