@@ -349,27 +349,27 @@ my-locals
         (tap> (with-meta [fname# ls#] dmeta#))))))
 
 (defmacro expand-locals
-  "Establish  bindings saved in given var as local symbols via `let`."
-  [bindings-var-sym & body]
-  (let [atom-var (deref (ns-resolve *ns* bindings-var-sym))
-        binding-syms (keys (peek @atom-var))
+  "Establish  bindings (as returned by `get-binding-fn`) as local symbols via `let`.
+  `get-binding-fn` must return  map of symbols to their values.
+  This dynamic lookup mechanism make it possible to defer the symbol resolution until runtime;
+  while compile-time resolution would be mostly fine (I use this macro manually via `exl`),
+  it would be come a problem when the values were not serializable in the bytecode,
+  such as HickariCP connection pool object stored in ring's request map."
+  [get-binding-fn & body]
+  (let [binding-syms (keys (get-binding-fn))
         ;; For details about this implementation see:
         ;; https://clojurians.slack.com/archives/C03S1KBA2/p1659601131210959
         get-sym (gensym "get-sym-val-")]
-    ;; get the latest values of locals from bindings-var-sym
-    ;; the symbols values will be resolved at runtime, rather than compile time
-    ;; while it wouldn't matter much for me, it helps to solve the problem
-    ;; with non-standard data like Hickari connection pool object stored in a request map
-    ;; (those would throw an exception otherwise mentioning 'print-dup')
-    `(let [~get-sym (fn [sym#] (get (peek @~bindings-var-sym) sym#))
+    `(let [~get-sym (fn [sym#] (get (~get-binding-fn) sym#))
            ~@(mapcat (fn [sym] [sym (list get-sym (list 'quote sym))])
                      binding-syms)]
        ~@body)))
+
 (defmacro exl
-  "Like `expand-local` but assumes that the var storing the bindings
-  is called `my-locals` - see `locals` macro."
+  "Like `expand-local` but assumes that the var storing the bindings is called `my-locals` (see the `locals` macro)."
   [& body]
-  `(expand-locals my-locals ~@body))
+  (let [get-binding (fn [] (peek @my-locals))]
+    `(expand-locals ~get-binding ~@body)))
 
 (defn my-function [x y z]
   (let [a (* x y z)
