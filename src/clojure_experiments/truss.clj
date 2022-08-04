@@ -1,6 +1,8 @@
 (ns clojure-experiments.truss
   "Experiments with Truss library: https://github.com/ptaoussanis/truss.
-  Motivated by defn podcast episode with Peter Taoussanis."
+  Motivated by defn podcast episode with Peter Taoussanis.
+  See also https://clojureverse.org/t/pragmatic-programmer-should-we-all-use-assert/9106
+  and https://gist.github.com/mjmeintjes/e277d014a3f971b3a3da5fddf29aee30"
   (:require [taoensso.truss :as it :refer [have have! have?]]
             [clojure.string :as str]
             ))
