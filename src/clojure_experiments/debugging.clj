@@ -325,22 +325,28 @@ my-locals
      ;; StackWalker is another option: https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/lang/StackWalker.html#getCallerClass()
      #_(println (.getCallerClass (java.lang.StackWalker/getInstance java.lang.StackWalker$Option/RETAIN_CLASS_REFERENCE)))))
 
-(defmacro locals []
-  (let [ks (keys &env)]
-    `(let [ls# (zipmap '~ks [~@ks])
-           fname# (get-function-name)
-           now# (java.util.Date.)
-           dmeta# {:fn-name fname#
-                   :file *file*
-                   :timestamp now#}]
-       (printf "\ndebugging function %s in %s\n" fname# *file*)
-       (println "====================== DEBUG locals =======================")
-       (clojure.pprint/pprint ls#)
-       (println "====================== END DEBUG locals =======================")
-       ;; save it in the atom
-       (record-locals (with-meta ls# dmeta#))
-       ;; and also tap it
-       (tap> (with-meta [fname# ls#] dmeta#)))))
+(defmacro locals
+  ([]
+   `(locals false))
+  ([print-locals?]
+   (let [ks (keys &env)]
+     `(let [ls# (zipmap '~ks [~@ks])
+            fname# (get-function-name)
+            now# (java.util.Date.)
+            dmeta# {:fn-name fname#
+                    :file *file*
+                    :timestamp now#}]
+
+        (printf "\ndebugging function %s in %s\n" fname# *file*)
+        (when ~print-locals?
+          (println "====================== DEBUG locals =======================")
+          (clojure.pprint/pprint ls#)
+          (println "====================== END DEBUG locals ======================="))
+
+        ;; save it in the atom
+        (record-locals (with-meta ls# dmeta#))
+        ;; and also tap it
+        (tap> (with-meta [fname# ls#] dmeta#))))))
 
 (defmacro expand-locals
   "Establish  bindings saved in given var as local symbols via `let`."
