@@ -38,6 +38,17 @@ my-list
   ;; Overhead used : 7.130587 ns
 
   (crit/bench (conj my-list 10))
+  ;; Evaluation count : 794363280 in 60 samples of 13239388 calls.
+  ;; Execution time mean : 77.193018 ns
+  ;; Execution time std-deviation : 8.286716 ns
+  ;; Execution time lower quantile : 67.474897 ns ( 2.5%)
+  ;; Execution time upper quantile : 98.872603 ns (97.5%)
+  ;; Overhead used : 7.130587 ns
+  ;; 
+  ;; Found 2 outliers in 60 samples (3.3333 %)
+	;; low-severe	 2 (3.3333 %)
+  ;; Variance from outliers : 72.1181 % Variance is severely inflated by outliers
+
 
   (crit/quick-bench (ft/conjl my-list 10))
   ;; Evaluation count : 19903338 in 6 samples of 3317223 calls.
@@ -46,5 +57,18 @@ my-list
   ;; Execution time lower quantile : 22.863717 ns ( 2.5%)
   ;; Execution time upper quantile : 26.077004 ns (97.5%)
   ;; Overhead used : 7.130587 ns
+
+  (crit/bench (ft/conjl my-list 10))
+  ;; Evaluation count : 1869717900 in 60 samples of 31161965 calls.
+  ;; Execution time mean : 27.385624 ns
+  ;; Execution time std-deviation : 3.050391 ns
+  ;; Execution time lower quantile : 23.798787 ns ( 2.5%)
+  ;; Execution time upper quantile : 33.501864 ns (97.5%)
+  ;; Overhead used : 7.130587 ns
+  ;; 
+  ;; Found 1 outliers in 60 samples (1.6667 %)
+	;; low-severe	 1 (1.6667 %)
+  ;; Variance from outliers : 73.8193 % Variance is severely inflated by outliers
+
 
   .)
