@@ -352,12 +352,23 @@ my-locals
   "Establish  bindings saved in given var as local symbols via `let`."
   [bindings-var-sym & body]
   (let [atom-var (deref (ns-resolve *ns* bindings-var-sym))
-        binding-syms (keys (peek @atom-var))]
+        binding-syms (keys (peek @atom-var))
+        ;; For details about this implementation see:
+        ;; https://clojurians.slack.com/archives/C03S1KBA2/p1659601131210959
+        get-sym (gensym "get-sym-val-")]
     ;; get the latest values of locals from bindings-var-sym
-    `(let [~@(mapcat (fn [sym] [sym `(get (peek @~bindings-var-sym) '~sym)])
+    ;; the symbols values will be resolved at runtime, rather than compile time
+    ;; while it wouldn't matter much for me, it helps to solve the problem
+    ;; with non-standard data like Hickari connection pool object stored in a request map
+    ;; (those would throw an exception otherwise mentioning 'print-dup')
+    `(let [~get-sym (fn [sym#] (get (peek @~bindings-var-sym) sym#))
+           ~@(mapcat (fn [sym] [sym (list get-sym (list 'quote sym))])
                      binding-syms)]
        ~@body)))
-(defmacro exl [& body]
+(defmacro exl
+  "Like `expand-local` but assumes that the var storing the bindings
+  is called `my-locals` - see `locals` macro."
+  [& body]
   `(expand-locals my-locals ~@body))
 
 (defn my-function [x y z]
@@ -377,3 +388,26 @@ my-locals
 (exl [x y z a b c])
 ;; => [5 6 7 210 211 211/10]
 
+(macroexpand '(exl [x y z a b c]))
+;;=>
+(let*
+ [get-sym-val-31251
+  (clojure.core/fn
+   [sym__31209__auto__]
+   (clojure.core/get
+    (clojure.core/peek @clojure-experiments.debugging/my-locals)
+    sym__31209__auto__))
+  x
+  (get-sym-val-31251 'x)
+  y
+  (get-sym-val-31251 'y)
+  z
+  (get-sym-val-31251 'z)
+  a
+  (get-sym-val-31251 'a)
+  b
+  (get-sym-val-31251 'b)
+  c
+  (get-sym-val-31251 'c)]
+ [x y z a b c])
+;; => [5 6 7 210 211 211/10]
