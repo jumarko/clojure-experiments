@@ -146,6 +146,9 @@
         ;; compare to transit: https://github.com/cognitect/transit-clj
         com.cognitect/transit-clj {:mvn/version "1.0.329"}
 
+        ;; finger trees: https://github.com/clojure/data.finger-tree
+        ;; see discussion here: https://clojurians.slack.com/archives/C03S1KBA2/p1659682276157529
+        org.clojure/data.finger-tree {:mvn/version "0.0.3"}
 
         }
 
