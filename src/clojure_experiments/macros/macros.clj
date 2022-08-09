@@ -1,6 +1,5 @@
 (ns clojure-experiments.macros.macros
   (:require [clojure.data :as data]))
-
 ;;; Simple experiment with macros and the difference between compile-time and runtime
 ;;; The first version of `name-it` macro is too naive and it calls println without quoting the form.
 ;;; Which means that println is executed in compile-time.
@@ -186,4 +185,97 @@
        (clojure.pprint/pprint ls#)
        (println "====================== END DEBUG locals =======================")
        (def my-locals ls#))))
+
+
+;;; idea for `condto` macro: https://clojurians.slack.com/archives/C03M5U2LLAC/p1659859505220269
+;;; - heavily inspired by `cond->`
+
+;; first prepare some objects
+(definterface ICfg
+  (setMaxTotal [max])
+  (setMaxIdle [max])
+  (setMaxWait [max])
+  (inspect []))
+
+;; For mutable fields, see https://stackoverflow.com/questions/3132931/mutable-fields-in-clojure-deftype
+(deftype cfg [^:volatile-mutable maxTotal
+              ^:volatile-mutable maxIdle
+              ^:volatile-mutable maxWait]
+  ICfg
+  (setMaxTotal [this max] (set! maxTotal max))
+  (setMaxIdle [this max] (set! maxIdle max))
+  (setMaxWait [this max] (set! maxWait max))
+  (inspect [this] [maxTotal maxIdle maxWait]))
+
+(def my-config (->cfg 0 0 0))
+(.inspect my-config)
+;; => [0 0 0]
+
+
+;; ... then the idea is to simplify this:
+(let [max-total 100
+      max-idle 20
+      max-wait-ms 1000]
+  (cond-> my-config
+    max-total   (doto (.setMaxTotal max-total))
+    max-idle    (doto (.setMaxIdle max-idle))
+    max-wait-ms (doto (.setMaxWait max-wait-ms))))
+(.inspect my-config)
+;; => [100 20 1000]
+
+;; this is the quick first solution - just replacing one symbol in cond->
+;; it's not as simple as it could be though
+(defmacro condto
+  "Like `cond->` but passes the original (mutable) object 
+  through each form for which the corresponding test  expression is true.
+  Uses `doto` instead of `->`."
+  [expr & clauses]
+  (assert (even? (count clauses)))
+  (let [g (gensym)
+        steps (map (fn [[test step]]
+                     ;; this is the only change compared to `cond->`: instead of `->` we use `doto`
+                     `(if ~test (doto ~g ~step) ~g))
+                   (partition 2 clauses))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
+(let [max-total 1000
+      max-idle 200
+      max-wait-ms 10000]
+  (condto my-config
+    max-total   (.setMaxTotal max-total)
+    max-idle    (.setMaxIdle max-idle)
+    max-wait-ms (.setMaxWait max-wait-ms)))
+(.inspect my-config)
+;; => [1000 200 10000]
+
+;; Finally, this is an attempt to simplify the macroexpanded form
+;; based on our constraint that we do not actually want to thread the result
+;; but the original object.
+(defmacro condto
+  "Like `cond->` but passes the original (mutable) object 
+  through each form for which the corresponding test  expression is true.
+  Uses `doto` instead of `->`."
+  [expr & clauses]
+  (assert (even? (count clauses)))
+  (let [g (gensym)
+        steps (map (fn [[test [fst & next :as step]]]
+                     `(when ~test ~(conj next g fst)))
+                   (partition 2 clauses))]
+    `(let [~g ~expr]
+       ~@steps
+       ~g)))
+
+(let [max-total 1000000
+      max-idle 2
+      max-wait-ms 10]
+  (condto my-config
+          max-total   (.setMaxTotal max-total)
+          max-idle    (.setMaxIdle max-idle)
+          max-wait-ms (.setMaxWait max-wait-ms)))
+(.inspect my-config)
+;; => [1000000 2 10]
 
