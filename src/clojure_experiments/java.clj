@@ -1,7 +1,8 @@
 (ns clojure-experiments.java
   "Anything related to java interop.
 
-  Really cool talk is 'Java Made (Somewhat) Simple' by Ghadi Shayban: https://www.youtube.com/watch?v=-zszF8bbXM0")
+  Really cool talk is 'Java Made (Somewhat) Simple' by Ghadi Shayban: https://www.youtube.com/watch?v=-zszF8bbXM0"
+  (:import (java.util.zip ZipFile)))
 
 ;;; instace of two classes with the same name
 ;;; aren't generally equal because they came from different classloaders!
@@ -64,3 +65,20 @@
 ;;  clojure.lang.Counted
 ;;    (count [this])
 
+
+;;; "override" one method of an object with `proxy`
+;;; java.util.zip.ZipFile is kinda random choise
+;;; but it implements Closeable and is a non-final class
+;;; with non-final close method implementation
+(let [filename "empty.zip"
+      original-zip (ZipFile. filename)
+      proxy-zip (proxy [ZipFile] [filename]
+                  ;; overriding close method
+                  (close [] (println "Ignored!"))
+                  ;; random method implementation passing the call to the wrapper
+                  (size [] (.size original-zip)))]
+  [[(.size proxy-zip) (.size original-zip)]
+   ;; check the REPL - you will see "Ignored!" printed one time
+   ;; - note that we cannot return "Ignored" as a value
+   ;; because close method is 'void'
+   [(.close proxy-zip) (.close original-zip)]])
