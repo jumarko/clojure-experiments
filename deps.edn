@@ -150,6 +150,13 @@
         ;; see discussion here: https://clojurians.slack.com/archives/C03S1KBA2/p1659682276157529
         org.clojure/data.finger-tree {:mvn/version "0.0.3"}
 
+        ;; https://github.com/aysylu/loom
+        ;; from lisp-in-small-pieces slack https://lisp2022.slack.com/archives/C03C3NMCM7T/p1659860280125529?thread_ts=1659808272.992099&cid=C03C3NMCM7T
+        ;; - For graphs there is a mature library “Loom” which defines protocols and provides implementations for many common graphs and common graph algorithms.
+        ;; - It is an excellent, well tested and well thought out library that works well.
+        ;; - For most use cases it will make your life much easier to use it.
+        aysylu/loom {:mvn/version "1.0.2"}
+
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
