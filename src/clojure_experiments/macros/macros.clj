@@ -198,7 +198,7 @@
   (inspect []))
 
 ;; For mutable fields, see https://stackoverflow.com/questions/3132931/mutable-fields-in-clojure-deftype
-(deftype cfg [^:volatile-mutable maxTotal
+(deftype Cfg [^:volatile-mutable maxTotal
               ^:volatile-mutable maxIdle
               ^:volatile-mutable maxWait]
   ICfg
@@ -207,7 +207,7 @@
   (setMaxWait [this max] (set! maxWait max))
   (inspect [this] [maxTotal maxIdle maxWait]))
 
-(def my-config (->cfg 0 0 0))
+(def my-config (->Cfg 0 0 0))
 (.inspect my-config)
 ;; => [0 0 0]
 
@@ -278,4 +278,5 @@
           max-wait-ms (.setMaxWait max-wait-ms)))
 (.inspect my-config)
 ;; => [1000000 2 10]
+
 

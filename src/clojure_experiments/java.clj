@@ -96,6 +96,16 @@
 ;;     [true true]
 ;;     [clojure_experiments.java.proxy$java.util.zip.ZipFile$ff19274a java.util.zip.ZipFile]]
 
+;; the minimal implementation would be
+(let [filename "empty.zip"
+      original-zip (ZipFile. filename)
+      proxy-zip (proxy [ZipFile] [filename]
+                  ;; overriding close method
+                  (close [] (println "Ignored!")))]
+  [[(.getName proxy-zip) (.getName original-zip)]
+   ;; check the REPL - you will see "Ignored!" printed one time
+   [(.close proxy-zip) (.close original-zip)]])
+
 
 ;; ... or use lesser-known `get-proxy-class`, `construct-proxy`, and `init-proxy`
 ;; (later you could also use `update-proxy`)

@@ -157,6 +157,11 @@
         ;; - For most use cases it will make your life much easier to use it.
         aysylu/loom {:mvn/version "1.0.2"}
 
+        ;; wrapper for ghostwheel: https://github.com/fulcrologic/guardrails
+        ;; see also https://www.fulcrologic.com/open-source#guardrails
+        ;; and "-Dguardrails.enabled" jvm option below (https://github.com/fulcrologic/guardrails#quick-start)
+        com.fulcrologic/guardrails {:mvn/version "1.1.11"}
+
         }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
@@ -180,4 +185,6 @@
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
               ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
-              "-XX:+ShowCodeDetailsInExceptionMessages"]}}}
+              "-XX:+ShowCodeDetailsInExceptionMessages"
+              ;; To enable guardrails: https://github.com/fulcrologic/guardrails#quick-start
+              "-Dguardrails.enabled"]}}}
