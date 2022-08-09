@@ -76,9 +76,41 @@
                   ;; overriding close method
                   (close [] (println "Ignored!"))
                   ;; random method implementation passing the call to the wrapper
+                  ;; Note: you don't have to do this at all! (see .getName call below)
                   (size [] (.size original-zip)))]
   [[(.size proxy-zip) (.size original-zip)]
    ;; check the REPL - you will see "Ignored!" printed one time
    ;; - note that we cannot return "Ignored" as a value
    ;; because close method is 'void'
-   [(.close proxy-zip) (.close original-zip)]])
+   [(.close proxy-zip) (.close original-zip)]
+
+   ;; now try a method which we didn't specify at all
+   [(.getName proxy-zip) (.getName original-zip)]
+
+   ;; finally check the instances and their classes
+   [(instance? ZipFile proxy-zip) (instance? ZipFile original-zip)]
+   [(class proxy-zip) (class original-zip)]])
+;; => [[1 1]
+;;     [nil nil]
+;;     ["empty.zip" "empty.zip"]
+;;     [true true]
+;;     [clojure_experiments.java.proxy$java.util.zip.ZipFile$ff19274a java.util.zip.ZipFile]]
+
+
+;; ... or use lesser-known `get-proxy-class`, `construct-proxy`, and `init-proxy`
+;; (later you could also use `update-proxy`)
+;; https://clojuredocs.org/clojure.core/construct-proxy
+(def MyZipFile (get-proxy-class ZipFile))
+(let [filename "empty.zip"
+      original-zip (ZipFile. filename)
+      proxy-zip (-> (construct-proxy MyZipFile filename)
+                    (init-proxy {"close" (fn [_this] (doto "Ignored!" println))}))]
+  proxy-zip
+  [[(.size proxy-zip) (.size original-zip)]
+   ;; check the REPL - you will see "Ignored!" printed one time
+   ;; - note that we cannot return "Ignored" as a value
+   ;; because close method is 'void'
+   [(.close proxy-zip) (.close original-zip)]
+   [(.getName proxy-zip) (.getName original-zip)]])
+;; => [[1 1] [nil nil] ["empty.zip" "empty.zip"]]
+
