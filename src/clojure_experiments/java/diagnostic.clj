@@ -168,3 +168,12 @@
   .)
 
 
+;;; MaxDirectMemory - tricky to get this value
+;;; See
+;;; - Default HotSpot Maximum Direct Memory Size https://dzone.com/articles/default-hotspot-maximum-direct-memory-size
+;;; - Replace access to sun.misc.VM for JDK 11 https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
+;;;   => you need `--add-export java.base/jdk.internal.misc=xyz` (see deps.edn)
+
+;; MaxDirectMemorySize is by default the same as MaxHeapSize
+(jdk.internal.misc.VM/maxDirectMemory)
+;; => 1073741824

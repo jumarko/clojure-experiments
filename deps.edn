@@ -171,6 +171,8 @@
  ;; this is also in /Users/jumar/.clojure/deps.edn
  {:dev
   {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
+              ;; use -Xmx or use MaxRAMPercentage
+              #_"-XX:MaxRAMPercentage=5"
               "--enable-preview"
               "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
               "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
@@ -184,6 +186,9 @@
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
               "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
+              ;; to access jdk.internal.misc.VM#maxDirectMemory
+              ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
+              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
               ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
               "-XX:+ShowCodeDetailsInExceptionMessages"
               ;; To enable guardrails: https://github.com/fulcrologic/guardrails#quick-start
