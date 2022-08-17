@@ -73,8 +73,32 @@
   ;;          const__0 = RT.var("clojure-experiments.performance.performance", "my-add-long");
   ;;          }
   ;;  }
-
-
-
   )
+
+
+;;; Storing a primitive long in a var?
+;;; Alex Miller: vars can't point to primitive values so it's being boxed into a Long
+;;; (https://clojurians.slack.com/archives/C03S1KBA2/p1660681614394949)
+
+(set! *unchecked-math* :warn-on-boxed)
+(def min-part-byte-size (* 1024 1024 5))
+;; when you evaluate this, you'll see in stdout this warning:
+;;    Boxed math warning, /Users/jumar/workspace/clojure/clojure-experiments/src/clojure_experiments/performance/boxed_math.clj:84:1 - call: public static boolean clojure.lang.Numbers.gt(long,java.lang.Object).
+(> (.length "abc") min-part-byte-size)
+
+;; now define it as :const - this should be enough to get rid of the warning
+(def ^:const min-part-byte-size (* 1024 1024 5))
+(> (.length "abc") min-part-byte-size)
+
+;; ... but Alex shown this declaration:
+(def ^:const ^{:tag 'long} min-part-byte-size (* 1024 1024 5))
+(> (.length "abc") min-part-byte-size)
+
+;; ... which should be the same as this:
+(def ^:const ^long min-part-byte-size (* 1024 1024 5))
+(> (.length "abc") min-part-byte-size)
+
+
+
+
 
