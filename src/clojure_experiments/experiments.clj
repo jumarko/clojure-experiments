@@ -457,23 +457,6 @@ org.apache.pdfbox.pdmodel.PDPageContentStream$AppendMode
 #_(inspector-jay.core/inspect java.util.AbstractQueue)
 
 
-;;; case
-
-;; petr.mensik
-(def all-statuses {:won {:a 1}
-                   :lost-project {:a 2}
-                   :lost-invoice {:a 3}})
-(def my-status {:a 1})
-#_(let [contact-status (case my-status
-                       (:won all-statuses) (println "won")
-                       (:lost-project all-statuses) (println "lost project")
-                       (:lost-invoice all-statuses) (println "lost invoice")
-                       nil)]
-  (println contact-status))
-
-;; clojure pills screencast
-(case 1 (inc 0) "1" (dec 1) "0" :default)
-
 
 ;;; clojure test output diffing
 (def expected {:url "http://example.com",
@@ -684,32 +667,6 @@ d-m
 ;; => [{:y "y" :z "z" :x "1111"}]
 
 
-;;; https://dev.clojure.org/jira/browse/CLJ-2275
-;;; case fails for vectors with negative numbers
-(case -1 -1 true false)
-;;=> true
-(case [-1] [-1] true false)
-;;=> true
-(case (int -1) -1 true false)
-;;=> true
-(case [(int 1)] [1] true false)
-;;=> true
-(case [(int -1)] [-1] true false)
-;;=> false
-
-
-;; this doesn't give you what you think!
-(def one 1)
-(case 1
-  one :one
-  :not-one)
-;; => :not-one
-
-(case 'one
-  one :one
-  :not-one)
-;; => :one
-
 
 ;;; bronsa
 ;; use `replace`
@@ -782,25 +739,6 @@ d-m
       (map
        (fn [[k v]] [(keyword k) v]))
        {"a" 1 "b" 2})
-
-
-
-;;; interesting behavior of when-let when using destructuring
-;;; there's just no way to use `when-let`/`if-let` on destructured values
-;;; 
-(def foo {:a 1})
-
-(when-let [a (:a foo)] (println a))
-;; => prints "1", returns nil
-
-(when-let [{:keys [a]} foo] (println a))
-;; => prints "1", returns nil
-
-(when-let [a (:a (assoc foo :a nil))] (println a))
-;; => returns nil
-
-(when-let [{:keys [a]} (assoc foo :a nil)] (println a))
-;; => prints "nil", returns nil
 
 
 ;;; clj-java-decompiler: https://github.com/clojure-goes-fast/clj-java-decompiler
