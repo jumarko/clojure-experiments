@@ -87,6 +87,10 @@
         org.clojure/core.cache {:mvn/version "1.0.217"}
         org.clojure/core.memoize {:mvn/version "1.0.250"}
         techascent/tech.ml.dataset {:mvn/version "6.021"}
+        ;; cool visualization library built on top of Vega with pre-made visualizations functions
+        ;; https://github.com/techascent/tech.viz
+        ;; - see also https://github.com/scicloj/viz.clj
+        techascent/tech.viz {:mvn/version "6.00-beta-16-3"}
         scicloj/tablecloth {:mvn/version "6.012"}
         ;; jme-clj/jme-clj {:mvn/version "0.1.13"}
         org.clojure/core.logic {:mvn/version "1.0.0"}
