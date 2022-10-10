@@ -49,3 +49,30 @@
 
 
 
+;;; core.memoize - custom cache key
+;;; https://github.com/clojure/core.memoize/blob/master/docs/Using.md#overriding-the-cache-keys
+(defn- my-cache-key [args]
+  (prn "cache-key args: " args)
+  (drop 2 args))
+
+(defn
+  ^{:clojure.core.memoize/args-fn my-cache-key}
+  cache-key
+  "ahoj"
+  [a b c]
+  (println "calling!" a b c)
+
+  )
+
+(meta #'cache-key)
+;; => {:clojure.core.memoize/args-fn #function[clojure.core/partial/fn--5908] ...
+
+(def memo-cache-key
+  ;; note that we must pass the var ref here
+  (memo/ttl #'cache-key :ttl/threshold 10000))
+
+(memo-cache-key 1 2 3)
+(memo-cache-key 10 20 3)
+(memo-cache-key 10 30 3)
+(memo-cache-key 10 20 30)
+
