@@ -4,7 +4,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(def input (->> (slurp (io/reader "src/clojure_experiments/advent_of_code/advent_2022/01.txt"))
+(def input (->> (slurp (io/reader "src/clojure_experiments/advent_of_code/advent_2022/day_01.txt"))
                 str/split-lines))
 
 (defn sum-nums [str-nums]
