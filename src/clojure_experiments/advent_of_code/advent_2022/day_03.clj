@@ -67,3 +67,10 @@
        (map group-priority)
        (apply +)))
 (assert (= 2738 (puzzle-2)))
+
+
+
+;;; Other solutions
+
+;; https://github.com/genmeblog/advent-of-code/blob/master/src/advent_of_code_2022/day03.clj
+;; - notice they encoded the data as the first step

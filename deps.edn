@@ -173,9 +173,12 @@
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
 
  :aliases
- ;; this is also in /Users/jumar/.clojure/deps.edn
- {:dev
-  {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
+ ;; Run `clj -M:cider-repl`, then use `cider-connect`
+ {:cider-repl {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
+                            cider/cider-nrepl {:mvn/version "0.28.7"}
+                            refactor-nrepl/refactor-nrepl {:mvn/version "3.6.0"}}
+               :main-opts ["-m" "nrepl.cmdline" "--middleware" "[refactor-nrepl.middleware/wrap-refactor,cider.nrepl/cider-middleware]"]}
+  :dev {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
               ;; use -Xmx or use MaxRAMPercentage
               #_"-XX:MaxRAMPercentage=5"
               "--enable-preview"
@@ -197,4 +200,5 @@
               ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
               "-XX:+ShowCodeDetailsInExceptionMessages"
               ;; To enable guardrails: https://github.com/fulcrologic/guardrails#quick-start
-              "-Dguardrails.enabled"]}}}
+              "-Dguardrails.enabled"]}
+  }}

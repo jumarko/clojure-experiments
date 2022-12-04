@@ -1,5 +1,7 @@
 (ns clojure-experiments.macros.macros
-  (:require [clojure.data :as data]))
+  (:require
+   [taoensso.encore :as encore]))
+
 ;;; Simple experiment with macros and the difference between compile-time and runtime
 ;;; The first version of `name-it` macro is too naive and it calls println without quoting the form.
 ;;; Which means that println is executed in compile-time.
@@ -279,4 +281,19 @@
 (.inspect my-config)
 ;; => [1000000 2 10]
 
+
+
+;;; encore's if-let is interesting and sometimes useful
+;;; https://github.com/ptaoussanis/encore/blob/master/src/taoensso/encore.cljc#L149
+(encore/if-let [x (range  2 10)
+                y (seq (filter #(< % 4) x))]
+  (reduce + y))
+;; => 5
+(encore/if-let [x (range  5 10)
+                y (seq (filter #(< % 4) x))]
+  (reduce + y))
+;; => nil
+;; ... and it's certainly not reduce returning nil:
+(reduce + nil)
+;; => 0
 
