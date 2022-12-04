@@ -2,12 +2,11 @@
   "https://adventofcode.com/2022/day/2
   Input: https://adventofcode.com/2022/day/2/input"
   (:require
-   [clojure.java.io :as io]
+   [clojure-experiments.advent-of-code.advent-2022.utils :as utils]
    [clojure.string :as str]))
 
-(def input (->> (slurp (io/reader "src/clojure_experiments/advent_of_code/advent_2022/day_02.txt"))
-                str/split-lines
-                (map #(str/split % #" ") )))
+(def input (->> (utils/read-input "02")
+                (map #(str/split % #" "))))
 
 ;;; Puzzle 1
 
@@ -181,8 +180,9 @@
   (def rules
     {:rock {:rock :draw :paper :lost :scissors :win}
      :paper {:paper :draw :rock :win :scissors :lost}
+     ;; ... so I could actually flip it and simply the `play` (puzzle 1) function too!?
      :scissors {:scissors :draw :paper :win :rock :lost}})
-    )
+)
 
 (defn find-shape [[opponents-shape outcome]]
   (get-in rules2 [opponents-shape outcome]))
