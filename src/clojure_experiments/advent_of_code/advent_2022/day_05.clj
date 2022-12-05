@@ -140,3 +140,26 @@ move 1 from 1 to 2"
 
 ;; puzzle-2
 (assert (= "JNRSCDWPP" (tops-of-stacks input)))
+
+
+
+;;; All-in-one - all the code for the part 2 together
+(defn all-in-one [input]
+  (let [levels (->> input (take-while (complement str/blank?)))
+        level-count (->> (last levels) (re-seq #"\d+") last parse-long)
+        init-stacks  (->> (for [l (butlast levels)
+                                crate (partition-all 4 l)]
+                            (re-find #"[A-Z]+" (apply str crate)))
+                          (partition level-count)
+                          ;; transpose the matrix
+                          (apply map vector)
+                          (map #(remove nil? %)))
+        skip-lines (+ (apply max (map count init-stacks)) 2)
+        moves (map (fn [move-str] (map parse-long (re-seq #"\d+" move-str)))
+                   (drop skip-lines input))]
+    (reduce apply-move init-stacks moves)
+    ;; get tops of the stacks
+    (->> (apply-moves input) (map first) (apply str))))
+
+(assert (= "JNRSCDWPP" (all-in-one input)))
+
