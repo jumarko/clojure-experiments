@@ -25,6 +25,8 @@ move 2 from 2 to 1
 move 1 from 1 to 2"
                       (str/split-lines)))
 
+;;; Part 1
+
 (defn parse-move [move-str]
   (map parse-long (re-seq #"\d+" move-str)))
 (parse-move "move 1 from 2 to 1")
@@ -117,7 +119,24 @@ move 1 from 1 to 2"
 
 (assert (= "CMZ" (tops-of-stacks sample-input)))
 
-(defn puzzle-1 []
-  (tops-of-stacks input))
+;; puzzle-1
+(assert (= "TWSGQHNHL" (tops-of-stacks input)))
 
-(assert (= "TWSGQHNHL" (puzzle-1)))
+
+
+;;; Part 2 - moving multiple crates at once
+
+(defn apply-move [stacks move]
+  (let [[n from to] move
+        [from-idx to-idx] (map dec [from to])
+        from-stack (nth stacks from-idx)
+        to-stack (nth stacks to-idx)]
+    (assoc (vec stacks)
+           from-idx (drop n from-stack)
+           ;; the only change it to use `concat` instead of  `apply conj`
+           to-idx (concat (take n from-stack) to-stack ))))
+(assert (= "MCD" (tops-of-stacks sample-input)))
+
+
+;; puzzle-2
+(assert (= "JNRSCDWPP" (tops-of-stacks input)))
