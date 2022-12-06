@@ -5,8 +5,8 @@
   Parsing signal - looking for start-of-packet marker (4 unique characters)
  "
   (:require
-   [clojure-experiments.advent-of-code.advent-2022.utils :as utils :refer [assert=]]))
-
+   [clojure-experiments.advent-of-code.advent-2022.utils :as utils]
+   [clojure-experiments.macros.macros  :refer [assert=]]))
 
 (def input (first (utils/read-input "06")))
 
