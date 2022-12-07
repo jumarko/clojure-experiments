@@ -167,7 +167,10 @@
         com.fulcrologic/guardrails {:mvn/version "1.1.11"}
 
 
-        lambdaisland/deep-diff2 {:mvn/version "2.4.138"}}
+        lambdaisland/deep-diff2 {:mvn/version "2.4.138"}
+        ;; https://github.com/clojure-emacs/haystack/ - parsing stacktraces ala Cider
+        mx.cider/haystack {:mvn/version "0.0.3"}
+}
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
