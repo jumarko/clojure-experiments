@@ -83,12 +83,15 @@
 (visible sample-grid 2 2)
 ;; => nil
 
-(defn visible-trees [grid]
+(defn map-grid-tree [grid tree-fn]
   (let [gs (grid-size grid)]
     (mapv (fn [row]
-            (mapv (fn [col] (visible grid row col))
+            (mapv (fn [col] (tree-fn grid row col))
                   (range gs)))
           (range gs))))
+
+(defn visible-trees [grid]
+  (map-grid-tree grid visible))
 (visible-trees sample-grid)
 ;; => [[3 0 3 7 3]
 ;;     [2 5 5 nil 2]
@@ -107,5 +110,59 @@
 
 (defn part-1 []
   (count-visible-trees (make-grid full-input )))
-(part-1)
-;; => 1835
+(assert= 1835 (time (part-1)))
+;; "Elapsed time: 228.600886 msecs"
+
+
+;;; part 2
+
+;; take-until is just like `take-while`
+;; but also includes the first element that violates the predicate.
+(defn take-until
+  [pred coll]
+  (lazy-seq
+   (when-let [s (seq coll)]
+     (if (pred (first s))
+       (cons (first s) (take-until pred (rest s)))
+       (cons (first s) nil)))))
+(take-until #(< % 3 ) (range 9))
+;; => (0 1 2 3)
+
+(defn scenic-trees [grid i j]
+  (let [tree (tree-height grid i j)
+        tb (trees-between grid i j)]
+    (vec (map-indexed (fn [idx trees-toward-edge]
+                        ;; take all the trees that are visible, starting from the closest ones
+                        (let [fixed-order (cond-> trees-toward-edge (zero? (mod idx 2)) rseq)]
+                          (vec (take-until #(< % tree) fixed-order))))
+                      tb))))
+(scenic-trees sample-grid 1 2)
+;; => [[5] [1 2] [3] [3 5]]
+
+(defn scenic-score [grid i j]
+  (->> (scenic-trees grid i j)
+       (map count)
+       (apply *)))
+(scenic-score sample-grid 1 2)
+;; => 4
+
+(scenic-trees sample-grid 3 2)
+;; => [[3 3] [4 9] [3 5] [3]]
+(scenic-score sample-grid 3 2)
+;; => 8
+
+
+(defn scenic-scores [grid]
+  (map-grid-tree grid scenic-score))
+
+(apply max (apply concat (scenic-scores sample-grid)))
+;; => 8
+
+(defn part-2 []
+  (->> full-input
+       make-grid
+       scenic-scores
+       (apply concat)
+       (apply max)))
+(assert= 263670 (time (part-2)))
+;; "Elapsed time: 116.53988 msecs"
