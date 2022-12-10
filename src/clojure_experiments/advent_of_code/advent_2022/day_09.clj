@@ -6,6 +6,8 @@
    [clojure-experiments.macros.macros  :refer [assert=]]
    [clojure.string :as str]))
 
+
+
 (def full-input (utils/read-input "09"))
 
 (def sample-input
@@ -72,10 +74,9 @@ R 2"))
 
 (def sample-directions (parse-directions sample-input))
 (defn positions [moves]
-  (reductions
-   apply-move
-   {:head [0 0] :tail [0 0]}
-   moves))
+  (reductions apply-move
+              {:head [0 0] :tail [0 0]}
+              moves))
 (positions sample-directions)
 ;; => ({:head [0 0], :tail [0 0]}
 ;;     {:head [1 0], :tail [0 0]}
@@ -115,3 +116,61 @@ R 2"))
        unique-tail-positions
        count))
 (assert= 6011 (puzzle-1))
+
+
+
+;;; part 2
+;;; Now the rope has 10 knots!
+
+(-> {:head [0 0] :tail [0 0]}
+    (apply-move "R"))
+(-> {:head [0 0] :tail [0 0]}
+    (apply-move "R"))
+
+;;; ... OMG...
+
+
+;;; Check this: https://gist.github.com/maacl/992c94a6000ae1ae206a926eccd34294#file-clj
+;;; it's similar in spirit to the first part of my solution
+;;; but I got stuck on the second part.
+;;; Here they solve it very elegantly and concisely.
+(comment
+
+  (def pos {0 0 1 1 2 1 -1 -1 -2 -1})
+  (def dirs {"U" [1  0] "R" [0  1] "D" [-1  0] "L" [0 -1]})
+  (defn move [pos move]  (mapv + pos move))
+  (defn diff [pos1 pos2] (mapv - pos2 pos1))
+  (defn touching? [d] (#{[0 1] [1 0] [1 1] [0 0]} (mapv abs d)))
+  (defn positions [f moves] (reductions f [0 0] moves))
+
+  (defn moves->1-step-moves
+    [moves]
+    (mapcat (fn [[d n]] (repeat (parse-long n) (dirs d))) moves))
+
+  (defn H-pos->T-pos
+    [T-pos H-pos]
+    (let [d (diff T-pos H-pos)]
+      (if (touching? d)
+        T-pos
+        (move T-pos (mapv pos d)))))
+
+  (def common
+    (->>
+     full-input
+     (map #(str/split % #" "))
+     moves->1-step-moves
+     (positions move)))
+
+  (def end (comp count set))
+  
+  ;; Part 1
+  (->> common (positions H-pos->T-pos) end)
+;; => 6011
+
+  ;; Part 2
+  (->> common (iterate (partial positions H-pos->T-pos)) (take 10) last end)
+;; => 2419
+
+  )
+
+
