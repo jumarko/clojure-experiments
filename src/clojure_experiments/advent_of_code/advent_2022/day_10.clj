@@ -16,154 +16,7 @@ addx 3
 addx -5"
    ))
 
-(def sample-input2
-  (str/split-lines
-   "addx 15
-addx -11
-addx 6
-addx -3
-addx 5
-addx -1
-addx -8
-addx 13
-addx 4
-noop
-addx -1
-addx 5
-addx -1
-addx 5
-addx -1
-addx 5
-addx -1
-addx 5
-addx -1
-addx -35
-addx 1
-addx 24
-addx -19
-addx 1
-addx 16
-addx -11
-noop
-noop
-addx 21
-addx -15
-noop
-noop
-addx -3
-addx 9
-addx 1
-addx -3
-addx 8
-addx 1
-addx 5
-noop
-noop
-noop
-noop
-noop
-addx -36
-noop
-addx 1
-addx 7
-noop
-noop
-noop
-addx 2
-addx 6
-noop
-noop
-noop
-noop
-noop
-addx 1
-noop
-noop
-addx 7
-addx 1
-noop
-addx -13
-addx 13
-addx 7
-noop
-addx 1
-addx -33
-noop
-noop
-noop
-addx 2
-noop
-noop
-noop
-addx 8
-noop
-addx -1
-addx 2
-addx 1
-noop
-addx 17
-addx -9
-addx 1
-addx 1
-addx -3
-addx 11
-noop
-noop
-addx 1
-noop
-addx 1
-noop
-noop
-addx -13
-addx -19
-addx 1
-addx 3
-addx 26
-addx -30
-addx 12
-addx -1
-addx 3
-addx 1
-noop
-noop
-noop
-addx -9
-addx 18
-addx 1
-addx 2
-noop
-noop
-addx 9
-noop
-noop
-noop
-addx -1
-addx 2
-addx -37
-addx 1
-addx 3
-noop
-addx 15
-addx -21
-addx 22
-addx -6
-addx 1
-noop
-addx 2
-addx 1
-noop
-addx -10
-noop
-noop
-addx 20
-addx 1
-addx 2
-addx 2
-addx -6
-addx -11
-noop
-noop
-noop"))
+(def sample-input2 (utils/read-input "10.sample"))
 
 (defn interpret [cycles instruction]
   (let [{:keys [c v] :as _last-cycle} (peek cycles)
@@ -177,17 +30,20 @@ noop"))
 (interpret [{:c 1, :v 1} {:c 2, :v 1}] "addx -5")
 ;; => [{:c 1, :v 1} {:c 2, :v 1} {:c 3, :v 1} {:c 4, :v -4}]
 
-(reduce interpret [{:c 1 :v 1}] sample-input)
+(defn compute [input]
+  (reduce interpret [{:c 1 :v 1}] input))
+
+(compute sample-input)
 ;; => [{:c 1, :v 1} {:c 2, :v 1} {:c 3, :v 1} {:c 4, :v 4} {:c 5, :v 4} {:c 6, :v -1}]
 
-(peek (reduce interpret [{:c 1 :v 1}] sample-input2))
-;; => {:c 241, :v 17}
+(assert= {:c 241 :v 17}
+         (peek (compute sample-input2)))
 
 (defn cycle-strength [{:keys [c v] :as cycle}]
   (* c v))
 
 (defn total-strength [input]
-  (->> (reduce interpret [{:c 1 :v 1}] input)
+  (->> (compute input)
        (filter (fn [{:keys [c]}] (= (mod c 40) 20)))
        (map cycle-strength)
        (reduce +)))
@@ -200,5 +56,45 @@ noop"))
 
 
 ;;; part2
+(compute sample-input2)
 
+(defn draw-pixel [pixel x]
+  (if (<= (dec x) pixel (inc x))  "#" "."))
+(assert= "#" (draw-pixel 0 1))
+(assert= "#" (draw-pixel 2 1))
+(assert= "."(draw-pixel 3 1))
+(assert= "#" (draw-pixel 5 4))
 
+(assert= ["#" "#" "." "#" "#" "."]
+         (mapv (fn [{:keys [c v]}] (draw-pixel c v))
+               (compute sample-input)))
+
+(defn draw-screen [input]
+  (->> (compute input)
+       (map (fn [{:keys [c v]}] (draw-pixel (dec (mod c 40))
+                                            v)))
+       (partition-all 40)
+       (mapv #(apply str %))))
+
+(draw-screen sample-input)
+;; => ["##.##."]
+
+(draw-screen sample-input2)
+;;=>
+["##..##..##..##..##..##..##..##..##..##.."
+ "###...###...###...###...###...###...###."
+ "####....####....####....####....####...."
+ "#####.....#####.....#####.....#####....."
+ "######......######......######......###."
+ "#######.......#######.......#######....."
+ "."]
+
+(draw-screen full-input)
+;;=> 
+["####.#..#.###..####.#....###....##.###.#"
+ "#....#..#.#..#....#.#....#..#....#.#..##"
+ "###..####.###....#..#....#..#....#.#..##"
+ "#....#..#.#..#..#...#....###.....#.###.."
+ "#....#..#.#..#.#....#....#.#..#..#.#.#.#"
+ "####.#..#.###..####.####.#..#..##..#..#."
+ "."]
