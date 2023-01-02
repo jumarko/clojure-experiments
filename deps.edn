@@ -3,7 +3,7 @@
         ;; org.clojure/clojure {:mvn/version "1.10.3"}
         org.clojure/test.check {:mvn/version "1.1.0"}
         com.gfredericks/test.chuck {:mvn/version "0.2.12"}
-        medley/medley {:mvn/version "1.3.0"}
+        dev.weavejester/medley {:mvn/version "1.5.0"}
         ring/ring-core {:mvn/version "1.9.5"}
         ring/ring-json {:mvn/version "0.5.1"}
         compojure/compojure {:mvn/version "1.6.2"}
@@ -43,7 +43,7 @@
         nodisassemble/nodisassemble {:mvn/version "0.1.3"}
         phrase/phrase {:mvn/version "0.3-alpha4"}
         net.n01se/clojure-jna {:mvn/version "1.0.0"}
-        com.taoensso/truss {:mvn/version "1.6.0"}
+        com.taoensso/truss {:mvn/version "1.8.0"}
         net.cgrand/xforms {:mvn/version "0.19.2"}
         clojure2d/clojure2d {:mvn/version "1.4.3"}
         datascript/datascript {:mvn/version "1.2.8"}
@@ -72,7 +72,7 @@
         com.palletops/stevedore {:mvn/version "0.8.0-beta.7"}
         com.taoensso/tufte {:mvn/version "2.2.0"}
         com.taoensso/timbre {:mvn/version "5.1.2"}
-        com.taoensso/encore {:mvn/version "3.19.0"}
+        com.taoensso/encore {:mvn/version "3.45.0"}
         org.clojure/tools.logging {:mvn/version "1.1.0"}
         org.apache.logging.log4j/log4j-api {:mvn/version "2.14.1"}
         org.apache.logging.log4j/log4j-core {:mvn/version "2.14.1"}
@@ -100,7 +100,7 @@
         com.gfredericks/vcr-clj {:mvn/version "0.4.19"}
         nubank/matcher-combinators {:mvn/version "3.3.1"}
         meander/epsilon {:mvn/version "0.0.650"}
-        djblue/portal {:mvn/version "0.29.1"}
+        djblue/portal {:mvn/version "0.35.0"}
         ;; this leads to circular dependency error in aws logs?!
         ;; org.clojars.cyrik/omni-trace {:mvn/version "0.3.31"}
         expound/expound {:mvn/version "0.8.10"}
@@ -150,6 +150,9 @@
         ;; compare to transit: https://github.com/cognitect/transit-clj
         com.cognitect/transit-clj {:mvn/version "1.0.329"}
 
+        ;; datalevin: https://github.com/juji-io/datalevin/blob/master/doc/install.md
+        datalevin/datalevin {:mvn/version "0.6.29"}
+
         ;; finger trees: https://github.com/clojure/data.finger-tree
         ;; see discussion here: https://clojurians.slack.com/archives/C03S1KBA2/p1659682276157529
         org.clojure/data.finger-tree {:mvn/version "0.0.3"}
@@ -166,11 +169,19 @@
         ;; and "-Dguardrails.enabled" jvm option below (https://github.com/fulcrologic/guardrails#quick-start)
         com.fulcrologic/guardrails {:mvn/version "1.1.11"}
 
-
         lambdaisland/deep-diff2 {:mvn/version "2.4.138"}
         ;; https://github.com/clojure-emacs/haystack/ - parsing stacktraces ala Cider
         mx.cider/haystack {:mvn/version "0.0.3"}
-}
+
+        ;; https://github.com/clj-python/libpython-clj
+        ;; To use libpython-clj2 with jdk-17 you need to enable the foreign module - see https://github.com/clj-python/libpython-clj/blob/6e7368b44aaabddf565a5bbf3a240e60bf3dcbf8/deps.edn#L10
+        ;; => DOESN'T WORK at the moment - see `clojure-experiments.stats.python.libpython`
+        ;; clj-python/libpython-clj {:mvn/version "2.021"}
+
+        ;; simple library to read excel sheets with Clojure
+        ;; https://github.com/kbosompem/bb-excel
+        com.github.kbosompem/bb-excel {:mvn/version "0.0.2"}
+        }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
@@ -178,30 +189,36 @@
  :aliases
  ;; Run `clj -M:cider-repl`, then use `cider-connect`
  {:cider-repl {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
-                            cider/cider-nrepl {:mvn/version "0.28.7"}
+                            cider/cider-nrepl {:mvn/version "0.29.0"}
                             refactor-nrepl/refactor-nrepl {:mvn/version "3.6.0"}}
-               :main-opts ["-m" "nrepl.cmdline" "--middleware" "[refactor-nrepl.middleware/wrap-refactor,cider.nrepl/cider-middleware]"]}
+               :main-opts ["-m" "nrepl.cmdline" "--middleware" "[refactor-nrepl.middleware/wrap-refactor,cider.nrepl/cider-middleware]"]
+               ;; this is needed for datalevin: https://github.com/juji-io/datalevin/blob/master/doc/install.md
+               :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
+                          "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"]
+               }
+   ;; To use libpython-clj2 with jdk-17 you need to enable the foreign module - see https://github.com/clj-python/libpython-clj/blob/6e7368b44aaabddf565a5bbf3a240e60bf3dcbf8/deps.edn#L10
+  :jdk-17 {:jvm-opts ["--add-modules" "jdk.incubator.foreign"
+                      "--enable-native-access=ALL-UNNAMED"]}
   :dev {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
               ;; use -Xmx or use MaxRAMPercentage
-              #_"-XX:MaxRAMPercentage=5"
-              "--enable-preview"
-              "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
-              "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
-              "-Djdk.attach.allowAttachSelf=true"
+                   #_"-XX:MaxRAMPercentage=5"
+                   "--enable-preview"
+                   "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
+                   "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
+                   "-Djdk.attach.allowAttachSelf=true"
               ;; to make clj-memory-meter work with JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
-              "--illegal-access=permit"
+                   "--illegal-access=permit"
               ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
-              "--add-modules=jdk.hotspot.agent"
-              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"
-              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED"
-              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
-              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
-              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
+                   "--add-modules=jdk.hotspot.agent"
+                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"
+                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED"
+                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
+                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
+                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
               ;; to access jdk.internal.misc.VM#maxDirectMemory
               ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
-              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
+                   "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
               ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
-              "-XX:+ShowCodeDetailsInExceptionMessages"
+                   "-XX:+ShowCodeDetailsInExceptionMessages"
               ;; To enable guardrails: https://github.com/fulcrologic/guardrails#quick-start
-              "-Dguardrails.enabled"]}
-  }}
+                   "-Dguardrails.enabled"]}}}
