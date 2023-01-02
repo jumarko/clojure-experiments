@@ -599,3 +599,14 @@ db
 
 ;; sorted-map cannot be made transient
 #_(transient (sorted-map 1 10 2 20))
+
+
+;;; medley 1.5.0 introduces `m/partition-before` and `m/partition-after`
+;;; https://www.juxt.pro/blog/new-medley-partition-fns/
+(partition-by odd? [1 2 3 4 5])
+;; => ((1) (2) (3) (4) (5))
+(m/partition-after odd? [1 2 3 4 5])
+;; => ((1) (2 3) (4 5))
+(m/partition-before odd? [1 2 3 4 5])
+;; => ((1 2) (3 4) (5))
+

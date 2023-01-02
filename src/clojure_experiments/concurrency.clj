@@ -44,9 +44,7 @@
   "Logs any error that occurs during the execution of given body in a `future`
   *including* the client stack trace at the time of submitting the future for execution."
   [& body]
-  (logging-future+* *file*
-                    (:line (meta &form))
-                    body))
+  (logging-future+* *file* (:line (meta &form)) body))
 #_(logging-future+ (Thread/sleep 1000) (throw (Exception. "ERROR!")))
 
 ;; an improved version of logging-future (logged-future) shared by Sean Corfield:
@@ -356,3 +354,4 @@
    z 10]
   (list (var-get x) (var-get y) (var-get z)))
 ;; => (#<Var: --unnamed--> #<Var: --unnamed--> 10)
+
