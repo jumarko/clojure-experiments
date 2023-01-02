@@ -13,7 +13,16 @@
   ;; - we also open this window in `user` ns
   (def portal (p/open)) ; by saving it in a var we can use it from the REPL https://github.com/djblue/portal#portal-atom
   ;; you can use the Electron version - run /Applications/portal.app first!
-  (def portal (p/open {:launcher :electron}))
+  (def portal (p/open {:launcher :electron
+                       :window-title "something new"}))
+
+  ;; what about :emacs!
+  ;; https://github.com/djblue/portal/blob/master/doc/editors/emacs.md#xwidget-webkit-embed
+  ;; You need a build of emacs with Embedded-WebKit-Widgets https://www.gnu.org/software/emacs/manual/html_node/emacs/Embedded-WebKit-Widgets.html
+  ;; - cool but unusable (no keyboard shortcuts working :( )
+  (def portal (p/open {:launcher :emacs
+                       :window-title "emacs!?"}))
+
 
   (add-tap #'p/submit)
 

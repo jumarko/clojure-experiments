@@ -1,3 +1,4 @@
+;; DEPRECATED! See `clojure-experiments.stats.python.libpython` instead
 (ns clojure-experiments.visualizations.libpython
   (:require [libpython-clj.require :refer [require-python]]
             [libpython-clj.python :as py :refer [py. py.. py.-]]
