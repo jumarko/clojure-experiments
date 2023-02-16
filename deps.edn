@@ -31,10 +31,10 @@
         org.clojure/java.jmx {:mvn/version "1.0.0"}
         me.raynes/conch {:mvn/version "0.8.0"}
         tupelo/tupelo {:mvn/version "21.09.07"}
-        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.1"}
-        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.0"}
+        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.3"}
+        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.3"}
         com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "0.1.1"}
-        com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.2.1-SNAPSHOT"}
+        com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.2.1"}
         com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "0.1.4"}
         criterium/criterium {:mvn/version "0.4.6"}
         org.clojars.pntblnk/clj-ldap {:mvn/version "0.0.17"}
@@ -119,8 +119,7 @@
         ;; use java.nio from Clojure: https://github.com/babashka/fs
         babashka/fs {:mvn/version "0.1.6"}
         ;; flow-storm-debugger: https://github.com/jpmonettas/flow-storm-debugger/
-        com.github.jpmonettas/flow-storm-dbg {:mvn/version "2.2.114"}
-        com.github.jpmonettas/flow-storm-inst {:mvn/version "2.2.114"}
+        com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.3.309"}
 
         ;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
         ;; https://commons.apache.org/proper/commons-net/apidocs/index.html
@@ -181,7 +180,9 @@
         ;; simple library to read excel sheets with Clojure
         ;; https://github.com/kbosompem/bb-excel
         com.github.kbosompem/bb-excel {:mvn/version "0.0.2"}
-        }
+
+        ;; see https://clojureverse.org/t/scicloj-meeting-14-video-clojure-in-geography-with-will-cohen/6644/1
+        factual/geo {:mvn/version "3.0.1"}}
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html

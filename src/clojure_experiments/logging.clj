@@ -151,3 +151,26 @@
   (log-timbre/info "Bearer XYZ")
   )
 
+
+;;; Timbre doesn't work with internal exception classes like `SunCertPathBuilderException`
+;;; https://github.com/ptaoussanis/timbre/issues/365
+;;; NOTE: clojure.tools.logging works just fine
+(comment 
+  ;; This throws
+  ;; 1. Unhandled java.lang.IllegalAccessException
+  ;; class clojure.core$bean$fn__7278$fn__7279 cannot access class
+  ;; sun.security.validator.ValidatorException (in module java.base) because module java.base does not
+  ;; export sun.security.validator to unnamed module @ac279a9
+  (try
+    (slurp "https://untrusted-root.badssl.com/")
+    (catch Exception e
+      (taoensso.timbre/error e "ssl error")))
+
+  ;; clojure.tools.logging works
+  (try
+    (slurp "https://untrusted-root.badssl.com/")
+    (catch Exception e
+      (log/error e "ssl error")))
+
+  )
+
