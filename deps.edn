@@ -182,7 +182,10 @@
         com.github.kbosompem/bb-excel {:mvn/version "0.0.2"}
 
         ;; see https://clojureverse.org/t/scicloj-meeting-14-video-clojure-in-geography-with-will-cohen/6644/1
-        factual/geo {:mvn/version "3.0.1"}}
+        factual/geo {:mvn/version "3.0.1"}
+
+        repl-plot/repl-plot {:mvn/version "0.1.0-SNAPSHOT"}
+        }
 
  ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
  ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
