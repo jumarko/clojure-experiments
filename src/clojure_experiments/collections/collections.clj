@@ -610,3 +610,17 @@ db
 (m/partition-before odd? [1 2 3 4 5])
 ;; => ((1 2) (3 4) (5))
 
+
+;;; little puzzle: https://clojurians.slack.com/archives/C03S1KBA2/p1674541466643169
+;;; Input: (1 2 :nest 3 4 :nest 5 6 7 :nest 8)
+;;; Output: (1 2 (3 4 (5 6 7 (8))))
+(defn nest [xs]
+  xs)
+(reduced
+ (fn [acc x]
+   (if (= :nest x)
+     (conj [])
+     (conj acc x)))
+ []
+ [1 2 :nest 3 4 :nest 5 6 7 :nest 8]
+     )
