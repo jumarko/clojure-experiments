@@ -412,3 +412,6 @@
 
   .)
 
+
+;;; Traverse all threads
+(seq (.keySet (Thread/getAllStackTraces)))

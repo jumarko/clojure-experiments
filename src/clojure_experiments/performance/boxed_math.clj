@@ -100,5 +100,12 @@
 
 
 
+(set! *unchecked-math* :warn-on-boxed)
+(def ^{:tag 'long} k 100)
+(let [i k]
+  (+ i 10))
 
+(def ^:const k 100)
+(let [i k]
+  (+ i 10))
 

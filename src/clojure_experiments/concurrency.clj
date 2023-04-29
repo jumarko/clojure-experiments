@@ -355,3 +355,19 @@
   (list (var-get x) (var-get y) (var-get z)))
 ;; => (#<Var: --unnamed--> #<Var: --unnamed--> 10)
 
+
+
+;; https://clojurians.slack.com/archives/C03S1KBA2/p1672857305344059
+(defn periodically [func millis]
+  (let [p (promise)]
+    (future
+      (while (= (deref p millis :timeout) :timeout)
+        (func)))
+    #(deliver p :cancel)))
+(comment
+  (def myp (periodically (fn [] (println "Hello"))
+                         1000))
+
+  (myp)
+
+  .)

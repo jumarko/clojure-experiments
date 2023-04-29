@@ -84,3 +84,74 @@
 
 
 ;;; Vega Lite Intro 2 - Exploring Data: https://vega.github.io/vega-lite/tutorials/explore.html
+{:data {:url "seattle-weather.csv"}
+ :mark "tick"
+ :encoding {:x {:field :precipitation :type :quantitative}}}
+
+
+;; to create a histogram, we need to add encoding channel for "y"
+;; that shows aggreggated 'count'
+{:data {:url "seattle-weather.csv"}
+ :mark "bar"
+ :encoding {:x {:field :precipitation :type :quantitative
+                :bin true} ; NOTICE `:bin true`
+            :y {:aggregate "count"}}}
+
+
+;; Changes over time
+{:data {:url "seattle-weather.csv"}
+ :mark "line"
+ :encoding {:x {:timeUnit :month :field :date}
+            :y {:aggregate :mean :field :precipitation}}}
+
+;; ... let's look at avg temperatures
+;; - notice I plot both of them simultaneously using `:layer`
+{:data {:url "seattle-weather.csv"}
+ :mark "line"
+ :layer [{:mark {:type "line" :color "red"}
+          :encoding {:x {:timeUnit :month :field :date}
+                     :y {:aggregate :mean :field :temp_max :title "avg-max-temp"}}}
+         {:mark {:type "line" :color "blue"}
+          :encoding {:x {:timeUnit :month :field :date}
+                     :y {:aggregate :mean :field :temp_min :title "avg-min-temp"}}}]}
+
+
+;; Let's look at seasonal trends for each year separately => use :yearmonth 
+{:data {:url "seattle-weather.csv"}
+ :mark "line"
+ :encoding {:x {:timeUnit :yearmonth :field :date}
+            :y {:aggregate :max :field :temp_max}}}
+;; ... let's see if the max temperatur is really increasing from year to year
+{:data {:url "seattle-weather.csv"}
+ :mark "line"
+ :encoding {:x {:timeUnit :year :field :date}
+            :y {:aggregate :mean :field :temp_max}}}
+
+{:data {:url "seattle-weather.csv"}
+ :transform [{:calculate "datum.temp_max - datum.temp_min"
+              :as :temp-range}]
+ :mark "line"
+ :encoding {:x {:timeUnit :month :field :date}
+            :y {:aggregate :mean :field :temp-range}}}
+
+
+;; Finally, let's look at how different kind of weather is distributed throughout the year
+;; We'll use :month as a time unit and count number of records on the y-axis
+;; We'll assign different colors to different values of 'weather' field
+;; - when use map a field to colors in a bar chart, Vega Lite automatically
+;;   stacks the bars atop each other
+{:data {:url "seattle-weather.csv"}
+ :mark "bar"
+ :encoding {:x {:timeUnit :month :field :date #_#_:type :ordinal}
+            :y {:aggregate :count :type :quantitative}
+            :color {:field :weather :type :nominal}}}
+
+;; ... BUT the default colors don't fit well => let's customize the colors
+{:data {:url "seattle-weather.csv"}
+ :mark "bar"
+ :encoding {:x {:timeUnit :month :field :date #_#_:type :ordinal}
+            :y {:aggregate :count :type :quantitative}
+            :color {:field :weather :type :nominal
+                    :scale {:domain ["sun" "fog" "drizzle" "rain" "snow"]
+                            :range ["#e7ba52" "#c7c7c7" "#aec7e8" "#1f77b4" "#9467bd"]}
+                    :title "Weather type"}}}

@@ -56,3 +56,19 @@
 
 
   ,)
+
+;;; Handy macro for setting thread names - improves debugging
+(defmacro with-thread-name-suffix
+  "Appends `thread-name-suffix` to the current thread name (separates them with \"___unix-time-millis_<currentTimeInMillis>__\"),
+  executes the body,
+  and then restores the original thread name.
+  This can be useful for debugging - by temporarily setting thread name to something meaningful;
+  we can get a useful piece of information immediately visible in the Thread stacks."
+  [thread-name-suffix & body]
+  `(let [current-name# (.getName (Thread/currentThread))]
+     (.setName (Thread/currentThread)
+               (str current-name# "___unix-time-millis_" (System/currentTimeMillis) "__" ~thread-name-suffix))
+     (try
+       ~@body
+       ;; restore the original thread name
+       (finally (.setName (Thread/currentThread) current-name#)))))
