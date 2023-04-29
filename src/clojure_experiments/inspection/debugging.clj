@@ -1,9 +1,11 @@
-(ns clojure-experiments.debugging
+(ns clojure-experiments.inspection.debugging
   "Experiments with debugging code,
   perhaps using Cider debugger: https://docs.cider.mx/cider/debugging/debugger.html"
-  (:require [clojure.string :as str]
-            [flow-storm.api :as fs-api]
-            [sc.api :as sc]))
+  (:require
+   [clojure.string :as str]
+   [clojure.walk :as walk]
+   [flow-storm.api :as fs-api]
+   [sc.api :as sc]))
 
 
 (defn baz [z]

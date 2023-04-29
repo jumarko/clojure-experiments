@@ -1,4 +1,4 @@
-(ns clojure-experiments.portal
+(ns clojure-experiments.inspection.portal
   "https://github.com/djblue/portal"
   (:require [portal.api :as p]))
 
