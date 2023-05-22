@@ -80,5 +80,15 @@
 
 
 ;;; babashka/fs: https://github.com/babashka/fs
+(.getName (Files/getOwner (Paths/get "/var/tmp" (make-array String 0))
+                          (into-array java.nio.file.LinkOption [java.nio.file.LinkOption/NOFOLLOW_LINKS])))
+;; => "root"
+(Files/getOwner (fs/path "/Users/jumar/")
+                (into-array java.nio.file.LinkOption [java.nio.file.LinkOption/NOFOLLOW_LINKS]))
+;; => #object[sun.nio.fs.UnixUserPrincipals$User 0x32917181 "jumar"]
+
+(Files/getOwner (fs/path "/Users/jumar/")
+                (#'fs/->link-opts true))
+;; => #object[sun.nio.fs.UnixUserPrincipals$User 0x3cb03b8b "jumar"]
 
 
