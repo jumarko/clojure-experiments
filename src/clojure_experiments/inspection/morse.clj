@@ -2,11 +2,10 @@
   (:require
    [dev.nu.morse :as morse]))
 
-(defn launch []
-  (morse/launch-in-proc))
-
 (comment
   (launch)
   (morse/inspect {:a 1 :b 2})
+
+  (tap> {:a 10 :b 20})
 
   .)
