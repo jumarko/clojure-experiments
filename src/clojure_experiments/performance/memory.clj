@@ -4,7 +4,8 @@
             #_[cljol.dig9 :as cljol]
             ;; Cannot make it work with JDK 17? https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
             ;; - it does work for me
-            [jvm-alloc-rate-meter.core :as ameter])
+            [jvm-alloc-rate-meter.core :as ameter]
+            [clj-async-profiler.core :as prof])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
 (defn print-memory-layout
@@ -58,6 +59,40 @@
 ;; => "93.8 KB"  
   (mm/measure (vec (range 1000)))
 ;; => "28.8 KB"
+
+  ;; let's look at the detail structure with a smaller vector
+  (mm/measure (vec (range 10))
+              {:debug true})
+  ;;=> 
+  ;; root [clojure.lang.PersistentVector] 520 bytes (40 bytes)
+  ;; root [clojure.lang.PersistentVector$Node] 184 bytes (24 bytes)
+  ;; |  |
+  ;; |  +--edit [java.util.concurrent.atomic.AtomicReference] 16 bytes (16 bytes)
+  ;; |  |
+  ;; |  +--array [java.lang.Object[]] 144 bytes (144 bytes)
+  ;; |
+  ;; +--tail [java.lang.Object[]] 296 bytes (56 bytes)
+  ;; |
+  ;; +--0 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--1 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--2 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--3 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--4 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--5 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--6 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--7 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--8 [java.lang.Long] 24 bytes (24 bytes)
+  ;; |
+  ;; +--9 [java.lang.Long] 24 bytes (24 bytes)
+
 
 ;; `vector-of` !
 (mm/measure (apply (partial vector-of :long) (range 1000)))
@@ -415,3 +450,4 @@
 
 ;;; Traverse all threads
 (seq (.keySet (Thread/getAllStackTraces)))
+
