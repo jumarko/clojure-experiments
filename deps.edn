@@ -4,7 +4,7 @@
         org.clojure/test.check {:mvn/version "1.1.0"}
         com.gfredericks/test.chuck {:mvn/version "0.2.12"}
         dev.weavejester/medley {:mvn/version "1.5.0"}
-        ring/ring-core {:mvn/version "1.9.5"}
+        ring/ring-core {:mvn/version "1.10.0"}
         ring/ring-json {:mvn/version "0.5.1"}
         compojure/compojure {:mvn/version "1.6.2"}
         org.apache.pdfbox/pdfbox {:mvn/version "3.0.0-RC1"}
@@ -31,10 +31,10 @@
         org.clojure/java.jmx {:mvn/version "1.0.0"}
         me.raynes/conch {:mvn/version "0.8.0"}
         tupelo/tupelo {:mvn/version "21.09.07"}
-        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.3"}
-        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.3"}
+        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.4"}
+        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.4"}
         com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "0.1.1"}
-        com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.2.1"}
+        com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.3.0"}
         com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "0.1.4"}
         criterium/criterium {:mvn/version "0.4.6"}
         org.clojars.pntblnk/clj-ldap {:mvn/version "0.0.17"}
@@ -73,7 +73,7 @@
         com.taoensso/tufte {:mvn/version "2.2.0"}
         com.taoensso/timbre {:mvn/version "5.1.2"}
         com.taoensso/encore {:mvn/version "3.45.0"}
-        org.clojure/tools.logging {:mvn/version "1.1.0"}
+        org.clojure/tools.logging {:mvn/version "1.2.4"}
         org.apache.logging.log4j/log4j-api {:mvn/version "2.14.1"}
         org.apache.logging.log4j/log4j-core {:mvn/version "2.14.1"}
         org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.14.1"}
@@ -124,6 +124,8 @@
         ;; SubnetUtils is useful for IP range detection: https://jkoder.com/convert-cidr-notation-to-ip-range-in-java/
         ;; https://commons.apache.org/proper/commons-net/apidocs/index.html
         commons-net/commons-net {:mvn/version "3.8.0"}
+
+        commons-io/commons-io {:mvn/version "2.13.0"}
 
         ;; loopr macro: https://aphyr.com/posts/360-loopr-a-loop-reduction-macro-for-clojure
         ;; https://github.com/aphyr/dom-top/blob/04d0a688262a3671880e83ce0f35882bd8fa2ff9/src/dom_top/core.clj#L665
@@ -185,45 +187,83 @@
         factual/geo {:mvn/version "3.0.1"}
 
         repl-plot/repl-plot {:mvn/version "0.1.0-SNAPSHOT"}
+
+        ;; statecharts / state machines: https://github.com/lucywang000/clj-statecharts
+        clj-statecharts/clj-statecharts {:mvn/version "0.1.7"}
+
+        ;; to compile java code - see "Clojure goes brr" talk
+        virgil/virgil {:mvn/version "0.1.9"}
+
+        io.github.nubank/morse {:git/tag "v2023.04.27.01" :git/sha "7a85e46"}
+
+        ;; remote debugging with Clojure Debugging Toolkit: http://georgejahad.com/clojure/cdt.html
+        ;; - see also https://github.com/georgejahad/cdt
+        cdt/cdt {:mvn/version "1.2.6.2"}
+
+
+        ;;; Jetty benchmark: https://clojurians.slack.com/archives/C03S1KBA2/p1691305650647229
+        ;;; see `clojure-experiments.performance.jetty-c10k-problem`
+        ;;; also standalone in /Users/jumar/workspace/clojure/performance/c10k-problem
+        metosin/jsonista               {:mvn/version "0.3.7"}
+        metosin/malli                  {:mvn/version "0.11.0"}
+        metosin/reitit                 {:mvn/version "0.7.0-alpha5"}
+        metosin/reitit-dev             {:mvn/version "0.7.0-alpha5"}
+        metosin/ring-swagger-ui        {:mvn/version "4.18.1"}
+        ring-cors/ring-cors            {:mvn/version "0.1.13"}
+        ;; https://github.com/sunng87/ring-jetty9-adapter/blob/master/project.clj
+        info.sunng/ring-jetty9-adapter {:mvn/version "0.22.1"}
+        ;; doesn't work with Jetty 12 :(
+        ;; org.eclipse.jetty/jetty-server {:mvn/version "12.0.0.beta4"}
+        org.clojure/tools.cli          {:mvn/version "1.0.219"}
+        ;; logs to stderr by default - see resources/jetty-logging.properties
+        org.eclipse.jetty/jetty-slf4j-impl {:mvn/version "11.0.15"}
+
         }
 
- ;; Make sure to configure this alias in `cider-clojure-cli-aliases` - see .dir-locals.el
- ;; and https://practical.li/spacemacs/clojure-projects/project-configuration.html
-
  :aliases
- ;; Run `clj -M:cider-repl`, then use `cider-connect`
- {:cider-repl {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
-                            cider/cider-nrepl {:mvn/version "0.29.0"}
-                            refactor-nrepl/refactor-nrepl {:mvn/version "3.6.0"}
-                            io.github.nubank/morse {:git/tag "v2023.04.27.01" :git/sha "7a85e46"}}
-               :main-opts ["-m" "nrepl.cmdline" "--middleware" "[refactor-nrepl.middleware/wrap-refactor,cider.nrepl/cider-middleware]"]
-               ;; this is needed for datalevin: https://github.com/juji-io/datalevin/blob/master/doc/install.md
-               :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
-                          "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"]
-               }
-   ;; To use libpython-clj2 with jdk-17 you need to enable the foreign module - see https://github.com/clj-python/libpython-clj/blob/6e7368b44aaabddf565a5bbf3a240e60bf3dcbf8/deps.edn#L10
-  :jdk-17 {:jvm-opts ["--add-modules" "jdk.incubator.foreign"
-                      "--enable-native-access=ALL-UNNAMED"]}
-  :dev {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
-              ;; use -Xmx or use MaxRAMPercentage
-                   #_"-XX:MaxRAMPercentage=5"
-                   "--enable-preview"
-                   "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" ; this can be used with http://georgejahad.com/clojure/cdt.html too
-                   "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
-                   "-Djdk.attach.allowAttachSelf=true"
-              ;; to make clj-memory-meter work with JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
-                   "--illegal-access=permit"
+ {
+  :dev
+  {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
+
+              ;; For example Virtual Threads
+              "--enable-preview"
+
+              ;; this can be used with http://georgejahad.com/clojure/cdt.html too
+              ;; don't use this by default because you won't be able to run multiple repls
+              ;; If needed, it's preferable to start the repl and pass this via `-J`
+              ;;     clj -J"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" -M:dev:cider-repl
+              ;; "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+              "-Djol.tryWithSudo=true"  ;; cljol: # WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scopejk 1j
+
+              ;; For clj-memory-meter - see https://gist.github.com/alexander-yakushev/63515455759e66bfa19dbaa126fccf56
+              "-Djdk.attach.allowAttachSelf=true"
+
+              ;; see https://krzysztofslusarski.github.io/2022/12/12/async-manual.html#how-to-cl
+              "-XX:+UnlockDiagnosticVMOptions" "-XX:+DebugNonSafepoints"
+
+              ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
+              "-XX:+ShowCodeDetailsInExceptionMessages"
+
+              ;; To use libpython-clj2 with jdk-17 you need to enable the foreign module - see https://github.com/clj-python/libpython-clj/blob/6e7368b44aaabddf565a5bbf3a240e60bf3dcbf8/deps.edn#L10
+              "--enable-native-access=ALL-UNNAMED"
+
+                   ;;; module exports
+
+              ;; this is needed for datalevin: https://github.com/juji-io/datalevin/blob/master/doc/install.md
+              "--add-opens=java.base/java.nio=ALL-UNNAMED"
+              "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+
               ;; to access Hotspot Severicability API - see https://stackoverflow.com/questions/55698109/has-this-method-ever-been-called-inside-a-running-jvm
-                   "--add-modules=jdk.hotspot.agent"
-                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"
-                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED"
-                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
-                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
-                   "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
+              "--add-modules=jdk.hotspot.agent"
+              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED"
+              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED"
+              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED"
+              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED"
+              "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.classfile=ALL-UNNAMED"
+
               ;; to access jdk.internal.misc.VM#maxDirectMemory
               ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
-                   "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
-              ;; for helpful NPE messages: https://openjdk.java.net/jeps/358
-                   "-XX:+ShowCodeDetailsInExceptionMessages"
-              ;; To enable guardrails: https://github.com/fulcrologic/guardrails#quick-start
-                   "-Dguardrails.enabled"]}}}
+              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
+
+              ]}}}

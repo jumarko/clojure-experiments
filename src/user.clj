@@ -1,5 +1,6 @@
 (ns user
   (:require
+   [dev.nu.morse :as morse]
    [flow-storm.api :as fs-api]
    [portal.api :as p]))
 
@@ -15,4 +16,9 @@
 (add-tap #'p/submit)
 
 .)
+
+;;; morse:`clojure-experiments.inspection.morse`
+;; UPDATE: I do not use morse
+;; (morse/launch-in-proc)
+
 
