@@ -68,8 +68,6 @@
   ;; String.java: 1811  java.lang.String/getBytes
   ;; REPL:   57  clojure-experiments.strings/eval25912
 
-
-
   .)
 
 
