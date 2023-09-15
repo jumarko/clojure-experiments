@@ -1,5 +1,5 @@
 (ns clojure-experiments.transducers.transducers
-  (:require [clojure.core.async :refer [>! <! <!!] :as async]
+  (:require [clojure.core.async :refer [>! <! <!! >!!] :as async]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [net.cgrand.xforms :as x]))
@@ -807,3 +807,53 @@
                 (caduction zs)])))
 ;; it's usually somewhere between 10 and 20 msecs
 ;; "Elapsed time: 0.108906 msecs"
+
+
+;;; My mental model of transducers https://blog.danieljanus.pl/2023/09/09/transducers/
+;;; Using core.async as an example
+
+(defn transformed-belt [xf]
+  (let [ch (async/chan 1 xf)]
+    (async/thread
+      (loop []
+        (when-some [value (<!! ch)]
+          (println "Value:" (pr-str value)))
+        (recur)))
+    ch))
+
+;; play with it!
+(comment
+(def b (transformed-belt (map inc)))
+;; Prints 'Value: 3'
+(>!! b 2)
+;; Prints 'Value: 43'
+(>!! b 42)
+(async/close! b)
+
+;; more complexed example
+(def b (transformed-belt (comp (map inc)
+                               (remove odd?))))
+;; Prints 'Value: 2'
+(>!! b 1)
+;; Prints nothing because the result after incrementing is an odd number
+(>!! b 2)
+;; Prints 'Value: 4'
+(>!! b 3)
+(async/close! b)
+
+;; Even more fun!
+(def b (transformed-belt (partition-all 3)))
+;; Prints nothing
+(>!! b 1)
+;; Still nothing ...
+(>!! b 2)
+;; Prints 'Value: [1 2 3]'
+(>!! b 3)
+;; Prints nothing
+(>!! b 4)
+;; Prints nothing
+(>!! b 5)
+;; Prints 'Value: [4 5]'
+(async/close! b)
+
+)
