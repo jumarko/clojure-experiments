@@ -767,3 +767,36 @@ hello
 ;; Execution error - invalid arguments to clojure-experiments.spec/hello at (form-init8139173344950676957.clj:766).
 ;; 10 - failed: string? at: [:a]
 
+
+;;; Optional keys
+(s/def ::optional (s/keys :req-un [::optional-required]))
+(s/fdef optional-keys-in-args
+  :args (s/cat :arg (s/keys :req-un [::required]
+                            :opt-un [::optional])))
+(defn optional-keys-in-args[arg]
+  100)
+
+(comment
+  ;; Missing required key:
+  (optional-keys-in-args {})
+  ;; Problems: 
+  ;; val: {}
+  ;; in: [0]
+  ;; failed: (contains? % :required)
+  ;; at: [:arg]
+
+  ;; Required key ok:
+  (optional-keys-in-args {:required true})
+  ;; => 100
+
+  ;; The optional key is passed but fails the spec
+  (optional-keys-in-args {:required true :optional {:random 101}})
+  ;; Problems: 
+  ;; val: {:random 101}
+  ;; in: [0 :optional]
+  ;; failed: (contains? % :optional-required)
+  ;; spec: :clojure-experiments.spec/optional
+  ;; at: [:arg :optional]
+
+
+  .)

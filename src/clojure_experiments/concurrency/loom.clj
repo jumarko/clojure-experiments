@@ -4,7 +4,8 @@
 
   This requires JDK 19 with `--enable-preview`."
   (:require [clojure.core.async :as async])
-  (:import (java.util.concurrent Executors)))
+  (:import (java.util.concurrent Executors
+                                 ThreadFactory)))
 
 ;; see https://download.java.net/java/early_access/loom/docs/api/java.base/java/lang/Thread.html
 (defn thread-factory [name]
@@ -108,3 +109,24 @@
               (recur)))
 
   )
+
+
+;;; Virtual Threads executor with limited number of virtual threads (throttling)
+;; Motivation from Clojurians slack: https://clojurians.slack.com/archives/CLX41ASCS/p1691652254406739
+;;   Been playing around with Executors/newVirtualThreadPerTaskExecutor in babashka,  and it works great.
+;;   Does anyone have any reference implementation on how to constrain the amount of concurrent threads when using virtual threads?
+;;   Like a fixed thread pool, just with virtual ones.
+;;   Reason I'm asking is because I'm working against an API that limits the amount of concurrent requests being done from one client
+
+(defn fixed-virtual-thread-executor [thread-limit]
+  (Executors/newFixedThreadPool)
+  )
+
+;; maybe use `seque`?
+
+(defonce ^:private ^java.util.concurrent.ArrayBlockingQueue my-tapq (java.util.concurrent.ArrayBlockingQueue. 1024))
+(dotimes [i 1026]
+  (println "Attempt "i)
+  ()
+  )
+

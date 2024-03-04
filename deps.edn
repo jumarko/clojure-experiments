@@ -31,11 +31,11 @@
         org.clojure/java.jmx {:mvn/version "1.0.0"}
         me.raynes/conch {:mvn/version "0.8.0"}
         tupelo/tupelo {:mvn/version "21.09.07"}
-        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "0.3.4"}
-        com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.4"}
-        com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "0.1.1"}
-        com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.3.0"}
-        com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "0.1.4"}
+        com.clojure-goes-fast/clj-java-decompiler {:mvn/version "RELEASE"}
+        com.clojure-goes-fast/clj-async-profiler {:mvn/version "RELEASE"}
+        com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "RELEASE"}
+        com.clojure-goes-fast/clj-memory-meter {:mvn/version "RELEASE"}
+        com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "RELEASE"}
         criterium/criterium {:mvn/version "0.4.6"}
         org.clojars.pntblnk/clj-ldap {:mvn/version "0.0.17"}
         vvvvalvalval/scope-capture {:mvn/version "0.3.3"}
@@ -177,7 +177,7 @@
         ;; https://github.com/clj-python/libpython-clj
         ;; To use libpython-clj2 with jdk-17 you need to enable the foreign module - see https://github.com/clj-python/libpython-clj/blob/6e7368b44aaabddf565a5bbf3a240e60bf3dcbf8/deps.edn#L10
         ;; => DOESN'T WORK at the moment - see `clojure-experiments.stats.python.libpython`
-        ;; clj-python/libpython-clj {:mvn/version "2.021"}
+        ;; clj-python/libpython-clj {:mvn/version "2.025"}
 
         ;; simple library to read excel sheets with Clojure
         ;; https://github.com/kbosompem/bb-excel
@@ -218,6 +218,9 @@
         ;; logs to stderr by default - see resources/jetty-logging.properties
         org.eclipse.jetty/jetty-slf4j-impl {:mvn/version "11.0.15"}
 
+        ;; tesseract's java bindings for OCR / image recognition: https://github.com/nguyenq/tess4j
+        ;; - recommended here: https://clojurians.slack.com/archives/CQT1NFF4L/p1704717615285299
+        net.sourceforge.tess4j/tess4j {:mvn/version "5.10.0"}
         }
 
  :aliases
