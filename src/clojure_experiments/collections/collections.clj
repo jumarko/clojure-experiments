@@ -136,7 +136,7 @@
 (require '[clojure.set :as set])
 
 (def info
-  [{:year 2017
+  [{:year 2015
     :month 4
     :data "x"}
    {:year 2017
@@ -163,36 +163,14 @@
            {:entity id
             :attribute k
             :value v})))
-db
-;; partial inspection =>:
-;;    {{:attribute :month}
-;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
-;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}
-;;       {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}},
 
-;;     {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month}
-;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}},
-
-;;     {:value 7} #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}},
-
-;;     {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month}
-;;     #{{:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}},
-
-;;     {:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
-;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}},
-
-;;     {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53"}
-;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :month, :value 7}
-;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :year, :value 2017}
-;;       {:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :data, :value "z"}},
-
-;;     {:attribute :data, :value "z"}
-;;     #{{:entity #uuid "d8afcc50-87b3-49a4-ba80-678c23aeab53", :attribute :data, :value "z"}},
-
-;;     ...
-;;     {:value 4}
-;;     #{{:entity #uuid "994a2626-85c8-440a-a85c-c11def76f2c1", :attribute :month, :value 4}
-;;       {:entity #uuid "4320e80e-9b49-4ef6-85be-816d57e73531", :attribute :month, :value 4}}}
+(get db {:attribute :year :value 2017})
+;; => #{{:entity #uuid "934068ab-c5ac-469d-8ac8-279cb1d6b9d7",
+;;       :attribute :year,
+;;       :value 2017}
+;;      {:entity #uuid "9df79204-4b28-45f2-a97d-bde3dbe318b1",
+;;       :attribute :year,
+;;       :value 2017}}
 
 (for [{:keys [entity attribute value]} (get db {:attribute :month :value 4})
       {data :value} (get db {:entity entity :attribute :data})]
@@ -616,11 +594,10 @@ db
 ;;; Output: (1 2 (3 4 (5 6 7 (8))))
 (defn nest [xs]
   xs)
-(reduced
+(reductions
  (fn [acc x]
    (if (= :nest x)
      (conj [])
      (conj acc x)))
  []
- [1 2 :nest 3 4 :nest 5 6 7 :nest 8]
-     )
+ [1 2 :nest 3 4 :nest 5 6 7 :nest 8])
