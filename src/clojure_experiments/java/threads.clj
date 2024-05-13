@@ -72,3 +72,23 @@
        ~@body
        ;; restore the original thread name
        (finally (.setName (Thread/currentThread) current-name#)))))
+
+
+(defn dump-thread-stacks
+  "Prints thread stacks for all running threads into stdout as per `Thread/getAllStackTraces`;
+  See https://docs.oracle.com/en/java/javase/17/docs/api/java.management/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean,boolean,int)
+  and ThreadInfo: https://docs.oracle.com/en/java/javase/21/docs/api/java.management/java/lang/management/ThreadInfo.html"
+  []
+  (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)
+        thread-infos (.dumpAllThreads thread-mbean true true)]
+    thread-infos))
+
+(defn print-thread-stacks
+  "As `dump-thread-stacks` but prints them via `println` instead of returning."
+  []
+  (run! println (dump-thread-stacks)))
+
+(comment
+  (print-thread-stacks)
+  ;;
+  )
