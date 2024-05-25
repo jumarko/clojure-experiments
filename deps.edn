@@ -1,4 +1,4 @@
-{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
+{:deps {org.clojure/clojure {:mvn/version "1.12.0-alpha12"}
         ;; try older clojure version if you wish
         ;; org.clojure/clojure {:mvn/version "1.10.3"}
         org.clojure/test.check {:mvn/version "1.1.0"}
@@ -221,6 +221,9 @@
         ;; tesseract's java bindings for OCR / image recognition: https://github.com/nguyenq/tess4j
         ;; - recommended here: https://clojurians.slack.com/archives/CQT1NFF4L/p1704717615285299
         net.sourceforge.tess4j/tess4j {:mvn/version "5.10.0"}
+
+        ;; https://github.com/aphyr/clj-antlr
+        clj-antlr/clj-antlr {:mvn/version "0.2.13"}
         }
 
  :aliases
