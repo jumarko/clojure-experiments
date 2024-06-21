@@ -9,3 +9,12 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+*.iml
+.dea/
+.lsp/
+.clerk/
+.classpath
+.cache/
+target/
+.cpcache
+.clj-kondo/
