@@ -1,8 +1,10 @@
 (ns clojure-experiments.concurrency
   "Namespace related to concurrency and parallelism features of Clojure and related libraries."
-  (:require [clojure.java.io :as io]
-            [cheshire.core :as json]
-            [taoensso.timbre :as log]))
+  (:require
+   [clojure.java.io :as io]
+   [clj-http.client :as client]
+   [cheshire.core :as json]
+   [taoensso.timbre :as log]))
 
 ;;; How to install UncaughtExceptionHandler for futures?
 (Thread/setDefaultUncaughtExceptionHandler
@@ -80,7 +82,7 @@
 
 (defn map-throttled
   "like `map` but never realizes more than `max-n` elements ahead of the consumer of the return value.
-  useful for cases like an rate limited asynchronous http api (e.g. startquery aws cloudwatch insights api).
+  useful for cases like an rate limited asynchronous client api (e.g. startquery aws cloudwatch insights api).
   uses `re-chunk`."
   [max-n f coll]
   (map f (re-chunk max-n coll)))
@@ -371,3 +373,103 @@
   (myp)
 
   .)
+
+
+;;; Clojure Slack discussion about map, future, and HTTP api calls with respect to chunking https://clojurians.slack.com/archives/C053AK3F9/p1718957395463689 
+(defn parallel-requests
+  []
+  (let [urls (->> (http/get "https://pokeapi.co/api/v2/pokemon-species?limit=100"
+                            {:as :json})
+                  :body :results
+                  (map :url))]
+
+    (->> urls
+         ;; notice how the parallism of this function depends on chunki-ness of `map`
+         (map (fn [url]
+                (future
+                  (println "Fetching URL: " url)
+                  (-> (http/get url {:as :json})
+                      :body
+                      (select-keys [:name :shape])))))
+         (map (fn [f]
+                (println "Derefing future.")
+                (deref f)))
+         (doall))))
+
+(comment
+  ;; Set log level to INFO before calling this
+  (parallel-requests)
+  ;; In the output, you will see ~32 requests fired, then derefed.
+  ;; Then the next chunk is processed - 32 requests sent, then derefed.
+  ;; Etc.
+  ;; ------------------------------------------------------------------------
+;;   Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/1/
+;; Fetching URL: Fetching URL:   https://pokeapi.co/api/v2/pokemon-species/3/https://pokeapi.co/api/v2/pokemon-species/2/
+
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/7/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/9/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/6/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/10/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/5/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/4/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/8/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/11/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/12/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/13/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/14/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/15/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/16/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/17/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/18/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/19/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/20/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/22/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/21/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/23/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/24/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/25/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/26/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/27/
+;; Fetching URL: Fetching URL:   https://pokeapi.co/api/v2/pokemon-species/29/
+;; https://pokeapi.co/api/v2/pokemon-species/28/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/30/
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/31/
+;; Derefing future.
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/32/
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+;; Derefing future.
+  ;; First chunk was processed, let's continue with the next one
+;; Fetching URL:  https://pokeapi.co/api/v2/pokemon-species/33/
+  ;; ...
+  ;;
+  )
+
