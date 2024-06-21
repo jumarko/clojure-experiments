@@ -225,6 +225,16 @@
         thread-id (.getId t)]
     (.getThreadAllocatedBytes thread-mbean thread-id)))
 
+;; Bytes allocated by all threads - added in JDK 21: https://bugs.openjdk.org/browse/JDK-8304074
+;; NOTE: this includes memory allocated by terminated threads
+(defn all-threads-allocated-bytes
+  "Returns an approximation of the total number of bytes allocated in the Java heap by the JVM process."
+  []
+  (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)]
+    (.getTotalThreadAllocatedBytes thread-mbean)))
+#_(all-threads-allocated-bytes)
+;; => 4243494416
+
 (defn allocated-bytes
   [f]
   (let [thread (Thread/currentThread)
