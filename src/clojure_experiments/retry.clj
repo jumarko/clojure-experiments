@@ -30,7 +30,8 @@
 
 ;;; Emil's retry attempt
 (defn- exponential-backoff [x]
-  (math/pow 2 x))
+  (* (math/pow 2 x)
+     1000))
 (exponential-backoff 3)
 
 (defn retry-loop
@@ -63,3 +64,21 @@
                          true)))
          first)))
 
+;; Another alternative
+(defn retry
+  "Because of the IP address whitelisting required to access staging, we need to
+  wait for the IP whitelisting to complete. It takes about ~30 seconds until it
+  has propagated. Retrying with exponential backoff."
+  [fn request-url request retries]
+  (->> (apply list (range retries))
+       (map #(doto (int (exponential-backoff %)) (Thread/sleep) (println)))
+       (second)
+       #_(some #(let [result (fn request-url request)]
+                (if (= 403 (result :status))
+                  (println "Got status 403 - expected while waiting for staging firewall to open - trying again in " %)
+                  result)))))
+(comment
+  (retry http/get "https://staging.codescene.io"
+         {:throw-exceptions? false} 30)
+  ;;
+  )
