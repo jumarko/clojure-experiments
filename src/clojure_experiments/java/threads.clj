@@ -1,4 +1,5 @@
-(ns clojure-experiments.java.threads)
+(ns clojure-experiments.java.threads
+  (:require [clojure.string :as str]))
 
 ;; you can change thread stack size if JVM supports it:
 ;; - https://stackoverflow.com/questions/64829317/how-to-extend-stack-size-without-access-to-jvm-settings
@@ -77,16 +78,47 @@
 (defn dump-thread-stacks
   "Prints thread stacks for all running threads into stdout as per `Thread/getAllStackTraces`;
   See https://docs.oracle.com/en/java/javase/17/docs/api/java.management/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean,boolean,int)
-  and ThreadInfo: https://docs.oracle.com/en/java/javase/21/docs/api/java.management/java/lang/management/ThreadInfo.html"
+  and ThreadInfo: https://docs.oracle.com/en/java/javase/21/docs/api/java.management/java/lang/management/ThreadInfo.html
+
+  NOTE: ThreadInfo class offers convenient string representation (.toString) which you can use to print basic thread information
+  and a _subset_ of threads stacks (max 8 elements).
+  See `thread-info-str` if you need a complete thread stack.
+"
   []
   (let [thread-mbean (java.lang.management.ManagementFactory/getThreadMXBean)
         thread-infos (.dumpAllThreads thread-mbean true true)]
     thread-infos))
 
+(defn thread-info-str
+  "Returns string representation of ThreadInfo.
+  Similar to ThreadInfo#toString but includes the whole stacktrace.
+  See also
+  - ThreadInfo.toString always cuts off the stack trace after 8 elements: https://bugs.openjdk.org/browse/JDK-8019366
+  - ThreadInfo#toString impl: https://github.com/openjdk/jdk/blob/master/src/java.management/share/classes/java/lang/management/ThreadInfo.java#L676"
+  [^java.lang.management.ThreadInfo thread-info]
+  (str thread-info)
+  (let [{:keys [stackTrace threadName threadId daemon priority threadState lockName lockOwnerName lockOwnerId suspended inNative] :as ti}
+        (bean thread-info)
+        header (format "\"%s\"%s prio=%s Id=%s %s%s%s%s%s\n"
+                       threadName
+                       (if daemon " daemon" "")
+                       priority threadId threadState
+                       (if lockName (str " on " lockName)
+                           "")
+                       (if lockOwnerName (format " owned by \"%s\" Id=%s" lockOwnerName lockOwnerId)
+                           "")
+                       (if suspended " (suspended)" "")
+                       (if inNative " (in native)" ""))
+        stack (str/join "\n\t " stackTrace)]
+    (str header "\n" stack)))
+
 (defn print-thread-stacks
-  "As `dump-thread-stacks` but prints them via `println` instead of returning."
+  "As `dump-thread-stacks` but prints them via `println`.
+  Notice that this means only limited stacks are printed (max 8 stack trace elements)
+  - see https://bugs.openjdk.org/browse/JDK-8019366
+  "
   []
-  (run! println (dump-thread-stacks)))
+  (run! println (mapv thread-info-str (dump-thread-stacks))))
 
 (comment
   (print-thread-stacks)
