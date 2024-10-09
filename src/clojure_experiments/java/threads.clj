@@ -1,5 +1,6 @@
 (ns clojure-experiments.java.threads
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str])
+  (:import [java.util.concurrent Executors]))
 
 ;; you can change thread stack size if JVM supports it:
 ;; - https://stackoverflow.com/questions/64829317/how-to-extend-stack-size-without-access-to-jvm-settings
@@ -124,3 +125,23 @@
   (print-thread-stacks)
   ;;
   )
+
+;;; https://clojurians.slack.com/archives/C03S1KBA2/p1719422755625319
+;;; Performance difference when threads reused immediately VS when sleeping between tasks
+;;; They used fixed thread pool: https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html#newFixedThreadPool(int)
+(defn fixed-thread-pool [n]
+  (Executors/newFixedThreadPool n))
+
+(comment
+  ;; NOTE: this doesn't make much sense - I would have to be smarter when submitting and measuring
+(let [ftp (fixed-thread-pool 6)]
+  (mapv (fn [i]
+          (future (.submit ftp
+                           (fn []
+                             (Thread/sleep (rand-int 5))
+                             (println "Done: " i)))))
+        (range 20)))
+
+  ;;
+  )
+

@@ -77,3 +77,32 @@
 (defrecord FooImpl [] Foo (foo [x] :impl))
 (satisfies? Foo (->FooImpl))
 ;; => true
+
+
+;;; extenders: https://clojuredocs.org/clojure.core/extenders
+(defprotocol P (id [this]))
+(extend-protocol P
+  String
+  (id [this] this)
+  clojure.lang.Symbol
+  (id [this] (name this))
+  clojure.lang.Keyword
+  (id [this] (name this)))
+
+(extenders P)
+;; => (java.lang.String clojure.lang.Symbol clojure.lang.Keyword)
+
+;; unfortunately, it doesn't cover defrecord and deftype
+(defrecord PP []
+    P
+    (id [this] (str this ":" this)))
+
+(deftype PPP []
+    P
+  (id [this] (str this ":" this ":" this)))
+
+(extenders P)
+;; => (java.lang.String clojure.lang.Symbol clojure.lang.Keyword)
+
+(extends? P PPP)
+;; => true
