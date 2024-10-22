@@ -1,4 +1,4 @@
-(ns clojure-experiments.books.clojure-brain-teasers.puzzle01
+(ns clojure-experiments.books.clojure-brain-teasers.01-equality
   "See also
   - https://clojure.org/reference/data_structures#Numbers")
 
@@ -9,7 +9,7 @@
 ;; => true
 
 ;;; further checks
-(= 1 1N)
+(= 1 1N) ; notice that bigint and int are equal!
 ;; => true
 
 (= 1.0 1.0M)
