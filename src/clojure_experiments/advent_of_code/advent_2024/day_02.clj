@@ -34,6 +34,8 @@
 ;; => 371
 
 ;; https://stackoverflow.com/questions/1394991/clojure-remove-item-from-vector-at-a-specified-location
+;; See also https://gitlab.com/maximoburrito/advent2024/-/blob/main/src/day02/main.clj?ref_type=heads#L27-29
+;; for alternative implementation using (concat (take idx ...) (drop (inc idx) ...))
 (defn remove-by-index
   "Removes element at index `idx` from vector `avec`."
   [avec idx]
