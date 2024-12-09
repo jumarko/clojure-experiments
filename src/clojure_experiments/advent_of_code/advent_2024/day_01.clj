@@ -36,7 +36,6 @@
 (part1)
 ;; => 2344935
 
-
 (defn part2
   "Determine how often each number from the left list appears in the right list.
   Calculate 'similarity score' by summing products of each number from the left list
