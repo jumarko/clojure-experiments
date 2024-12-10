@@ -70,10 +70,10 @@
         clj-http/clj-http {:mvn/version "3.12.3"}
         com.palletops/stevedore {:mvn/version "0.8.0-beta.7"}
         com.taoensso/telemere {:mvn/version "1.0.0-RC1"}
-        com.taoensso/timbre {:mvn/version "5.1.2"}
-        com.taoensso/tufte {:mvn/version "2.2.0"}
-        com.taoensso/truss {:mvn/version "1.8.0"}
-        com.taoensso/encore {:mvn/version "3.45.0"}
+        com.taoensso/timbre {:mvn/version "6.6.1"}
+        com.taoensso/tufte {:mvn/version "2.6.3"}
+        com.taoensso/truss {:mvn/version "1.12.0"}
+        com.taoensso/encore {:mvn/version "3.132.0"}
         org.clojure/tools.logging {:mvn/version "1.2.4"}
         org.apache.logging.log4j/log4j-api {:mvn/version "2.14.1"}
         org.apache.logging.log4j/log4j-core {:mvn/version "2.14.1"}
