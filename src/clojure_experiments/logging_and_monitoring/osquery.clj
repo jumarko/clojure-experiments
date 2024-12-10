@@ -1,4 +1,4 @@
-(ns clojure-experiments.monitoring.osquery
+(ns clojure-experiments.logging-and-monitoring.osquery
   "Query your devices like a database.
   Motivated by https://yogthos.net/posts/2022-11-26-nREPL-system-interaction.html
   See https://www.osquery.io/ and https://www.osquery.io/schema.

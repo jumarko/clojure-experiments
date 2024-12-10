@@ -1,4 +1,4 @@
-(ns clojure-experiments.monitoring.jvm
+(ns clojure-experiments.logging-and-monitoring.jvm
   "Various snippets and 'tools' for monitoring/debugging running JVM."
   (:import (sun.jvmstat.monitor MonitoredHost
                                 VmIdentifier)))

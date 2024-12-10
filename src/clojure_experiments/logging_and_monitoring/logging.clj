@@ -1,4 +1,4 @@
-(ns clojure-experiments.logging
+(ns clojure-experiments.logging-and-monitoring.logging
   (:require [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.impl :as log-impl]
