@@ -19,6 +19,11 @@
 (parse-muls "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))")
 ;; => [[2 4] [5 5] [11 8] [8 5]]
 
+(defn calculate [muls]
+  (->> muls
+   (map #(apply * %))
+   (apply +)))
+
 (defn part1
   "Scan input for valid 'mul' instructions which have the form `mul(x,y)`,
   where x and y are 1-3 digit integers.
@@ -26,11 +31,10 @@
   []
   (->> (read-input)
        (mapcat parse-muls)
-       (map #(apply * %))
-       (apply +)))
+       calculate))
 
-(part1)
-;; => 183380722
+(assert (= 183380722
+           (part1)))
 
 ;;; Part2
 ;;; Can I solve this using regex again? Efficiently?
@@ -65,8 +69,7 @@
        ;; activated on the previous line and thus would erroneously include more `mul()` instructions than desired.
        (apply str)
        (parse-muls2)
-       (map #(apply * %))
-       (apply +)))
-;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2
-(part2)
-;; => 82733683
+       calculate))
+
+(assert (= 82733683
+           (part2)))
