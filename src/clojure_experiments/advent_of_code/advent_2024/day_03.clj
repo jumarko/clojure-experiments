@@ -45,10 +45,10 @@
 
 (defn parse-muls2
   "Parses all multiplications in given string, ignoring those those preceded by don't."
-  [program-line]
+  [program]
   ;; each line is split into segments delimited by "do" or "don't";
   ;; and we ignore segments starting with "don't"
-  (->> (str/split program-line do-dont-regex)
+  (->> (str/split program do-dont-regex)
        (remove #(str/starts-with? % "don't()"))
        (mapcat parse-muls)))
 (parse-muls2 my-line)
@@ -60,9 +60,13 @@
   xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
   []
   (->> (read-input)
-       (mapcat parse-muls2)
+       ;; combine the whole program into a single line - this is also why there's no `mapcat` below (when calling parse-muls2)
+       ;; this is necessary to make parse-muls2 work properly - otherwise it would automatically forget don't instructions
+       ;; activated on the previous line and thus would erroneously include more `mul()` instructions than desired.
+       (apply str)
+       (parse-muls2)
        (map #(apply * %))
        (apply +)))
 ;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2;; => #'clojure-experiments.advent-of-code.advent-2024.day-03/part2
 (part2)
-;; => 83546082
+;; => 82733683
