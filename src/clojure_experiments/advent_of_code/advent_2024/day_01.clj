@@ -14,16 +14,14 @@
         sorted2 (sort list2)]
     (mapv #(abs (- %1 %2)) sorted1 sorted2)))
 
-(defn- transpose [avec]
-  (apply mapv vector avec))
-(transpose [[1 2] [3 4] [10 20]])
+(u/transpose [[1 2] [3 4] [10 20]])
 ;; => [[1 3 10] [2 4 20]]
 
 (defn read-input-as-lists-of-numbers []
   (let [input (u/read-input "01")]
     (->> input
          (mapv (fn [line] (mapv parse-long (str/split line #"\s+"))))
-         (transpose))))
+         (u/transpose))))
 
 (defn part1
   "Sum up all the distances between the two lists from the input,

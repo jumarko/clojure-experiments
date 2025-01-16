@@ -7,3 +7,6 @@
   (->> (slurp (io/reader (format "src/clojure_experiments/advent_of_code/advent_2024/day_%s.txt"
                                  day-num)))
        str/split-lines))
+
+(defn transpose [avec]
+  (apply mapv vector avec))
