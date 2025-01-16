@@ -225,7 +225,12 @@
 
         ;; https://github.com/aphyr/clj-antlr
         clj-antlr/clj-antlr {:mvn/version "0.2.13"}
+
+        ;; tree-sitter: https://github.com/tree-sitter/java-tree-sitter
+        ;; - see also https://tree-sitter.github.io/tree-sitter/using-parsers/1-getting-started.html
+        io.github.tree-sitter/jtreesitter {:mvn/version "0.24.1"}
         }
+
 
  :aliases
  {
