@@ -18,13 +18,14 @@
   which you can specify via `TREE_SITTER_HOME` env variable
   (you can also change the hardcoded value down below).
 
-
   Additionally, you need Java binding for Tree-sitter, that is https://github.com/tree-sitter/java-tree-sitter
   This is added as a dependency in deps.edn and you do not need to take any further action.
-  NOTE: the library requires JDK 22+.
+  The library requires JDK 22+.
 
-
-  Example: java"
+  NOTE: It should also be possible to install all the tree-sitter's dynamic libs system-wide
+  or in `java.library.path`, but this is not what this code is for
+  (but you could still use `load-lib` in that scenario and, at least, get some inspiration from `load-treesitter-lib`).
+  "
   (:import
    [io.github.treesitter.jtreesitter Language Parser]
    ;; https://docs.oracle.com/en/java/javase/22/docs//api/java.base/java/lang/foreign/SymbolLookup.html
