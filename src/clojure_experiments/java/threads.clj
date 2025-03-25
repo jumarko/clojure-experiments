@@ -1,6 +1,7 @@
 (ns clojure-experiments.java.threads
   (:require [clojure.string :as str])
-  (:import [java.util.concurrent Executors]))
+  (:import [java.util.concurrent Executors]
+           [java.util Date]))
 
 ;; you can change thread stack size if JVM supports it:
 ;; - https://stackoverflow.com/questions/64829317/how-to-extend-stack-size-without-access-to-jvm-settings
@@ -38,19 +39,23 @@
   ;; finished
 
   ;; try to interrupt disk io
-  (do (def fio
-     (future 
-       (try
-         (println "slurping from the disk")
-         (slurp "/Users/jumar/workspace/clojure/clojure-rte/java_pid73938.hprof")
-         (println "slurped from the disk")
-         (catch InterruptedException ie
-           (println "Interrupted.")))))
-      (Thread/sleep 100)
-      (println "Interrupting...")
-      (future-cancel fio)
-      (println "Interrupted?"))
-  ;;=> prints:
+  (let [big-file-path "/Users/jumar/workspace/git/git-trace.log"
+        fio (future
+              (try
+                (println (Date.) "slurping from the disk")
+                (slurp big-file-path)
+                (println (Date.) "slurped from the disk")
+                (catch InterruptedException ie
+                  (println (Date.) "INTERRUPTED."))
+                (catch Exception e
+                  (println (Date.) "ERROR:" e))
+                (catch Error e
+                  (println (Date.) "FATAL ERROR:" e))))]
+    (Thread/sleep 100)
+    (println (Date.) "Interrupting...")
+    (future-cancel fio)
+    (println (Date.) "Interrupted?"))
+      ;;=> prints:
   ;; slurping from the disk
   ;; Interrupting...
   ;; Interrupted?

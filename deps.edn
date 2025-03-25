@@ -235,7 +235,7 @@
  :aliases
  {
   :dev
-  {:jvm-opts ["-Xmx1g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
+  {:jvm-opts ["-Xmx4g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
 
               ;; For example Virtual Threads
               "--enable-preview"
