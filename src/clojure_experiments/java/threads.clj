@@ -56,11 +56,10 @@
     (future-cancel fio)
     (println (Date.) "Interrupted?"))
       ;;=> prints:
-  ;; slurping from the disk
-  ;; Interrupting...
-  ;; Interrupted?
-  ;; slurped from the disk
-
+  ;; #inst "2025-03-25T07:26:23.273-00:00" slurping from the disk
+  ;; #inst "2025-03-25T07:26:23.375-00:00" Interrupting...
+  ;; #inst "2025-03-25T07:26:23.376-00:00" Interrupted?
+  ;; #inst "2025-03-25T07:26:26.152-00:00" slurped from the disk ; notice it takes about 3 seconds to get here
 
   ,)
 

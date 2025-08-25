@@ -17,7 +17,7 @@
         buddy/buddy-sign {:mvn/version "3.4.333"}
         org.julienxx/clj-slack {:mvn/version "0.6.3"}
         clojure-complete/clojure-complete {:mvn/version "0.2.5"}
-        com.rpl/specter {:mvn/version "1.1.3"}
+        com.rpl/specter {:mvn/version "1.1.4"}
         quil/quil {:mvn/version "4.0.0-SNAPSHOT-1"}
         inspector-jay/inspector-jay {:mvn/version "0.3"}
         org.clojure/tools.reader {:mvn/version "1.3.6"}
@@ -229,6 +229,10 @@
         ;; tree-sitter: https://github.com/tree-sitter/java-tree-sitter
         ;; - see also https://tree-sitter.github.io/tree-sitter/using-parsers/1-getting-started.html
         io.github.tree-sitter/jtreesitter {:mvn/version "0.24.1"}
+
+        ;; library (https://github.com/funcool/lentes) for this talk: https://www.youtube.com/watch?v=8K4IdE89IRA
+        funcool/lentes {:mvn/version "1.3.3"}
+        tick/tick {:mvn/version "1.0"}
         }
 
 
