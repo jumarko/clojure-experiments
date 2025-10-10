@@ -8,8 +8,68 @@
   - https://modelcontextprotocol.io/
   - https://spec.modelcontextprotocol.io/"
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io])
-  (:import [java.io BufferedReader InputStreamReader PrintWriter]))
+            [clojure.java.io :as io]
+            [clojure.string :as str])
+  (:import [java.io BufferedReader InputStreamReader PrintWriter File]))
+
+;; Configuration and security
+
+(def ^:dynamic *allowed-paths*
+  "Allow-list of paths that the MCP server can access.
+  Can be set via environment variable MCP_ALLOWED_PATHS (colon-separated).
+  Defaults to the current working directory."
+  (atom nil))
+
+(defn set-allowed-paths!
+  "Set the allowed paths for file system access.
+  Paths should be absolute paths to files or directories."
+  [paths]
+  (reset! *allowed-paths*
+          (mapv (fn [path]
+                  (let [file (io/file path)]
+                    (.getCanonicalPath file)))
+                paths)))
+
+(defn get-allowed-paths
+  "Get the currently configured allowed paths."
+  []
+  (or @*allowed-paths*
+      ;; Default to current working directory if not configured
+      (let [default-path (.getCanonicalPath (io/file "."))]
+        (reset! *allowed-paths* [default-path])
+        @*allowed-paths*)))
+
+(defn path-allowed?
+  "Check if a given path is within the allowed paths.
+  Returns true if the path or any of its parent directories are in the allow-list.
+  Uses canonical paths to prevent path traversal attacks."
+  [path]
+  (try
+    (let [file (io/file path)
+          canonical-path (.getCanonicalPath file)
+          allowed-paths (get-allowed-paths)]
+      (some (fn [allowed-path]
+              ;; Check if the path is the allowed path or within it
+              (or (= canonical-path allowed-path)
+                  (str/starts-with? canonical-path (str allowed-path File/separator))))
+            allowed-paths))
+    (catch Exception e
+      ;; If we can't resolve the canonical path, deny access
+      false)))
+
+(defn validate-path
+  "Validate that a path is allowed. Returns [ok? error-message]."
+  [path]
+  (cond
+    (str/blank? path)
+    [false "Path cannot be empty"]
+    
+    (not (path-allowed? path))
+    [false (str "Access denied: Path is outside allowed directories. Allowed paths: "
+                (str/join ", " (get-allowed-paths)))]
+    
+    :else
+    [true nil]))
 
 ;; JSON-RPC 2.0 message handling
 
@@ -67,47 +127,57 @@
 (defn read-file-tool
   "Implementation of the read_file tool."
   [{:keys [path]}]
-  (try
-    (let [file (io/file path)]
-      (if (.exists file)
-        (if (.isFile file)
-          {:content [{:type "text"
-                      :text (slurp file)}]}
-          {:isError true
-           :content [{:type "text"
-                      :text (str "Path is not a file: " path)}]})
-        {:isError true
-         :content [{:type "text"
-                    :text (str "File not found: " path)}]}))
-    (catch Exception e
+  (let [[valid? error-msg] (validate-path path)]
+    (if-not valid?
       {:isError true
        :content [{:type "text"
-                  :text (str "Error reading file: " (.getMessage e))}]})))
+                  :text error-msg}]}
+      (try
+        (let [file (io/file path)]
+          (if (.exists file)
+            (if (.isFile file)
+              {:content [{:type "text"
+                          :text (slurp file)}]}
+              {:isError true
+               :content [{:type "text"
+                          :text (str "Path is not a file: " path)}]})
+            {:isError true
+             :content [{:type "text"
+                        :text (str "File not found: " path)}]}))
+        (catch Exception e
+          {:isError true
+           :content [{:type "text"
+                      :text (str "Error reading file: " (.getMessage e))}]})))))
 
 (defn list-directory-tool
   "Implementation of the list_directory tool."
   [{:keys [path]}]
-  (try
-    (let [file (io/file path)]
-      (if (.exists file)
-        (if (.isDirectory file)
-          (let [files (.listFiles file)
-                file-list (map (fn [f]
-                                 (str (.getName f)
-                                      (when (.isDirectory f) "/")))
-                               (sort-by #(.getName %) files))]
-            {:content [{:type "text"
-                        :text (clojure.string/join "\n" file-list)}]})
-          {:isError true
-           :content [{:type "text"
-                      :text (str "Path is not a directory: " path)}]})
-        {:isError true
-         :content [{:type "text"
-                    :text (str "Directory not found: " path)}]}))
-    (catch Exception e
+  (let [[valid? error-msg] (validate-path path)]
+    (if-not valid?
       {:isError true
        :content [{:type "text"
-                  :text (str "Error listing directory: " (.getMessage e))}]})))
+                  :text error-msg}]}
+      (try
+        (let [file (io/file path)]
+          (if (.exists file)
+            (if (.isDirectory file)
+              (let [files (.listFiles file)
+                    file-list (map (fn [f]
+                                     (str (.getName f)
+                                          (when (.isDirectory f) "/")))
+                                   (sort-by #(.getName %) files))]
+                {:content [{:type "text"
+                            :text (str/join "\n" file-list)}]})
+              {:isError true
+               :content [{:type "text"
+                          :text (str "Path is not a directory: " path)}]})
+            {:isError true
+             :content [{:type "text"
+                        :text (str "Directory not found: " path)}]}))
+        (catch Exception e
+          {:isError true
+           :content [{:type "text"
+                      :text (str "Error listing directory: " (.getMessage e))}]})))))
 
 (def tool-handlers
   {"read_file" read-file-tool
@@ -193,12 +263,37 @@
       (println "MCP Server stopped."))))
 
 (defn -main
-  "Main entry point for the MCP server."
+  "Main entry point for the MCP server.
+  
+  Supports environment variables:
+  - MCP_ALLOWED_PATHS: Colon-separated list of allowed paths (defaults to current directory)"
   [& args]
+  ;; Initialize allowed paths from environment variable if set
+  (when-let [env-paths (System/getenv "MCP_ALLOWED_PATHS")]
+    (let [paths (str/split env-paths (re-pattern (System/getProperty "path.separator")))]
+      (set-allowed-paths! paths)
+      (binding [*err* *err*]
+        (println "Allowed paths configured:" (str/join ", " (get-allowed-paths))))))
+  
   (start-server))
 
 (comment
   ;; Test the server by simulating requests
+  
+  ;; Configure allowed paths for testing
+  (set-allowed-paths! ["/Users/jumar/workspace/clojure/clojure-experiments"])
+  (get-allowed-paths)
+  ;; => ["/Users/jumar/workspace/clojure/clojure-experiments"]
+  
+  ;; Test path validation
+  (path-allowed? "/Users/jumar/workspace/clojure/clojure-experiments/README.md")
+  ;; => true
+  
+  (path-allowed? "/etc/passwd")
+  ;; => false
+  
+  (path-allowed? "/Users/jumar/workspace/clojure/clojure-experiments/../../../etc/passwd")
+  ;; => false (canonical path resolution prevents path traversal)
   
   ;; Initialize request
   (process-request
@@ -224,7 +319,7 @@
   ;;     :id 2,
   ;;     :result {:tools [{:name "read_file", ...}]}}
   
-  ;; Call read_file tool
+  ;; Call read_file tool - allowed path
   (process-request
    {:jsonrpc "2.0"
     :id 3
@@ -232,12 +327,36 @@
     :params {:name "read_file"
              :arguments {:path "/Users/jumar/workspace/clojure/clojure-experiments/README.md"}}})
   
-  ;; Test with non-existent file
+  ;; Call read_file tool - disallowed path
   (process-request
    {:jsonrpc "2.0"
     :id 4
     :method "tools/call"
     :params {:name "read_file"
-             :arguments {:path "/does/not/exist.txt"}}})
+             :arguments {:path "/etc/passwd"}}})
+  ;; => {:jsonrpc "2.0",
+  ;;     :id 4,
+  ;;     :result {:isError true,
+  ;;              :content [{:type "text",
+  ;;                         :text "Access denied: Path is outside allowed directories..."}]}}
+  
+  ;; Test path traversal attempt
+  (process-request
+   {:jsonrpc "2.0"
+    :id 5
+    :method "tools/call"
+    :params {:name "read_file"
+             :arguments {:path "/Users/jumar/workspace/clojure/clojure-experiments/../../../etc/passwd"}}})
+  ;; => {:jsonrpc "2.0",
+  ;;     :id 5,
+  ;;     :result {:isError true,
+  ;;              :content [{:type "text",
+  ;;                         :text "Access denied..."}]}}
+  
+  ;; Test with multiple allowed paths
+  (set-allowed-paths! ["/Users/jumar/workspace/clojure/clojure-experiments"
+                       "/tmp"])
+  (path-allowed? "/tmp/test.txt")
+  ;; => true
   
   )

@@ -12,7 +12,8 @@ This implementation provides:
 
 - **stdio transport** for local communication (suitable for desktop AI apps)
 - **JSON-RPC 2.0** message protocol
-- **Tool support** with a simple `read_file` tool
+- **Tool support** with `read_file` and `list_directory` tools
+- **Sandboxed file system access** with configurable allow-lists for security
 
 ## Current Tools
 
@@ -40,12 +41,72 @@ Lists the contents of a directory.
 
 - List of files and directories (directories are marked with a trailing `/`), or an error if the directory doesn't exist or cannot be read
 
+## Security: Path Sandboxing
+
+The server implements path sandboxing to restrict file system access to an allow-list of directories. This prevents the MCP client from accessing sensitive files or directories outside the permitted scope.
+
+### How it works
+
+1. **Canonical path resolution**: All paths are resolved to their canonical form to prevent path traversal attacks (e.g., `../../../etc/passwd`)
+2. **Allow-list checking**: Each file operation validates that the requested path is within one of the allowed directories
+3. **Subdirectory access**: If a directory is in the allow-list, all its subdirectories and files are automatically accessible
+
+### Configuring Allowed Paths
+
+#### Option 1: Environment Variable (Recommended for production)
+
+Set the `MCP_ALLOWED_PATHS` environment variable with a colon-separated (Unix) or semicolon-separated (Windows) list of allowed paths:
+
+```bash
+# Unix/Linux/macOS
+export MCP_ALLOWED_PATHS="/Users/username/projects"
+clj -M -m clojure-experiments.mcp.server
+
+# Windows
+set MCP_ALLOWED_PATHS="C:\Users\username\projects"
+clj -M -m clojure-experiments.mcp.server
+```
+
+#### Option 2: Programmatic Configuration
+
+In your code, you can set allowed paths using `set-allowed-paths!`:
+
+```clojure
+(require '[clojure-experiments.mcp.server :as server])
+
+;; Set allowed paths
+(server/set-allowed-paths! ["/Users/username/projects"])
+
+;; Check if a path is allowed
+(server/path-allowed? "/Users/username/projects/README.md")
+;; => true
+
+(server/path-allowed? "/etc/passwd")
+;; => false
+```
+
+#### Default Behavior
+
+If no allowed paths are configured, the server defaults to allowing access only to the current working directory and its subdirectories.
+
+### Security Best Practices
+
+1. **Always configure allowed paths** in production environments
+2. **Use absolute paths** in the allow-list for clarity and security
+3. **Be specific** about allowed directories - don't allow root directories unless necessary
+4. **Review the allow-list** regularly to ensure it matches your security requirements
+5. **Symbolic links** are resolved to their canonical paths, so they're subject to the same restrictions
+
 ## Usage
 
 ### Running the Server
 
 ```bash
-# Start the server using Clojure CLI
+# Start the server using Clojure CLI (defaults to current directory)
+clj -M -m clojure-experiments.mcp.server
+
+# With custom allowed paths
+export MCP_ALLOWED_PATHS="/path/to/allowed/dir1:/path/to/allowed/dir2"
 clj -M -m clojure-experiments.mcp.server
 ```
 
@@ -82,11 +143,16 @@ To integrate this MCP server with AI applications like Claude Desktop, you would
     "clojure-mcp": {
       "command": "clj",
       "args": ["-M", "-m", "clojure-experiments.mcp.server"],
-      "cwd": "/Users/jumar/workspace/clojure/clojure-experiments"
+      "cwd": "/Users/jumar/workspace/clojure/clojure-experiments",
+      "env": {
+        "MCP_ALLOWED_PATHS": "/Users/jumar/workspace/clojure/clojure-experiments"
+      }
     }
   }
 }
 ```
+
+Note: Always configure the `MCP_ALLOWED_PATHS` environment variable when using with AI applications to restrict file system access.
 
 ## Development
 
