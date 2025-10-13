@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "clojure-mcp": {
+      "command": "clj",
+      "args": [
+        "-M",
+        "-m",
+        "clojure-experiments.mcp.server"
+      ],
+      "cwd": "/Users/jumar/workspace/clojure/clojure-experiments",
+      "env": {}
+    }
+  }
+}
