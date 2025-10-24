@@ -27,3 +27,26 @@
   ;;
   )
 
+
+;;; Clay examples: https://scicloj.github.io/clay/clay_book.examples.html
+(+ 4 5)
+
+
+
+;; hiccup
+(kind/hiccup
+ [:ul
+  [:li [:p "hi"]]
+  [:li [:big [:big [:p {:style ; https://www.htmlcsscolor.com/hex/7F5F3F
+                        {:color "#7F5F3F"}}
+                    "hello"]]]]])
+
+
+;; Markdown
+(kind/md
+ (list
+  "
+* This is [markdown](https://www.markdownguide.org/).
+  * *Isn't it??*"
+  "
+* Here is **some more** markdown."))
