@@ -101,7 +101,7 @@
         com.gfredericks/vcr-clj {:mvn/version "0.4.19"}
         nubank/matcher-combinators {:mvn/version "3.3.1"}
         meander/epsilon {:mvn/version "0.0.650"}
-        djblue/portal {:mvn/version "0.35.0"}
+        djblue/portal {:mvn/version "0.61.0"}
         ;; this leads to circular dependency error in aws logs?!
         ;; org.clojars.cyrik/omni-trace {:mvn/version "0.3.31"}
         expound/expound {:mvn/version "0.8.10"}
@@ -110,7 +110,7 @@
         ;; blazing fast JSON & CSV parsing: https://github.com/cnuernber/charred
         com.cnuernber/charred {:mvn/version "1.000"}
         ;; clerk - notebooks: https://github.com/nextjournal/clerk
-        io.github.nextjournal/clerk {:mvn/version "0.8.451"}
+        io.github.nextjournal/clerk {:mvn/version "0.18.1150"}
         ;; meta-csv, next.jdbc, and docjure are used in data-science notebook: https://github.com/nextjournal/clerk-demo/blob/main/notebooks/data_science.clj
         meta-csv/meta-csv {:mvn/version "0.1.0"}
         com.github.seancorfield/next.jdbc  {:mvn/version "1.2.659"}
@@ -118,7 +118,7 @@
         ;; signal handling
         spootnik/signal {:mvn/version "0.2.4"}
         ;; use java.nio from Clojure: https://github.com/babashka/fs
-        babashka/fs {:mvn/version "0.1.6"}
+        babashka/fs {:mvn/version "0.5.27"}
         ;; flow-storm-debugger: https://github.com/jpmonettas/flow-storm-debugger/
         com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.3.309"}
 
@@ -201,8 +201,7 @@
         ;; - see also https://github.com/georgejahad/cdt
         cdt/cdt {:mvn/version "1.2.6.2"}
 
-
-        ;;; Jetty benchmark: https://clojurians.slack.com/archives/C03S1KBA2/p1691305650647229
+;;; Jetty benchmark: https://clojurians.slack.com/archives/C03S1KBA2/p1691305650647229
         ;;; see `clojure-experiments.performance.jetty-c10k-problem`
         ;;; also standalone in /Users/jumar/workspace/clojure/performance/c10k-problem
         metosin/jsonista               {:mvn/version "0.3.7"}
@@ -238,12 +237,20 @@
         ;; See also 'Rich Comment Blocks' in Stuart Halloway's block 'Running with Scissors':
         ;; https://www.youtube.com/watch?v=Qx0-pViyIDU&t=1229s.
         com.cognitect/transcriptor {:mvn/version "0.1.5"}
+
+        ;; Clay is powerful visualization/notebook style tool
+        ;; https://scicloj.github.io/clay/
+        ;; see also: https://github.com/ClojureCivitas/clojurecivitas.github.io/blob/main/deps.edn#L14 
+        org.scicloj/clay {#_#_:mvn/version "2-beta57"
+                          :git/url "https://github.com/scicloj/clay.git"
+                          :git/sha "0240b1a4248fb2b1e67b933cbd51ef02a805ada9"}
+        ;; not needed because clay depends on it
+        ;;org.scicloj/kindly {:mvn/version "4-beta20"}
+        ;;
         }
 
-
  :aliases
- {
-  :dev
+ {:dev
   {:jvm-opts ["-Xmx4g" #_"-Xmx256m" ;; use -Xmx256m if you want to play with memory usage (see e.g. src/clojure_experiments/eval.clj )
 
               ;; For example Virtual Threads
@@ -285,6 +292,4 @@
 
               ;; to access jdk.internal.misc.VM#maxDirectMemory
               ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
-              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
-
-              ]}}}
+              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"]}}}
