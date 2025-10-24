@@ -5,8 +5,8 @@
   the discard reader symbol #_ is a much better choice.
 
   See also 'Rich Comment Blocks' in Stuart Halloway's block 'Running with Scissors':
-  https://www.youtube.com/watch?v=Qx0-pViyIDU&t=1229s)
-
+  https://www.youtube.com/watch?v=Qx0-pViyIDU&t=1229s."
+  )
 
 (map inc [1 2 3 (comment 4) 5])
 ;; =>
@@ -16,3 +16,10 @@
 ;; Numbers.java:  139  clojure.lang.Numbers/inc
 ;; core.clj:  929  clojure.core/inc
 
+
+(comment
+  ;; Using Transcriptor: https://github.com/cognitect-labs/transcriptor
+  ;; - https://youtu.be/Qx0-pViyIDU?t=1439
+  (require '[cognitect.transcriptor :as xr :refer (check!)])
+  (xr/run "src/clojure_experiments/books/clojure_brain_teasers/13-nil-comment.repl")
+  )

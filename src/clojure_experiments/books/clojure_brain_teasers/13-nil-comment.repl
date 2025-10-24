@@ -1,0 +1,17 @@
+;; Using Transcriptor: https://github.com/cognitect-labs/transcriptor
+;; - https://youtu.be/Qx0-pViyIDU?t=1439
+(require '[cognitect.transcriptor :as xr :refer (check!)])
+
+(+ 1 2)
+(check! #{3})
+
+(+ 1 1)
+(check! even?)
+
+
+(comment
+  ;; Using Transcriptor: https://github.com/cognitect-labs/transcriptor
+  ;; - https://youtu.be/Qx0-pViyIDU?t=1439
+
+  (xr/run "src/clojure_experiments/books/clojure_brain_teasers/13-nil-comment.repl")
+  )
