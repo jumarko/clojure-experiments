@@ -18,3 +18,12 @@
   ;; "Elapsed time: 529079.032449 msecs"
 
 ,)
+
+
+;;; Eval works via compilation to bytecode and running the bytecode: https://clojurians.slack.com/archives/C03S1KBA2/p1761093620504029?thread_ts=1761092076.285239&cid=C03S1KBA2
+;; when you eval something like a date, or some other arbitrary object, it needs to be serialized into something that can be used to reconstruct the object when bytecode runs
+;; The way that works is the compiler calls pr-str on the object and stashes the string and when the bytecode executes it calls read-string
+
+(eval (java.util.Date.))
+;; => #inst "2025-10-23T03:14:18.844-00:00"
+
