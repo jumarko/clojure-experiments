@@ -1,11 +1,5 @@
 ^{:kindly/hide-code true
-  :clay             {:title  "Macroexpand 2025 Noj: Clay Workshop"
-                     :quarto {:author      :timothypratley
-                              :description "What is Clay, why use it, and how to use it."
-                              :type        :post
-                              :date        "2025-10-16"
-                              :category    :clay
-                              :tags        [:clay :workflow]}}}
+  :clay {:title  "Macroexpand 2025 Noj: Clay Workshop"}}
 (ns clojure-experiments.visualizations.clay
   "https://scicloj.github.io/clay/.
   https://scicloj.github.io/clay/clay_book.examples.html
@@ -29,7 +23,7 @@
 
 
 ;;; Clay examples: https://scicloj.github.io/clay/clay_book.examples.html
-(+ 4 5)
+(+ 4 50)
 
 
 
@@ -50,3 +44,32 @@
   * *Isn't it??*"
   "
 * Here is **some more** markdown."))
+
+
+;; Mermaid
+(kind/mermaid
+ "
+flowchart TD
+    A[Christmas] -->|Get money| B(Go shopping)
+    B --> C{Let me think}
+    C -->|One| D[Laptop]
+    C -->|Two| E[iPhone]
+    C -->|Three| F[fa:fa-car Car]
+  ")
+
+
+;; Tables
+(def people [{:name "Juraj" :age 40 :preferred-language "Clojure"}
+             {:name "Zdenek" :age 39 :preferred-language "Scala"}])
+(kind/table
+ {:column-names [:preferred-language :age]
+  :row-maps people})
+
+
+
+;; watch! doesn't work for me for some reason - call `make!` manually
+(comment
+  (scicloj.clay.v2.make/make! {:source-path "src/clojure_experiments/visualizations/clay.clj"})
+  ;;
+  )
+
