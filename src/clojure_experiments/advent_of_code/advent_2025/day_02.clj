@@ -50,15 +50,43 @@
 (assert (true? (invalid-id? 7474)))
 (assert (false? (invalid-id? 7475)))
 
-(defn part-1 [parsed-input]
+(defn part [parsed-input invalid-id-fn]
   (->> parsed-input
        (mapcat (fn [[first-id last-id]]
                  (range first-id (inc last-id))))
-       (filter invalid-id?)
+       (filter invalid-id-fn)
        (apply +)))
+
+
+(defn part-1 [parsed-input]
+  (part parsed-input invalid-id?))
 
 (assert (= 1227775554 (part-1 sample-input)))
 
 (assert (= 13108371860 (time (part-1 parsed-input))))
 ;; "Elapsed time: 559.072833 msecs"
 
+
+
+;;; Part 2:
+;;; Now, an ID is invalid if it is made only of some sequence of digits repeated _at least_ twice.
+;;; So, 12341234 (1234 two times), 123123123 (123 three times), 1212121212 (12 five times), and 1111111 (1 seven times) are all invalid IDs.
+
+(defn invalid-id?
+  [num]
+  (let [digits (digits num)
+        n (count digits)]
+    (boolean (some #(apply = %) ; if any of the pattern size gives us a match
+                   (map (fn [x] (partition-all x digits))
+                        ;; check patterns of size 1 up to half of the digits count
+                        (range 1 (inc (quot n 2))))))))
+(assert (true? (invalid-id? 123123123)))
+(assert (true? (invalid-id? 12341234)))
+(assert (true? (invalid-id? 1111111)))
+(assert (false? (invalid-id? 1231231234)))
+
+(defn part-2 [parsed-input]
+  (part parsed-input invalid-id?))
+
+(assert (= 22471660255 (time (part-2 parsed-input))))
+;; "Elapsed time: 6037.115584 msecs"
