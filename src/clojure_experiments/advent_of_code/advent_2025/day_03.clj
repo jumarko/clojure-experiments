@@ -136,7 +136,7 @@
 ;; among the _rest_ (after the max) of the digits.
 ;; ... except that the max can be the _last_ digit in which case we need to take the max from before
 ;; Attempt #3:
-(defn- top-batteries [bank]
+(defn- top-batteries [bank B]
   (let [max1 (apply max bank)
         max1-index (.indexOf bank max1)]
     (if (< max1-index (dec (count bank)))
@@ -146,20 +146,95 @@
       ;; and put that one first
       [(apply max (subvec bank 0 max1-index)) max1])))
 
-(mapv top-batteries sample-banks)
+(mapv #(top-batteries % 2) sample-banks)
 ;; => [[9 8] [8 9] [7 8] [9 2]]
 
-(defn bank-joltage [bank]
-  (let [[a b](top-batteries bank)]
+(defn bank-joltage [bank B]
+  (let [[a b](top-batteries bank B)]
     (+ (* 10 a) b)))
 
-(mapv bank-joltage sample-banks)
+(mapv #(bank-joltage % 2) sample-banks)
 ;; => [98 89 78 92]
 
 (defn part1 [banks]
-  (apply + (mapv bank-joltage banks)))
+  ;; looking for 2 batteries in each bank
+  (apply + (mapv #(bank-joltage % 2) banks)))
 
 (assert (= 357 (part1 sample-banks)))
 ;; => 357
 
 (assert (= 17346 (part1 parsed-banks)))
+
+
+;;; Part 2: same as before but consider _12_ digits!!!
+;;; NOTE: `bank-joltage` and `part1` implementation are reused
+;;; It's only `top-batteries` that needs to change.
+
+(defn- top-batteries
+  "Returns B number of highest joltage batteries in the bank.
+  `bank` is assumed to be at least B digits long."
+  ([bank B]
+   (top-batteries bank B []))
+  ([bank B joltages]
+   (cond
+     (< (count bank) B) (throw (ex-info "Invalid input" {:bank bank :B B}))
+     (zero? B) joltages ; we found the required number of batteries/joltages
+     (= (count bank) B) (vec (concat joltages bank))
+     ;; The overall idea is to look at the maximum of the longest-possible prefix,
+     ;; such that the rest of the bank after the prefix can still be used to compose
+     ;; a number that is B digits long.
+     ;; Then we recursively do the same thing for shorter and shorter sequences of the digits left.
+     :else (let [bank-prefix (vec (take (inc (- (count bank) B))
+                                        bank))
+                 prefix-max (apply max bank-prefix)
+                 prefix-max-index (.indexOf bank-prefix prefix-max)
+                 bank-rest (drop (inc prefix-max-index) bank)]
+             (top-batteries bank-rest (dec B) (conj joltages prefix-max))))))
+
+(top-batteries (first sample-banks) 2)
+;; => [9 8]
+(mapv #(top-batteries % 2) sample-banks)
+;; => [[9 8] [8 9] (7 8) [9 2]]
+
+(assert (= [[9 8 7 6 5 4 3 2 1 1 1 1]
+            [8 1 1 1 1 1 1 1 1 1 1 9]
+            [4 3 4 2 3 4 2 3 4 2 7 8]
+            [8 8 8 9 1 1 1 1 2 1 1 1]]
+           (mapv #(top-batteries % 12) sample-banks)))
+
+
+(defn- digits->num
+  ([digits]
+   (digits->num 0 digits))
+  ([num digits]
+   (if (empty? digits)
+     num
+     (digits->num (+ (* 10 num) (first digits)) (rest digits)))))
+(digits->num [1 2 3])
+;; => 123
+
+;; more concise implementations of digits->num (taken from here: https://gitlab.com/maximoburrito/advent2025/-/blob/main/src/day03/main.clj#L46)
+(defn- digits->num [digits]
+  (reduce (fn [acc digit]
+            (+ digit (* 10 acc)))
+          0
+          digits))
+(digits->num [1 2 3])
+;; => 123
+
+(defn bank-joltage [bank B]
+  (let [digits (top-batteries bank B)]
+    (digits->num digits)))
+
+(mapv #(bank-joltage % 12) sample-banks)
+
+(defn part2 [banks]
+  ;; looking for 12 batteries in each bank
+  (apply + (mapv #(bank-joltage % 12) banks)))
+
+;; here's what it looks like for the sample inputs
+(assert (= 3121910778619 (part2 sample-banks)))
+
+;; The final answer to part 2
+(assert (= 172981362045136 (part2 parsed-banks)))
+
