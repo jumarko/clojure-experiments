@@ -25,10 +25,10 @@
 
 
 ;;; Input
-(def sample-input ["987654321111111"
-                   "811111111111119"
-                   "234234234234278"
-                   "818181911112111"])
+(def sample-input ["987654321111111" ; 98
+                   "811111111111119" ; 89
+                   "234234234234278" ; 78
+                   "818181911112111"]) ; 92
 
 (defn parse-banks [input-lines]
   (mapv (fn [line] (mapv #(parse-long (str %)) line))
@@ -136,15 +136,21 @@
 ;; among the _rest_ (after the max) of the digits.
 ;; ... except that the max can be the _last_ digit in which case we need to take the max from before
 ;; Attempt #3:
-(defn bank-joltage [bank]
+(defn- top-batteries [bank]
   (let [max1 (apply max bank)
-        max1-index (.indexOf bank max1)
-        [a b] (if (< max1-index (dec (count bank)))
-                    ;; if not last elem then pick the largest value of the rest of the bank
-                [max1 (apply max (subvec bank (inc max1-index) (count bank)))]
-                    ;; if it's the last elem, then find the max among all the preceeding digits
-                    ;; and put that one first
-                [(apply max (subvec bank 0 max1-index)) max1])]
+        max1-index (.indexOf bank max1)]
+    (if (< max1-index (dec (count bank)))
+      ;; if not last elem then pick the largest value of the rest of the bank
+      [max1 (apply max (subvec bank (inc max1-index) (count bank)))]
+      ;; if it's the last elem, then find the max among all the preceeding digits
+      ;; and put that one first
+      [(apply max (subvec bank 0 max1-index)) max1])))
+
+(mapv top-batteries sample-banks)
+;; => [[9 8] [8 9] [7 8] [9 2]]
+
+(defn bank-joltage [bank]
+  (let [[a b](top-batteries bank)]
     (+ (* 10 a) b)))
 
 (mapv bank-joltage sample-banks)
