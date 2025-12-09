@@ -133,3 +133,53 @@
 (part1 full-input)
 ;; => 1662
 
+
+
+;;; Part 2: Quantum tachyon manifold
+;;; Single tachyon enters the manifold and "picks" left or right at each splitter.
+;;; Count the total number of different paths the tachyon can take.
+
+;; It seems to me that I can reuse the `trace-beams` function defined above
+;; and simply count the total number of different paths marked by "beams" (pipes).
+;; Q: how do I do that? 
+
+;; Let's iterate through the rows, starting with initial state with tachyon in the first
+;; row at the column defined by S (in the 0th row)
+;; Then we can track its path by accumulating indexes
+;; - Each time there's a splitter we split a path into two by appending index of -+1 to the previous path
+;; - if it's not a splitter then it we just append the same index as the previous row had
+(defn part2 [parsed-input]
+  (let [start-column (.indexOf (first parsed-input)  "S")]
+    (reduce
+     (fn [paths-so-far next-row]
+       ;; mapcat needed in case the path is split into two
+       (set (mapcat (fn [path]
+                      (let [prev-row-index (peek path)]
+                           ;; if, in the next row, there's a splitter at the same index as the last element of the path (previous row)
+                           ;; then we split it into two possible paths
+                        (if (= splitter (get next-row prev-row-index))
+                          [(conj path (dec prev-row-index))
+                           (conj path (inc prev-row-index))]
+                             ;; otherwise just 'extend' the path by appending the same index (there's no change in tachyom's trajectory)
+                          [(conj path prev-row-index)])))
+                    paths-so-far)))
+
+     #{[start-column]}
+     (drop 2 parsed-input))))
+
+
+;; this works on sample input
+(assert (= 40 (count (part2 sample-input))))
+
+;; ... but it's way too slow on the full input :(
+(comment 
+  ;; takes a couple of minutes and then it fails with OutOfMemoryError
+  (time (part2 full-input))
+  )
+
+
+;; Q: what can I optimize?
+;; Maybe I don't need to track the whole path?
+;; That is, I only need to keep the previous row index?
+;; That would help with memory at least...
+;; BUT: how would I dinstiguish between all the different possibilities?
