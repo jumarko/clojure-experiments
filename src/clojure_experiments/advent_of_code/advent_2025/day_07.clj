@@ -183,3 +183,25 @@
 ;; That is, I only need to keep the previous row index?
 ;; That would help with memory at least...
 ;; BUT: how would I dinstiguish between all the different possibilities?
+
+;; What if I reuse `trace-beams`, again?
+;; 1. Look at all the beams in the row
+;; 2. Beams that don't hit a splitter, just continue in the same path -> no increment of the number of total paths
+;; 3. For beams that do hit a splitter, we add 1 (not two because the original path is  blocked
+;;                                                so one of the two new paths just replaces the old path)
+(defn part2 [parsed-input]
+  (let [traced (trace-beams parsed-input)]
+    (first (reduce
+            (fn [[total-paths-count prev-row] new-row]
+              (let [new-paths-count (apply + (map-indexed (fn [i _spot]
+                                                            ;; the only interesting case is if there's a splitter at the previous row at the same column
+                                                            (if (= splitter (get prev-row i)) 1 0))
+                                                          new-row))]
+                [(+ total-paths-count new-paths-count) new-row]))
+            [1 (first traced)] ; there's one path at the second row
+            ;; the third row is the first one where there actually can be a splitter
+            (rest traced)))))
+
+;; This is unfortunately incorrect :(
+(part2 sample-input)
+;; => 23
