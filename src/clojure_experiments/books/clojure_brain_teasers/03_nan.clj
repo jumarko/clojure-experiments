@@ -13,3 +13,11 @@
 
 (/ 0.0 0.0)
 ;; => ##NaN
+
+;;; BONUS:
+
+(/ 1 0.0)
+;; => ##Inf
+(/ 1 0)
+;; => 1. Unhandled java.lang.ArithmeticException
+
