@@ -4,7 +4,7 @@
         org.clojure/test.check {:mvn/version "1.1.0"}
         com.gfredericks/test.chuck {:mvn/version "0.2.12"}
         dev.weavejester/medley {:mvn/version "1.5.0"}
-        ring/ring-core {:mvn/version "1.10.0"}
+        ring/ring-core {:mvn/version "1.15.4"}
         ring/ring-json {:mvn/version "0.5.1"}
         compojure/compojure {:mvn/version "1.6.2"}
         org.apache.pdfbox/pdfbox {:mvn/version "3.0.0-RC1"}
@@ -208,8 +208,6 @@
         metosin/reitit-dev             {:mvn/version "0.7.0-alpha5"}
         metosin/ring-swagger-ui        {:mvn/version "4.18.1"}
         ring-cors/ring-cors            {:mvn/version "0.1.13"}
-        ;; https://github.com/sunng87/ring-jetty9-adapter/blob/master/project.clj
-        info.sunng/ring-jetty9-adapter {:mvn/version "0.22.1"}
         ;; doesn't work with Jetty 12 :(
         ;; org.eclipse.jetty/jetty-server {:mvn/version "12.0.0.beta4"}
         org.clojure/tools.cli          {:mvn/version "1.0.219"}
@@ -239,9 +237,8 @@
         ;; Clay is powerful visualization/notebook style tool
         ;; https://scicloj.github.io/clay/
         ;; see also: https://github.com/ClojureCivitas/clojurecivitas.github.io/blob/main/deps.edn#L14 
-        org.scicloj/clay {#_#_:mvn/version "2-beta57"
-                          :git/url "https://github.com/scicloj/clay.git"
-                          :git/sha "0240b1a4248fb2b1e67b933cbd51ef02a805ada9"}
+        ;; https://scicloj.github.io/clay/#emacs-cider
+        org.scicloj/clay {:mvn/version "2.0.16"}
         ;; not needed because clay depends on it
         ;;org.scicloj/kindly {:mvn/version "4-beta20"}
         ;;
