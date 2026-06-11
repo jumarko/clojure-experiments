@@ -5,7 +5,8 @@
             ;; Cannot make it work with JDK 17? https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
             ;; - it does work for me
             [jvm-alloc-rate-meter.core :as ameter]
-            [clj-async-profiler.core :as prof])
+            [clj-async-profiler.core :as prof]
+            [criterium.agent :as crit-agent])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
 (defn print-memory-layout
@@ -460,4 +461,26 @@
 
 ;;; Traverse all threads
 (seq (.keySet (Thread/getAllStackTraces)))
+
+
+
+;;; Criterium allocation tracking: https://github.com/hugoduncan/criterium/blob/develop/bases/notebooks/src/allocation_tracking.clj
+
+;; get the jvm-opts (see deps.edn)
+(crit-agent/jvm-opts)
+;; => ["-agentpath:/var/folders/pm/4gmxlr215r1ffxksn8vsxkf40000gn/T/criterium-agent-macos-arm64-027185c34649c29b39b6d41322b61893c0d61b1dc16ebf03924b0e5cd037aa7b.dylib"]
+
+
+;; check if agent loaded
+{:attached? (crit-agent/attached?)
+ :loaded?   (crit-agent/loaded?)}
+;; => {:attached? true, :loaded? true}
+
+;; basic usage
+(let [[allocations result] (crit-agent/with-allocation-tracing
+                             (str "hello" " " "world"))]
+  {:result           result
+   :allocation-count (when allocations (count allocations))
+   :agent-available? (some? allocations)})
+;; => {:result "hello world", :allocation-count 8, :agent-available? true}
 

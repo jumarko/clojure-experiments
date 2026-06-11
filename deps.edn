@@ -36,7 +36,9 @@
         com.clojure-goes-fast/jvm-hiccup-meter {:mvn/version "RELEASE"}
         com.clojure-goes-fast/clj-memory-meter {:mvn/version "RELEASE"}
         com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "RELEASE"}
-        criterium/criterium {:mvn/version "0.4.6"}
+        ;; NOTE: criterium 0.5 alphas can track allocation, free calls, and hence garbage, for a function call.
+        ;; https://github.com/hugoduncan/criterium/blob/develop/bases/notebooks/src/allocation_tracking.clj.
+        criterium/criterium {:mvn/version "0.5.243-ALPHA"}
         org.clojars.pntblnk/clj-ldap {:mvn/version "0.0.17"}
         vvvvalvalval/scope-capture {:mvn/version "0.3.3"}
         org.clojure/tools.trace {:mvn/version "0.7.11"}
@@ -290,4 +292,6 @@
 
               ;; to access jdk.internal.misc.VM#maxDirectMemory
               ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
-              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"]}}}
+              "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
+              ;; For criterium allocation tracking: https://github.com/hugoduncan/criterium/blob/develop/bases/notebooks/src/allocation_tracking.clj
+              "-agentpath:/var/folders/pm/4gmxlr215r1ffxksn8vsxkf40000gn/T/criterium-agent-macos-arm64-027185c34649c29b39b6d41322b61893c0d61b1dc16ebf03924b0e5cd037aa7b.dylib"]}}}
