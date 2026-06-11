@@ -479,6 +479,7 @@
 ;; basic usage
 (let [[allocations result] (crit-agent/with-allocation-tracing
                              (str "hello" " " "world"))]
+  (prn allocations)
   {:result           result
    :allocation-count (when allocations (count allocations))
    :agent-available? (some? allocations)})
