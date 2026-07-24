@@ -322,3 +322,51 @@
   .)
 
 
+
+;;; nest macro from Chris. Grand (+ plexus)
+;;; https://arnebrasseur.net/2026-07-16-vertical-programming.html
+(defmacro nest
+  "Nesting macro, puts every form as the last of the previous one.
+
+  This has the effect of flattening if, when, let, etc. by putting the else 
+  (for if) or the last (and often single) expression of the body (for when, 
+  let, loop etc.) out and after the form.
+
+  This keeps the main code path vertical, while special cases branch out 
+  of the main path."
+  [& forms]
+  `(->> ~@(reverse forms)))
+
+(def x 1)
+
+(nest
+  (if (= 0 x) :zero)
+  (if (= 1 x) :one)
+
+
+  (if (= 2 x) :two)
+  :other)
+;; expands too:
+(if (= 0 x)
+  :zero
+  (if (= 1 x)
+    :one
+    (if (= 2 x)
+      :two
+      :other)))
+
+
+(nest
+  (loop [i 0]
+    (println i))
+  (if (< 5 i) (println "DONE"))
+  (if (= 2 i) (recur 4))
+  (recur (inc i)))
+;; expands to
+(loop* [i 0]
+ (println i)
+ (if (< 5 i)
+   (println "DONE")
+   (if (= 2 i)
+     (recur 4)
+     (recur (inc i)))))
