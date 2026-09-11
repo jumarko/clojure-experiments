@@ -1,9 +1,10 @@
-{:deps {org.clojure/clojure {:mvn/version "1.12.0"}
+{:deps {org.clojure/clojure {:mvn/version "1.13.0-alpha6"}
         ;; try older clojure version if you wish
         ;; org.clojure/clojure {:mvn/version "1.10.3"}
         org.clojure/test.check {:mvn/version "1.1.0"}
         com.gfredericks/test.chuck {:mvn/version "0.2.12"}
         dev.weavejester/medley {:mvn/version "1.5.0"}
+        org.clj-commons/slingshot {:mvn/version "0.13.0"}
         ring/ring-core {:mvn/version "1.15.4"}
         ring/ring-json {:mvn/version "0.5.1"}
         compojure/compojure {:mvn/version "1.6.2"}
@@ -38,7 +39,7 @@
         com.clojure-goes-fast/jvm-alloc-rate-meter {:mvn/version "RELEASE"}
         ;; NOTE: criterium 0.5 alphas can track allocation, free calls, and hence garbage, for a function call.
         ;; https://github.com/hugoduncan/criterium/blob/develop/bases/notebooks/src/allocation_tracking.clj.
-        criterium/criterium {:mvn/version "0.5.243-ALPHA"}
+        criterium/criterium {:mvn/version "RELEASE"}
         org.clojars.pntblnk/clj-ldap {:mvn/version "0.0.17"}
         vvvvalvalval/scope-capture {:mvn/version "0.3.3"}
         org.clojure/tools.trace {:mvn/version "0.7.11"}
@@ -291,4 +292,5 @@
               ;; - see https://stackoverflow.com/questions/53543062/replace-access-to-sun-misc-vm-for-jdk-11
               "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
               ;; For criterium allocation tracking: https://github.com/hugoduncan/criterium/blob/develop/bases/notebooks/src/allocation_tracking.clj
-              "-agentpath:/var/folders/pm/4gmxlr215r1ffxksn8vsxkf40000gn/T/criterium-agent-macos-arm64-027185c34649c29b39b6d41322b61893c0d61b1dc16ebf03924b0e5cd037aa7b.dylib"]}}}
+              ;; NOTE: crashes the JVM
+              #_"-agentpath:/var/folders/pm/4gmxlr215r1ffxksn8vsxkf40000gn/T/criterium-agent-macos-arm64-027185c34649c29b39b6d41322b61893c0d61b1dc16ebf03924b0e5cd037aa7b.dylib"]}}}
