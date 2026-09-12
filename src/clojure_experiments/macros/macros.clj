@@ -370,3 +370,8 @@
    (if (= 2 i)
      (recur 4)
      (recur (inc i)))))
+
+
+(doseq [x [1 2 3]] x)
+(run! [x [1 2 3]] x)
+
