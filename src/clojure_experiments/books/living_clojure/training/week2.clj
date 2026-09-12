@@ -78,7 +78,6 @@
 (caps "heLLo, WorLD");; => "LLWLD"
 
 
-
 ;;; Day 1: Factorial
 (defn factorial [n]
   (cond
@@ -99,3 +98,14 @@
 #_(factorial 30)
 
 
+
+;;; Day 2: Implement GCD.
+;;; - see https://www.geeksforgeeks.org/dsa/euclidean-algorithms-basic-and-extended/
+(defn gcd [a b]
+  (if (zero? a)
+    b
+    (gcd (mod b a) a)))
+(gcd 35 15)
+;; => 5
+(gcd 28 7)
+;; => 7
