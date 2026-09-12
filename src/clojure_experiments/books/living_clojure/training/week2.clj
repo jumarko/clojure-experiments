@@ -109,3 +109,41 @@
 ;; => 5
 (gcd 28 7)
 ;; => 7
+
+
+
+
+;;; Day 3: cartesian product
+(for [x [1 2 3]
+      y [:a :b :c]]
+  [x y])
+;; => ([1 :a] [1 :b] [1 :c] [2 :a] [2 :b] [2 :c] [3 :a] [3 :b] [3 :c])
+
+
+;;; Day 5: Pascal's triangle
+(defn pascal [n]
+  (if (zero? n)
+    ;; the first row is 1 by definition
+    [1]
+    (let [previous-row (pascal (dec n))
+          sums (mapv + previous-row (drop 1 previous-row))]
+      (conj (into [1] sums)
+            1))))
+
+(pascal 0)
+;; => [1]
+(pascal 1)
+;; => [1 1]
+(pascal 2)
+;; => [1 2 1]
+(take 10 (map pascal (range 10) ))
+;; => ([1]
+;;     [1 1]
+;;     [1 2 1]
+;;     [1 3 3 1]
+;;     [1 4 6 4 1]
+;;     [1 5 10 10 5 1]
+;;     [1 6 15 20 15 6 1]
+;;     [1 7 21 35 35 21 7 1]
+;;     [1 8 28 56 70 56 28 8 1]
+;;     [1 9 36 84 126 126 84 36 9 1])
