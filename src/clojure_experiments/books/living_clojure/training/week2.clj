@@ -1,6 +1,8 @@
 (ns clojure-experiments.books.living-clojure.training.week2
   "Week 2 from the Clojure Training Plan at the end of the book.")
 
+;;;; Day 1
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Day 1: Fibonacci
 ;;; Write a function that returns Fibonacci sequence
@@ -70,7 +72,30 @@
 #_(time (fibonacci-loop 10000))
 
 
-;;; Day : Get the caps
+;;; Day 1: Get the caps
 (defn caps [s]
   (apply str (filter Character/isUpperCase s)))
 (caps "heLLo, WorLD");; => "LLWLD"
+
+
+
+;;; Day 1: Factorial
+(defn factorial [n]
+  (cond
+    (neg? n) (throw (ex-info "Cannot compute a factorial of a negative number"
+                             {:n n}))
+    (zero? n) 1 ; special case, as per definition
+    :else (reduce * (range 1 (inc n)))))
+
+(assert (= 1 (factorial 0)))
+(assert (= 1 (factorial 1)))
+(assert (= 6 (factorial 3)))
+(assert (= 120 (factorial 5)))
+(assert (= 40320 (factorial 8)))
+(factorial 20)
+;; => 2432902008176640000
+
+;; throws "long overflow"
+#_(factorial 30)
+
+
