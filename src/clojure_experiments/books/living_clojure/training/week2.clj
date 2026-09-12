@@ -68,3 +68,9 @@
 ;; => [1 1 2 3 5 8 13 21 34 55]
 
 #_(time (fibonacci-loop 10000))
+
+
+;;; Day : Get the caps
+(defn caps [s]
+  (apply str (filter Character/isUpperCase s)))
+(caps "heLLo, WorLD");; => "LLWLD"
