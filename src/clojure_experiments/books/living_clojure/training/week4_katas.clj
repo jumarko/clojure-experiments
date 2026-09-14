@@ -33,3 +33,23 @@
 
 (decode "scones" "egsgqwtahuiljgs")
 ;; => "meetmebythetree"
+
+
+;; REFACTOR: get rid of the duplication between `decode-char` and `encode-char` 
+
+(defn coding-char [k m op]
+  (let [[k0 m0] (mapv #(- (int %) (int \a))
+                      [k m])]
+    (char (+ (mod (op (int m0) (int k0))
+                  26)
+             (int \a)))))
+
+(defn encode-char [k m]
+  (coding-char k m +))
+(encode "scones" "meetmebythetree")
+;; => "egsgqwtahuiljgs"
+
+(defn decode-char [k m]
+  (coding-char k m -))
+(decode "scones" "egsgqwtahuiljgs")
+;; => "meetmebythetree"
