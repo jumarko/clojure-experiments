@@ -12,10 +12,24 @@
              (int \a)))))
 (encode-char \s \m)
 ;; => \e
-(defn encode [keyword message]
+(defn encode [keyword plain-message]
   (apply str
-         (mapv encode-char (apply concat (repeat keyword)) message)))
+         (mapv encode-char (apply concat (repeat keyword)) plain-message)))
 (encode "scones" "meetmebythetree")
 ;; => "egsgqwtahuiljgs"
 
+(defn decode-char [k m]
+  (let [[k0 m0] (mapv #(- (int %) (int \a))
+                      [k m])]
+    ;; this is the only difference from `encode-char` -> we do `(- (int m0) (int k0))` instead of `(+ (int k0) (int m0))` 
+    (char (+ (mod (- (int m0) (int k0))
+                  26)
+             (int \a)))))
 
+(defn decode [keyword encoded-message]
+  (apply str
+         (mapv decode-char (apply concat (repeat keyword)) encoded-message))
+  )
+
+(decode "scones" "egsgqwtahuiljgs")
+;; => "meetmebythetree"
