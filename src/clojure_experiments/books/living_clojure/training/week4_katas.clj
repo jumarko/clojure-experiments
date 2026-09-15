@@ -68,35 +68,60 @@
     [:boat] ; boat is empty
     [] ; the other side of the river is empty
     ]
-   ;; next step
    [[:fox :corn]
     [:boat :you :goose]
     []]
-   ;; 3rd step
+
+   [[:fox :corn]
+    [:boat]
+    [:goose :you]]
+
    [[:fox :corn]
     [:boat :you]
     [:goose]]
-   ;; 4th step
-   [[:fox ]
-    [:boat :you :corn]
+
+   [[:fox :corn :you]
+    [:boat]
     [:goose]]
-   ;; 5th step
+
    [[:fox]
+    [:boat :corn :you]
+    [:goose]]
+
+   [[:fox]
+    [:boat]
+    [:corn :you :goose]]
+
+   [[:fox]
+    ;; take the goose back
     [:boat :you :goose]
     [:corn]]
-   ;; 6th step
+
+   [[:fox :you :goose]
+    [:boat]
+    [:corn]]
+
    [[:goose]
     [:boat :you :fox]
     [:corn]]
-   ;; 7th step
+
+   [[:goose]
+    [:boat]
+    [:corn :you :fox]]
+
    [[:goose]
     [:boat :you]
     [:corn :fox]]
-   ;; 8th step
+
+   [[:goose :you]
+    [:boat]
+    [:corn :fox]]
+
    [[]
     [:boat :you :goose]
     [:corn :fox]]
-   ;; 9th step - Finally!
+
+   ;; Finally!
    [[]
     [:boat]
     [:corn :fox :you :goose]]
