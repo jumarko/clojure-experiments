@@ -39,3 +39,23 @@
   ;; bad!  the user dunno the default value from the parameter hint in lsp.  I can add the information to the 
   ;; docstring. but it is indeed extra work.
   (private-fun (merge {:timeout-ms 1000} opts)))
+
+
+
+;;; TODO: Clojure 1.13 destructuring features
+
+;; Required keys: https://clojure.atlassian.net/browse/CLJ-2961
+;; This throws:    Missing required key: :c
+(let [{:keys! [a b c]} {:a 10 :b 20}]);
+
+;; this works and declares `c` as optional
+(let [{:keys! [a b] :keys [c]} {:a 10 :b 20}]
+  [a b c]);
+;; => [10 20 nil]
+
+;; TODO: this doesn't work - WHY?
+(let [{:keys! [a b & d]} {:a 10 :b 20}]
+  #_[a b]);
+
+
+
